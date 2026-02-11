@@ -1,37 +1,66 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Restore and maintain the full previous app (v18), updating only the OCR to a real online OCR integration and applying a purple color theme across all pages/buttons without changing other screens/features.",
-  "architectural_notes": [
-    "Keep existing v18 app screens/features unchanged; only modify OCR implementation and global theme styling.",
-    "Real OCR requires calling an external OCR API with a free-tier quota (monthly request limits may apply)."
-  ],
+  "summary": "Build a question editor with a home-screen menu/theme update, and fix table/pair components to support per-cell editing, inline images, and consistent cell sizing with print-safe PDF output.",
+  "architectural_notes": [],
   "known_issues": [
-    "Current OCR is not working and shows an offline-mode message instead of performing real text extraction."
+    "Currently cannot type inside table/pair cells; input goes to the top question field instead"
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-replace-the-current-ocr-offline-mode-placeholder-flow-with-a-real-online-ocr-integration-using-a-legal-free-tier-external-ocr-api-ocr-space-so-that-selecting-an-image-pdf-and-clicking-extract-questions-performs-actual-text-extraction-and-proceeds-to-the-existing-review-approve-flow",
-      "title": "Replace the current OCR “Offline Mode” placeholder flow with a real online OCR integration using a legal free-tier external OCR API (OCR.space) so that selecting an image/PDF and clicking “Extract Questions” performs actual text extraction and proceeds to the existing review/approve flow.",
+      "id": "feature-update-the-app-theme-to-match-the-uploaded-screenshots-make-the-home-screen-navigation-drawer-menu-background-white-not-purple-and-lighten-the-purple-used-across-the-ui-to-match-the-screenshots-exactly-apply-globally-to-buttons-borders-highlights-accents-and-selected-nav-item",
+      "title": "Update the app theme to match the uploaded screenshots: make the home-screen navigation drawer/menu background white (not purple) and lighten the purple used across the UI to match the screenshots exactly (apply globally to buttons, borders, highlights, accents, and selected nav item).",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-ocr-session-utility-currently-named-mock-behaving-as-a-mock-extractor-so-it-supports-storing-sessions-created-from-real-ocr-results-extracted-text-parsed-questions-while-keeping-the-existing-session-load-clear-convert-apis-used-by-the-ocr-review-screen",
-      "title": "Update the OCR session utility currently named/mock-behaving as a mock extractor so it supports storing sessions created from real OCR results (extracted text + parsed questions) while keeping the existing session load/clear/convert APIs used by the OCR review screen.",
+      "id": "feature-fix-table-and-match-pairs-editing-so-users-can-click-inside-each-cell-box-and-type-independently-without-text-being-redirected-to-the-main-top-question-text-field",
+      "title": "Fix table and match-pairs editing so users can click inside each cell/box and type independently without text being redirected to the main/top question text field.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-a-consistent-purple-theme-across-the-entire-app-all-pages-and-buttons-by-verifying-that-primary-secondary-accent-tokens-and-button-variants-visually-render-as-purple-consistently-in-both-light-and-dark-mode-without-changing-layout-or-features",
-      "title": "Ensure a consistent purple theme across the entire app (all pages and buttons) by verifying that primary/secondary/accent tokens and button variants visually render as purple consistently in both light and dark mode, without changing layout or features.",
+      "id": "feature-add-inline-image-insertion-inside-table-cells-and-match-pairs-boxes-supporting-both-upload-from-device-and-paste-from-clipboard-while-allowing-text-and-images-within-the-same-cell-box-and-ensuring-nothing-overflows-outside-the-cell-box-boundaries",
+      "title": "Add inline image insertion inside table cells and match-pairs boxes supporting both upload-from-device and paste-from-clipboard, while allowing text and images within the same cell/box and ensuring nothing overflows outside the cell/box boundaries.",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-for-inserted-images-inside-table-match-pairs-cells-implement-formatting-controls-default-size-5-5-cm-user-adjustable-aspect-ratio-locked-by-default-alignment-controls-and-optional-caption-per-image",
+      "title": "For inserted images inside table/match-pairs cells, implement formatting controls: default size 5 × 5 cm (user adjustable), aspect ratio locked by default, alignment controls, and optional caption per image.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enforce-table-sizing-rules-all-columns-must-have-equal-width-across-the-table-within-each-row-all-cells-must-share-the-same-height-row-based-equal-heights-while-different-rows-may-have-different-heights",
+      "title": "Enforce table sizing rules: all columns must have equal width across the table; within each row, all cells must share the same height (row-based equal heights), while different rows may have different heights.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-print-safe-pdf-rendering-for-tables-match-pairs-containing-inline-images-and-captions-including-proper-wrapping-clipping-behavior-and-predictable-sizing-for-a4-print-output",
+      "title": "Ensure print-safe PDF rendering for tables/match-pairs containing inline images and captions, including proper wrapping/clipping behavior and predictable sizing for A4 print output.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-stored-paper-question-data-handling-to-persist-the-new-richer-table-match-pairs-cell-content-text-zero-or-more-images-with-formatting-metadata-including-backward-compatibility-for-existing-saved-papers-in-localstorage",
+      "title": "Update stored paper/question data handling to persist the new richer table/match-pairs cell content (text + zero or more images with formatting metadata), including backward compatibility for existing saved papers in localStorage.",
+      "reqIds": [
+        "REQ-7"
       ],
       "version": 1
     }
@@ -39,19 +68,36 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Integrate real OCR using a legal free-tier external OCR API (e.g., OCR.space) via REST, replacing the current offline placeholder behavior.",
+      "summary": "Update UI theme: home-screen menu background white and lighten purple theme to match provided image across all components",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Apply a purple color theme across the entire app (all pages and buttons) without changing other UI/screens/features.",
+      "summary": "Fix table/pair editing so each cell/box is independently editable (typing should not redirect to the top question field)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add inline image insertion inside table/pair cells via upload and paste, with text+image in same cell and content constrained within cell boundaries",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Table/pair layout rules: equal column widths across all cells; row-based equal heights (cells in same row share height; different rows may differ)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Image formatting options for inserted images: default 5×5 cm (adjustable), aspect ratio locked by default, alignment and caption support, print-safe PDF rendering",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "Restore working real OCR (OCR.space) while keeping v18 app unchanged + ensure purple theme everywhere",
+  "projectName": "Fix table/pair editing with inline images, consistent sizing, print-safe export, and updated theme colors from screenshots",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

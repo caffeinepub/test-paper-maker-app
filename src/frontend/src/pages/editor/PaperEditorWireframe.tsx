@@ -5,12 +5,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { FloatingAIButton } from '../../components/ai/FloatingAIButton';
-import { Plus, X, Info, AlertCircle, FileEdit, Pencil, Trash2 } from 'lucide-react';
+import { Plus, X, Info, AlertCircle, FileEdit, Trash2, Undo, Redo } from 'lucide-react';
 import { useDebouncedEffect } from '../../hooks/useDebouncedEffect';
+import { useUndoRedo } from '../../hooks/useUndoRedo';
 import { QuestionHeading } from '../../state/mockData';
+
+interface PaperEditorState {
+  paperData: {
+    title: string;
+    totalMarks: number;
+    timeMinutes: number;
+    board: string;
+    standard: string;
+    medium: string;
+  };
+  sections: Array<{
+    id: string;
+    title: string;
+    totalMarks: number;
+    marks: number;
+    questions: number;
+    headings: QuestionHeading[];
+  }>;
+}
 
 export function PaperEditorWireframe() {
   const navigate = useNavigate();
@@ -21,58 +40,56 @@ export function PaperEditorWireframe() {
 
   const isInitialLoadRef = useRef(true);
   const lastSavedDataRef = useRef<string>('');
-
-  const [paperData, setPaperData] = useState({
-    title: '',
-    totalMarks: 25,
-    timeMinutes: 45,
-    board: profile.preferredBoard,
-    standard: profile.defaultStandard || '',
-    medium: profile.medium,
-  });
-
-  const [sections, setSections] = useState<Array<{ 
-    id: string; 
-    marks: number; 
-    questions: number; 
-    plannedQuestionCount: number;
-    headings: QuestionHeading[];
-  }>>([]);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
   const [showSuggestion, setShowSuggestion] = useState(true);
+
+  const initialState: PaperEditorState = {
+    paperData: {
+      title: '',
+      totalMarks: 25,
+      timeMinutes: 45,
+      board: profile.preferredBoard,
+      standard: profile.defaultStandard || '',
+      medium: profile.medium,
+    },
+    sections: [],
+  };
+
+  const { state, setState, undo, redo, canUndo, canRedo, reset } = useUndoRedo<PaperEditorState>(initialState, {
+    maxHistorySize: 50,
+  });
 
   useEffect(() => {
     if (paper && isInitialized) {
       isInitialLoadRef.current = true;
 
-      setPaperData({
-        title: paper.title,
-        totalMarks: paper.totalMarks,
-        timeMinutes: paper.timeMinutes,
-        board: paper.board,
-        standard: paper.standard || '',
-        medium: paper.medium,
-      });
+      const loadedState: PaperEditorState = {
+        paperData: {
+          title: paper.title,
+          totalMarks: paper.totalMarks,
+          timeMinutes: paper.timeMinutes,
+          board: paper.board,
+          standard: paper.standard || '',
+          medium: paper.medium,
+        },
+        sections: paper.sections.map((s) => ({
+          id: s.id,
+          title: s.title,
+          totalMarks: s.totalMarks,
+          marks: s.marks,
+          questions: s.questions.length,
+          headings: s.headings || [],
+        })),
+      };
 
-      const editorSections = paper.sections.map((s) => ({
-        id: s.id,
-        marks: s.marks,
-        questions: s.questions.length,
-        plannedQuestionCount: s.plannedQuestionCount ?? s.questions.length,
-        headings: s.headings || [],
-      }));
-      setSections(editorSections);
-
-      const initialState = JSON.stringify({
-        ...paperData,
-        sections: editorSections,
-      });
-      lastSavedDataRef.current = initialState;
+      reset(loadedState);
+      lastSavedDataRef.current = JSON.stringify(loadedState);
 
       setTimeout(() => {
         isInitialLoadRef.current = false;
       }, 100);
     }
-  }, [paperId, isInitialized]);
+  }, [paperId, isInitialized, paper, reset]);
 
   useDebouncedEffect(
     () => {
@@ -80,62 +97,80 @@ export function PaperEditorWireframe() {
         return;
       }
 
-      const currentState = {
-        ...paperData,
-        sections: sections.map((s) => ({
-          id: s.id,
-          marks: s.marks as 1 | 2 | 3 | 4,
-          questions: paper.sections.find((ps) => ps.id === s.id)?.questions || [],
-          plannedQuestionCount: s.plannedQuestionCount,
-          headings: s.headings,
-        })),
-      };
-
-      const currentStateStr = JSON.stringify(currentState);
+      const currentStateStr = JSON.stringify(state);
 
       if (currentStateStr !== lastSavedDataRef.current) {
-        updatePaper(paperId, currentState);
+        setAutoSaveStatus('saving');
+
+        const updatedPaper = {
+          ...state.paperData,
+          sections: state.sections.map((s) => {
+            const existingSection = paper.sections.find((ps) => ps.id === s.id);
+            return {
+              ...s,
+              questions: existingSection?.questions || [],
+            };
+          }),
+        };
+
+        updatePaper(paperId, updatedPaper);
         lastSavedDataRef.current = currentStateStr;
+
+        setTimeout(() => {
+          setAutoSaveStatus('saved');
+          setTimeout(() => setAutoSaveStatus('idle'), 2000);
+        }, 300);
       }
     },
-    300,
-    [paperData, sections, isInitialized, paper?.id]
+    500,
+    [state, isInitialized, paper?.id]
   );
 
   const handleAddSection = (marks: number) => {
-    const newSection = {
-      id: `section-${Date.now()}`,
-      marks,
-      questions: 0,
-      plannedQuestionCount: 0,
-      headings: [],
-    };
-    setSections([...sections, newSection]);
+    setState((prev) => ({
+      ...prev,
+      sections: [
+        ...prev.sections,
+        {
+          id: `section-${Date.now()}`,
+          title: `Section ${String.fromCharCode(65 + prev.sections.length)}`,
+          totalMarks: 0,
+          marks,
+          questions: 0,
+          headings: [],
+        },
+      ],
+    }));
   };
 
   const handleRemoveSection = (id: string) => {
-    setSections(sections.filter((s) => s.id !== id));
+    setState((prev) => ({
+      ...prev,
+      sections: prev.sections.filter((s) => s.id !== id),
+    }));
   };
 
   const handleAddHeading = (sectionId: string) => {
-    setSections((prev) =>
-      prev.map((s) => {
+    setState((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) => {
         if (s.id === sectionId) {
           const newHeading: QuestionHeading = {
             id: `heading-${Date.now()}`,
             title: '',
-            plannedQuestionCount: 0,
+            plannedCount: 0,
           };
           return { ...s, headings: [...s.headings, newHeading] };
         }
         return s;
-      })
-    );
+      }),
+    }));
   };
 
   const handleUpdateHeading = (sectionId: string, headingId: string, updates: Partial<QuestionHeading>) => {
-    setSections((prev) =>
-      prev.map((s) => {
+    setState((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) => {
         if (s.id === sectionId) {
           return {
             ...s,
@@ -143,13 +178,14 @@ export function PaperEditorWireframe() {
           };
         }
         return s;
-      })
-    );
+      }),
+    }));
   };
 
   const handleRemoveHeading = (sectionId: string, headingId: string) => {
-    setSections((prev) =>
-      prev.map((s) => {
+    setState((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) => {
         if (s.id === sectionId) {
           return {
             ...s,
@@ -157,27 +193,20 @@ export function PaperEditorWireframe() {
           };
         }
         return s;
-      })
-    );
+      }),
+    }));
   };
 
   const handleContinueToPaper = () => {
     navigate({ to: `/editor/${paperId}/real-paper` });
   };
 
-  const totalAllocated = sections.reduce((sum, s) => sum + s.marks * s.questions, 0);
-
-  const canContinueToPaper = paperData.title.trim() !== '' && sections.length > 0;
+  const canContinueToPaper = state.paperData.title.trim() !== '' && state.sections.length > 0;
 
   if (!isInitialized) {
     return (
       <div className="container mx-auto max-w-4xl p-4 py-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-            <p className="text-muted-foreground">Loading paper...</p>
-          </div>
-        </div>
+        <p className="text-center text-muted-foreground">Loading...</p>
       </div>
     );
   }
@@ -185,186 +214,205 @@ export function PaperEditorWireframe() {
   if (!paper) {
     return (
       <div className="container mx-auto max-w-4xl p-4 py-8">
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <AlertCircle className="mb-4 h-16 w-16 text-muted-foreground" />
-            <h3 className="mb-2 text-xl font-semibold text-foreground">Paper Not Found</h3>
-            <p className="mb-6 text-center text-muted-foreground">
-              The paper you're trying to edit doesn't exist or has been deleted.
-            </p>
-            <div className="flex gap-4">
-              <Button onClick={() => navigate({ to: '/papers' })}>View All Papers</Button>
-              <Button variant="outline" onClick={() => navigate({ to: '/home' })}>
-                Go to Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Paper Not Found</AlertTitle>
+          <AlertDescription>The paper you're trying to edit doesn't exist or has been deleted.</AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Paper Details</h1>
-        <p className="mt-2 text-muted-foreground">Set up your test paper structure and sections</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Paper Details</h1>
+          <p className="mt-2 text-muted-foreground">Configure your test paper structure and sections</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {autoSaveStatus === 'saving' && <span className="text-sm text-muted-foreground">Saving...</span>}
+          {autoSaveStatus === 'saved' && <span className="text-sm text-success">Saved</span>}
+          <Button variant="outline" size="icon" onClick={undo} disabled={!canUndo} title="Undo">
+            <Undo className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={redo} disabled={!canRedo} title="Redo">
+            <Redo className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        {/* Paper Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Paper Information</CardTitle>
-            <CardDescription>Basic details about your test paper</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {showSuggestion && (
+        <Alert className="mb-6">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Tip: Use the Real Paper Editor</AlertTitle>
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              For a better editing experience with WYSIWYG preview, try the Real Paper Editor after setting up your
+              sections.
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setShowSuggestion(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Basic Information</CardTitle>
+          <CardDescription>Set the title and general details for your paper</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Paper Title</Label>
+            <Input
+              id="title"
+              value={state.paperData.title}
+              onChange={(e) =>
+                setState((prev) => ({
+                  ...prev,
+                  paperData: { ...prev.paperData, title: e.target.value },
+                }))
+              }
+              placeholder="e.g., Mathematics Mid-Term Exam"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="title">Paper Title *</Label>
+              <Label htmlFor="totalMarks">Total Marks</Label>
               <Input
-                id="title"
-                placeholder="e.g., Science Unit Test - Chapter 1"
-                value={paperData.title}
-                onChange={(e) => setPaperData({ ...paperData, title: e.target.value })}
+                id="totalMarks"
+                type="number"
+                value={state.paperData.totalMarks}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    paperData: { ...prev.paperData, totalMarks: parseInt(e.target.value) || 0 },
+                  }))
+                }
               />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="board">Board</Label>
-                <Select
-                  value={paperData.board}
-                  onValueChange={(value) => setPaperData({ ...paperData, board: value as 'CBSE' | 'GSEB' | 'Both' })}
-                >
-                  <SelectTrigger id="board">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CBSE">CBSE</SelectItem>
-                    <SelectItem value="GSEB">GSEB</SelectItem>
-                    <SelectItem value="Both">Both</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="standard">Standard</Label>
-                <Input
-                  id="standard"
-                  placeholder="e.g., 10"
-                  value={paperData.standard}
-                  onChange={(e) => setPaperData({ ...paperData, standard: e.target.value })}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="timeMinutes">Time (minutes)</Label>
+              <Input
+                id="timeMinutes"
+                type="number"
+                value={state.paperData.timeMinutes}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    paperData: { ...prev.paperData, timeMinutes: parseInt(e.target.value) || 0 },
+                  }))
+                }
+              />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="totalMarks">Total Marks</Label>
-                <Input
-                  id="totalMarks"
-                  type="number"
-                  min="1"
-                  value={paperData.totalMarks}
-                  onChange={(e) => setPaperData({ ...paperData, totalMarks: parseInt(e.target.value) || 0 })}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="board">Board</Label>
+              <Input
+                id="board"
+                value={state.paperData.board}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    paperData: { ...prev.paperData, board: e.target.value },
+                  }))
+                }
+              />
+            </div>
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="timeMinutes">Time (minutes)</Label>
-                <Input
-                  id="timeMinutes"
-                  type="number"
-                  min="1"
-                  value={paperData.timeMinutes}
-                  onChange={(e) => setPaperData({ ...paperData, timeMinutes: parseInt(e.target.value) || 0 })}
-                />
-              </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="standard">Standard/Class</Label>
+              <Input
+                id="standard"
+                value={state.paperData.standard}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    paperData: { ...prev.paperData, standard: e.target.value },
+                  }))
+                }
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="medium">Medium</Label>
-              <Select
-                value={paperData.medium}
-                onValueChange={(value) => setPaperData({ ...paperData, medium: value as 'English' | 'Gujarati' })}
-              >
-                <SelectTrigger id="medium">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="English">English</SelectItem>
-                  <SelectItem value="Gujarati">Gujarati</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="medium"
+                value={state.paperData.medium}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    paperData: { ...prev.paperData, medium: e.target.value },
+                  }))
+                }
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Sections */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Sections</CardTitle>
-            <CardDescription>Organize your paper into sections by marks</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {sections.map((section, idx) => (
-              <Card key={section.id} className="border-2">
-                <CardHeader className="pb-3">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Sections & Question Headings</CardTitle>
+          <CardDescription>
+            Organize your paper into sections with different mark values and question headings
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {state.sections.map((section, idx) => (
+            <Card key={section.id}>
+              <CardContent className="p-4">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">
-                      Section {String.fromCharCode(65 + idx)} - {section.marks} Mark Questions
-                    </CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveSection(section.id)}
-                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                    >
-                      <X className="h-4 w-4" />
+                    <h4 className="font-semibold text-foreground">
+                      Section {String.fromCharCode(65 + idx)} ({section.marks} mark{section.marks > 1 ? 's' : ''} each)
+                    </h4>
+                    <Button variant="ghost" size="sm" onClick={() => handleRemoveSection(section.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Question Headings */}
+
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Question Headings</Label>
                     {section.headings.length === 0 ? (
                       <p className="text-sm text-muted-foreground italic">
-                        No headings yet. Add a heading to organize questions.
+                        No headings yet. Add headings to organize questions in this section.
                       </p>
                     ) : (
                       <div className="space-y-2">
                         {section.headings.map((heading) => (
-                          <div key={heading.id} className="flex items-center gap-2 rounded-md border p-2">
-                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              <Input
-                                placeholder="Heading title (e.g., MCQ)"
-                                value={heading.title}
-                                onChange={(e) =>
-                                  handleUpdateHeading(section.id, heading.id, { title: e.target.value })
-                                }
-                                className="h-8 text-sm"
-                              />
-                              <Input
-                                type="number"
-                                min="0"
-                                placeholder="# of questions"
-                                value={heading.plannedQuestionCount}
-                                onChange={(e) =>
-                                  handleUpdateHeading(section.id, heading.id, {
-                                    plannedQuestionCount: parseInt(e.target.value) || 0,
-                                  })
-                                }
-                                className="h-8 text-sm"
-                              />
-                            </div>
+                          <div key={heading.id} className="flex items-center gap-2">
+                            <Input
+                              placeholder="Heading title (e.g., Short Answer Questions)"
+                              value={heading.title}
+                              onChange={(e) =>
+                                handleUpdateHeading(section.id, heading.id, { title: e.target.value })
+                              }
+                              className="flex-1"
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Count"
+                              value={heading.plannedCount}
+                              onChange={(e) =>
+                                handleUpdateHeading(section.id, heading.id, {
+                                  plannedCount: parseInt(e.target.value) || 0,
+                                })
+                              }
+                              className="w-20"
+                            />
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleRemoveHeading(section.id, heading.id)}
-                              className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive/10"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <X className="h-4 w-4" />
                             </Button>
                           </div>
                         ))}
@@ -374,65 +422,46 @@ export function PaperEditorWireframe() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleAddHeading(section.id)}
-                      className="gap-2"
+                      className="w-full"
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="mr-2 h-4 w-4" />
                       Add Heading
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
 
-            {sections.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground">
-                No sections yet. Add a section to get started.
-              </p>
-            )}
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+            <Button variant="outline" onClick={() => handleAddSection(1)} className="flex-1">
+              <Plus className="mr-1 h-4 w-4" />
+              <span className="text-sm sm:text-base">1 Mark</span>
+            </Button>
+            <Button variant="outline" onClick={() => handleAddSection(2)} className="flex-1">
+              <Plus className="mr-1 h-4 w-4" />
+              <span className="text-sm sm:text-base">2 Marks</span>
+            </Button>
+            <Button variant="outline" onClick={() => handleAddSection(3)} className="flex-1">
+              <Plus className="mr-1 h-4 w-4" />
+              <span className="text-sm sm:text-base">3 Marks</span>
+            </Button>
+            <Button variant="outline" onClick={() => handleAddSection(4)} className="flex-1">
+              <Plus className="mr-1 h-4 w-4" />
+              <span className="text-sm sm:text-base">4 Marks</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={() => handleAddSection(1)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add 1 Mark Section
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleAddSection(2)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add 2 Mark Section
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleAddSection(3)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add 3 Mark Section
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleAddSection(4)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add 4 Mark Section
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Continue Button */}
-        <div className="flex justify-end">
-          <Button
-            size="lg"
-            onClick={handleContinueToPaper}
-            disabled={!canContinueToPaper}
-            className="gap-2"
-          >
-            <FileEdit className="h-5 w-5" />
-            Continue to Paper
-          </Button>
-        </div>
-
-        {!canContinueToPaper && (
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertTitle>Complete Required Fields</AlertTitle>
-            <AlertDescription>
-              Please provide a paper title and add at least one section before continuing.
-            </AlertDescription>
-          </Alert>
-        )}
+      <div className="flex justify-end gap-4">
+        <Button variant="outline" onClick={() => navigate({ to: '/papers' })}>
+          Cancel
+        </Button>
+        <Button onClick={handleContinueToPaper} disabled={!canContinueToPaper}>
+          <FileEdit className="mr-2 h-4 w-4" />
+          Continue to Real Paper Editor
+        </Button>
       </div>
 
       <FloatingAIButton />

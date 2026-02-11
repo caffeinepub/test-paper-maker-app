@@ -1,124 +1,163 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useMockStore } from '../../state/mockStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Info, Sparkles, Edit2, Check, X } from 'lucide-react';
+import { Sparkles, Plus, Check, Edit2, Trash2, Info } from 'lucide-react';
+import { Question, QuestionType } from '../../state/mockData';
 import { generateMockQuestions } from '../../lib/ai/mockQuestionGenerator';
 import { getSectionInsertContext, clearSectionInsertContext } from '../../lib/editor/sectionInsertContext';
 
-interface Question {
+interface GeneratedQuestion {
   id: string;
   text: string;
-  marks: 1 | 2 | 3 | 4;
+  marks: number;
+  type: string;
+  questionType: QuestionType;
   selected: boolean;
+  editing: boolean;
 }
 
 export function AIPreferencesWireframe() {
   const navigate = useNavigate();
-  const { addQuestions, getPaperById, updatePaper } = useMockStore();
-  const [marks, setMarks] = useState('2');
+  const { addPersonalQuestion, getPaperById, updatePaper } = useMockStore();
+  const [topic, setTopic] = useState('');
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [count, setCount] = useState(5);
   const [focusArea, setFocusArea] = useState('');
-  const [difficulty, setDifficulty] = useState('medium');
-  const [questionStyle, setQuestionStyle] = useState<'numerical' | 'conceptual'>('conceptual');
-  const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
+  const [questionStyle, setQuestionStyle] = useState<'conceptual' | 'numerical' | 'mixed'>('mixed');
+  const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDrafts, setEditDrafts] = useState<Record<string, string>>({});
-  const [insertContext, setInsertContext] = useState(getSectionInsertContext());
 
-  useEffect(() => {
-    setInsertContext(getSectionInsertContext());
-  }, []);
+  const insertContext = getSectionInsertContext();
 
-  const handleGenerate = () => {
-    if (!focusArea.trim()) return;
+  const handleGenerate = async () => {
+    if (!topic.trim()) {
+      alert('Please enter a topic');
+      return;
+    }
 
     setIsGenerating(true);
-    setTimeout(() => {
-      const questions = generateMockQuestions({
-        marks,
-        focusArea,
-        difficulty: difficulty as 'easy' | 'medium' | 'hard',
-        questionStyle,
-      });
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      setGeneratedQuestions(
-        questions.map((q) => ({
-          id: q.id,
-          text: q.text,
-          marks: q.marks as 1 | 2 | 3 | 4,
-          selected: true,
-        }))
-      );
-      setIsGenerating(false);
-    }, 1500);
+    const questions = generateMockQuestions({
+      focusArea: focusArea || topic,
+      marks: '2',
+      difficulty,
+      questionStyle: questionStyle === 'mixed' ? undefined : questionStyle,
+    });
+
+    setGeneratedQuestions(
+      questions.map((q) => ({
+        ...q,
+        type: difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
+        questionType: 'short-answer' as QuestionType,
+        selected: false,
+        editing: false,
+      }))
+    );
+    setIsGenerating(false);
   };
 
-  const handleToggleQuestion = (id: string) => {
+  const handleToggleSelect = (id: string) => {
     setGeneratedQuestions((prev) =>
       prev.map((q) => (q.id === id ? { ...q, selected: !q.selected } : q))
     );
   };
 
-  const handleStartEdit = (id: string, currentText: string) => {
-    setEditingId(id);
-    setEditDrafts((prev) => ({ ...prev, [id]: currentText }));
+  const handleEdit = (id: string) => {
+    setGeneratedQuestions((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, editing: !q.editing } : q))
+    );
   };
 
-  const handleSaveEdit = (id: string) => {
-    const draft = editDrafts[id];
-    if (draft !== undefined) {
-      setGeneratedQuestions((prev) =>
-        prev.map((q) => (q.id === id ? { ...q, text: draft } : q))
-      );
+  const handleUpdateQuestion = (id: string, text: string) => {
+    setGeneratedQuestions((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, text } : q))
+    );
+  };
+
+  const handleDelete = (id: string) => {
+    setGeneratedQuestions((prev) => prev.filter((q) => q.id !== id));
+  };
+
+  const handleAddToBank = () => {
+    const selectedQuestions = generatedQuestions.filter((q) => q.selected);
+    if (selectedQuestions.length === 0) {
+      alert('Please select at least one question');
+      return;
     }
-    setEditingId(null);
+
+    selectedQuestions.forEach((q) => {
+      const newQuestion: Question = {
+        id: `q-${Date.now()}-${Math.random()}`,
+        text: q.text,
+        marks: q.marks,
+        type: q.type,
+        questionType: q.questionType,
+        headingId: null,
+        imageAttachment: null,
+      };
+      addPersonalQuestion(newQuestion);
+    });
+
+    alert(`${selectedQuestions.length} question(s) added to your personal bank!`);
+    setGeneratedQuestions([]);
   };
 
-  const handleCancelEdit = () => {
-    setEditingId(null);
-  };
+  const handleAddToPaper = () => {
+    if (!insertContext) {
+      alert('No paper context found. Please navigate from a paper editor.');
+      return;
+    }
 
-  const handleInsertSelected = () => {
-    const selected = generatedQuestions.filter((q) => q.selected);
-    if (selected.length === 0) return;
+    const selectedQuestions = generatedQuestions.filter((q) => q.selected);
+    if (selectedQuestions.length === 0) {
+      alert('Please select at least one question');
+      return;
+    }
 
-    const questionsToAdd = selected.map((q) => ({
+    const paper = getPaperById(insertContext.paperId);
+    if (!paper) {
+      alert('Paper not found');
+      return;
+    }
+
+    const targetSection = paper.sections.find((s) => s.id === insertContext.sectionId);
+    if (!targetSection) {
+      alert('Section not found');
+      return;
+    }
+
+    const headingId = targetSection.headings?.[0]?.id || null;
+
+    const newQuestions: Question[] = selectedQuestions.map((q) => ({
       id: `q-${Date.now()}-${Math.random()}`,
       text: q.text,
       marks: q.marks,
-      source: 'personal' as const,
-      questionType: 'short-answer' as const,
+      type: q.type,
+      questionType: q.questionType,
+      headingId: headingId,
+      imageAttachment: null,
     }));
 
-    if (insertContext) {
-      // Insert into specific paper section
-      const paper = getPaperById(insertContext.paperId);
-      if (paper) {
-        const updatedSections = paper.sections.map((s) => {
-          if (s.id === insertContext.sectionId) {
-            return { ...s, questions: [...s.questions, ...questionsToAdd] };
-          }
-          return s;
-        });
-        updatePaper(insertContext.paperId, { sections: updatedSections });
-        clearSectionInsertContext();
-        navigate({ to: `/editor/${insertContext.paperId}/real-paper` });
-        return;
+    const updatedSections = paper.sections.map((s) => {
+      if (s.id === insertContext.sectionId) {
+        return { ...s, questions: [...s.questions, ...newQuestions] };
       }
-    }
+      return s;
+    });
 
-    // Fallback: add to personal bank
-    addQuestions(questionsToAdd);
-    setGeneratedQuestions([]);
-    navigate({ to: '/question-bank', search: { tab: 'personal' } });
+    updatePaper(insertContext.paperId, { sections: updatedSections });
+    clearSectionInsertContext();
+    alert(`${selectedQuestions.length} question(s) added to paper!`);
+    navigate({ to: `/editor/${insertContext.paperId}/real-paper` });
   };
 
   const getSectionLabel = () => {
@@ -131,14 +170,14 @@ export function AIPreferencesWireframe() {
   };
 
   return (
-    <div className="container mx-auto max-w-4xl p-4 py-8">
+    <div className="container mx-auto max-w-6xl p-4 py-8">
       <div className="mb-6">
         <h1 className="flex items-center gap-2 text-3xl font-bold text-foreground">
           <Sparkles className="h-8 w-8 text-primary" />
           AI Assistant
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Generate question suggestions based on your preferences
+          Generate question suggestions using AI based on your preferences
         </p>
       </div>
 
@@ -147,182 +186,189 @@ export function AIPreferencesWireframe() {
           <Info className="h-4 w-4" />
           <AlertDescription>
             Generating questions for <strong>{getSectionLabel()}</strong> in paper{' '}
-            <strong>{getPaperById(insertContext.paperId)?.title}</strong>. Selected questions will be added to this section.
+            <strong>{getPaperById(insertContext.paperId)?.title}</strong>
           </AlertDescription>
         </Alert>
       )}
 
-      <Alert className="mb-6">
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          This is a mock AI generator for demonstration. No external AI providers are used. Questions
-          are generated locally based on templates.
-        </AlertDescription>
-      </Alert>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Question Preferences</CardTitle>
-          <CardDescription>Configure the type of questions you want to generate</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Configuration Panel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Question Preferences</CardTitle>
+            <CardDescription>Configure the AI to generate questions matching your needs</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="marks">Marks per Question</Label>
-              <Select value={marks} onValueChange={setMarks}>
-                <SelectTrigger id="marks">
+              <Label htmlFor="topic">Topic / Subject</Label>
+              <Input
+                id="topic"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="e.g., Photosynthesis, Quadratic Equations"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="focusArea">Focus Area (Optional)</Label>
+              <Textarea
+                id="focusArea"
+                value={focusArea}
+                onChange={(e) => setFocusArea(e.target.value)}
+                placeholder="Specific concepts, formulas, or areas to focus on..."
+                rows={3}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="difficulty">Difficulty</Label>
+                <Select value={difficulty} onValueChange={(value: any) => setDifficulty(value)}>
+                  <SelectTrigger id="difficulty">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">Easy</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="hard">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="count">Number of Questions</Label>
+                <Input
+                  id="count"
+                  type="number"
+                  value={count}
+                  onChange={(e) => setCount(parseInt(e.target.value) || 1)}
+                  min={1}
+                  max={20}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="questionStyle">Question Style</Label>
+              <Select value={questionStyle} onValueChange={(value: any) => setQuestionStyle(value)}>
+                <SelectTrigger id="questionStyle">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1 Mark</SelectItem>
-                  <SelectItem value="2">2 Marks</SelectItem>
-                  <SelectItem value="3">3 Marks</SelectItem>
-                  <SelectItem value="4">4 Marks</SelectItem>
+                  <SelectItem value="conceptual">Conceptual (Theory-based)</SelectItem>
+                  <SelectItem value="numerical">Numerical (Problem-solving)</SelectItem>
+                  <SelectItem value="mixed">Mixed (Both types)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty Level</Label>
-              <Select value={difficulty} onValueChange={setDifficulty}>
-                <SelectTrigger id="difficulty">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            <Button onClick={handleGenerate} className="w-full" disabled={isGenerating}>
+              {isGenerating ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate Questions
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
 
-          <div className="space-y-2">
-            <Label htmlFor="question-style">Question Style</Label>
-            <Select value={questionStyle} onValueChange={(v) => setQuestionStyle(v as 'numerical' | 'conceptual')}>
-              <SelectTrigger id="question-style">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="conceptual">Conceptual (Theory-based)</SelectItem>
-                <SelectItem value="numerical">Numerical (Problem-solving)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              {questionStyle === 'numerical'
-                ? 'Generate calculation-based problems with numerical answers'
-                : 'Generate theory and explanation-based questions'}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="focus-area">Topic / Focus Area</Label>
-            <Textarea
-              id="focus-area"
-              placeholder="e.g., Photosynthesis in plants, Quadratic equations, World War II causes..."
-              value={focusArea}
-              onChange={(e) => setFocusArea(e.target.value)}
-              className="min-h-[80px]"
-            />
-            <p className="text-xs text-muted-foreground">
-              Describe the topic or concept you want questions about. Be specific for better results.
-            </p>
-          </div>
-
-          <Button onClick={handleGenerate} disabled={!focusArea.trim() || isGenerating} className="w-full">
-            {isGenerating ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></div>
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Questions
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {generatedQuestions.length > 0 && (
+        {/* Generated Questions Panel */}
         <Card>
           <CardHeader>
             <CardTitle>Generated Questions</CardTitle>
             <CardDescription>
-              Review, edit, and select questions to add to your {insertContext ? 'paper section' : 'question bank'}
+              {generatedQuestions.length > 0
+                ? `${generatedQuestions.filter((q) => q.selected).length} of ${generatedQuestions.length} selected`
+                : 'Questions will appear here after generation'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {generatedQuestions.map((question) => (
-              <Card key={question.id} className={question.selected ? 'border-primary' : ''}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      checked={question.selected}
-                      onCheckedChange={() => handleToggleQuestion(question.id)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      {editingId === question.id ? (
-                        <div className="space-y-2">
-                          <Textarea
-                            value={editDrafts[question.id] || ''}
-                            onChange={(e) =>
-                              setEditDrafts((prev) => ({ ...prev, [question.id]: e.target.value }))
-                            }
-                            className="min-h-[80px]"
-                          />
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleSaveEdit(question.id)}>
-                              <Check className="mr-1 h-3 w-3" />
-                              Save
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
-                              <X className="mr-1 h-3 w-3" />
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-foreground">{question.text}</p>
-                          <div className="mt-2 flex items-center gap-2">
+          <CardContent>
+            {generatedQuestions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Sparkles className="mb-4 h-16 w-16 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Configure your preferences and click "Generate Questions" to get started
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {generatedQuestions.map((question) => (
+                  <Card key={question.id} className={question.selected ? 'border-primary' : ''}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={question.selected}
+                          onChange={() => handleToggleSelect(question.id)}
+                          className="mt-1 h-4 w-4 rounded border-border"
+                        />
+                        <div className="flex-1">
+                          {question.editing ? (
+                            <Textarea
+                              value={question.text}
+                              onChange={(e) => handleUpdateQuestion(question.id, e.target.value)}
+                              className="mb-2"
+                              rows={3}
+                            />
+                          ) : (
+                            <p className="text-sm text-foreground">{question.text}</p>
+                          )}
+                          <div className="mt-2 flex flex-wrap gap-2">
                             <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
                               {question.marks} Mark{question.marks > 1 ? 's' : ''}
                             </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleStartEdit(question.id, question.text)}
-                            >
-                              <Edit2 className="mr-1 h-3 w-3" />
-                              Edit
-                            </Button>
+                            <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                              {question.type}
+                            </span>
                           </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(question.id)}
+                            className="h-8 w-8"
+                          >
+                            {question.editing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(question.id)}
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
 
-            <div className="flex items-center justify-between border-t pt-4">
-              <p className="text-sm text-muted-foreground">
-                {generatedQuestions.filter((q) => q.selected).length} of {generatedQuestions.length}{' '}
-                questions selected
-              </p>
-              <Button
-                onClick={handleInsertSelected}
-                disabled={generatedQuestions.filter((q) => q.selected).length === 0}
-              >
-                Insert Selected Questions
-              </Button>
-            </div>
+                <div className="flex gap-2 pt-4">
+                  <Button onClick={handleAddToBank} variant="outline" className="flex-1">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add to Bank
+                  </Button>
+                  {insertContext && (
+                    <Button onClick={handleAddToPaper} className="flex-1">
+                      <Check className="mr-2 h-4 w-4" />
+                      Add to Paper
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+      </div>
     </div>
   );
 }
+

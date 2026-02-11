@@ -2,11 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-replace-the-current-ocr-offline-mode-placeholder-flow-with-a-real-online-ocr-integration-using-a-legal-free-tier-external-ocr-api-ocr-space-so-that-selecting-an-image-pdf-and-clicking-extract-questions-performs-actual-text-extraction-and-proceeds-to-the-existing-review-approve-flow",
-      "featureTitle": "Replace the current OCR “Offline Mode” placeholder flow with a real online OCR integration using a legal free-tier external OCR API (OCR.space) so that selecting an image/PDF and clicking “Extract Questions” performs actual text extraction and proceeds to the existing review/approve flow.",
+      "featureId": "feature-update-the-app-theme-to-match-the-uploaded-screenshots-make-the-home-screen-navigation-drawer-menu-background-white-not-purple-and-lighten-the-purple-used-across-the-ui-to-match-the-screenshots-exactly-apply-globally-to-buttons-borders-highlights-accents-and-selected-nav-item",
+      "featureTitle": "Update the app theme to match the uploaded screenshots: make the home-screen navigation drawer/menu background white (not purple) and lighten the purple used across the UI to match the screenshots exactly (apply globally to buttons, borders, highlights, accents, and selected nav item).",
       "files": [
-        "frontend/src/lib/ocr/ocrSpaceClient.ts",
-        "frontend/src/pages/ocr/OCRUploadWireframe.tsx"
+        "frontend/src/components/layout/AppShell.tsx",
+        "frontend/src/components/navigation/NavigationDrawer.tsx",
+        "frontend/src/index.css"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -21,10 +22,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-ocr-session-utility-currently-named-mock-behaving-as-a-mock-extractor-so-it-supports-storing-sessions-created-from-real-ocr-results-extracted-text-parsed-questions-while-keeping-the-existing-session-load-clear-convert-apis-used-by-the-ocr-review-screen",
-      "featureTitle": "Update the OCR session utility currently named/mock-behaving as a mock extractor so it supports storing sessions created from real OCR results (extracted text + parsed questions) while keeping the existing session load/clear/convert APIs used by the OCR review screen.",
+      "featureId": "feature-fix-table-and-match-pairs-editing-so-users-can-click-inside-each-cell-box-and-type-independently-without-text-being-redirected-to-the-main-top-question-text-field",
+      "featureTitle": "Fix table and match-pairs editing so users can click inside each cell/box and type independently without text being redirected to the main/top question text field.",
       "files": [
-        "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx"
+        "frontend/src/components/paper/PaperSurface.tsx",
+        "frontend/src/components/paper/QuestionBlockEditor.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -39,11 +41,13 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-a-consistent-purple-theme-across-the-entire-app-all-pages-and-buttons-by-verifying-that-primary-secondary-accent-tokens-and-button-variants-visually-render-as-purple-consistently-in-both-light-and-dark-mode-without-changing-layout-or-features",
-      "featureTitle": "Ensure a consistent purple theme across the entire app (all pages and buttons) by verifying that primary/secondary/accent tokens and button variants visually render as purple consistently in both light and dark mode, without changing layout or features.",
+      "featureId": "feature-add-inline-image-insertion-inside-table-cells-and-match-pairs-boxes-supporting-both-upload-from-device-and-paste-from-clipboard-while-allowing-text-and-images-within-the-same-cell-box-and-ensuring-nothing-overflows-outside-the-cell-box-boundaries",
+      "featureTitle": "Add inline image insertion inside table cells and match-pairs boxes supporting both upload-from-device and paste-from-clipboard, while allowing text and images within the same cell/box and ensuring nothing overflows outside the cell/box boundaries.",
       "files": [
+        "frontend/src/components/editor/RichCellEditor.tsx",
+        "frontend/src/components/paper/QuestionBlockEditor.tsx",
         "frontend/src/index.css",
-        "frontend/tailwind.config.js"
+        "frontend/src/lib/editor/richCellContent.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -54,6 +58,87 @@
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-for-inserted-images-inside-table-match-pairs-cells-implement-formatting-controls-default-size-5-5-cm-user-adjustable-aspect-ratio-locked-by-default-alignment-controls-and-optional-caption-per-image",
+      "featureTitle": "For inserted images inside table/match-pairs cells, implement formatting controls: default size 5 × 5 cm (user adjustable), aspect ratio locked by default, alignment controls, and optional caption per image.",
+      "files": [
+        "frontend/src/components/editor/RichCellEditor.tsx",
+        "frontend/src/components/paper/PaperRenderer.tsx",
+        "frontend/src/index.css",
+        "frontend/src/lib/editor/richCellContent.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-enforce-table-sizing-rules-all-columns-must-have-equal-width-across-the-table-within-each-row-all-cells-must-share-the-same-height-row-based-equal-heights-while-different-rows-may-have-different-heights",
+      "featureTitle": "Enforce table sizing rules: all columns must have equal width across the table; within each row, all cells must share the same height (row-based equal heights), while different rows may have different heights.",
+      "files": [
+        "frontend/src/components/paper/PaperRenderer.tsx",
+        "frontend/src/components/paper/QuestionBlockEditor.tsx",
+        "frontend/src/index.css"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-print-safe-pdf-rendering-for-tables-match-pairs-containing-inline-images-and-captions-including-proper-wrapping-clipping-behavior-and-predictable-sizing-for-a4-print-output",
+      "featureTitle": "Ensure print-safe PDF rendering for tables/match-pairs containing inline images and captions, including proper wrapping/clipping behavior and predictable sizing for A4 print output.",
+      "files": [
+        "frontend/src/components/paper/PaperSurface.tsx",
+        "frontend/src/index.css"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-stored-paper-question-data-handling-to-persist-the-new-richer-table-match-pairs-cell-content-text-zero-or-more-images-with-formatting-metadata-including-backward-compatibility-for-existing-saved-papers-in-localstorage",
+      "featureTitle": "Update stored paper/question data handling to persist the new richer table/match-pairs cell content (text + zero or more images with formatting metadata), including backward compatibility for existing saved papers in localStorage.",
+      "files": [
+        "frontend/src/components/paper/PaperRenderer.tsx",
+        "frontend/src/lib/editor/richCellContent.ts",
+        "frontend/src/state/mockData.ts",
+        "frontend/src/state/mockStore.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
       ],
       "confidence": "high"
     }

@@ -1,355 +1,263 @@
-import { useState, useEffect, useRef } from 'react';
-import { Question } from '../../state/mockData';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Trash2, Plus, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Trash2 } from 'lucide-react';
+import { Question, CellContent } from '../../state/mockData';
 import { AutoGrowTextarea } from '../editor/AutoGrowTextarea';
+import { RichCellEditor } from '../editor/RichCellEditor';
+import { RichCellContent } from '../../lib/editor/richCellContent';
 
 interface QuestionBlockEditorProps {
   question: Question;
+  questionNumber: number;
   onUpdate: (updates: Partial<Question>) => void;
   onDelete: () => void;
   autoFocus?: boolean;
-  onAutoFocusComplete?: () => void;
 }
 
-export function QuestionBlockEditor({
-  question,
-  onUpdate,
-  onDelete,
-  autoFocus,
-  onAutoFocusComplete,
-}: QuestionBlockEditorProps) {
+export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDelete, autoFocus }: QuestionBlockEditorProps) {
   const firstInputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
 
   useEffect(() => {
     if (autoFocus && firstInputRef.current) {
-      firstInputRef.current.focus();
-      firstInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      onAutoFocusComplete?.();
+      setTimeout(() => {
+        firstInputRef.current?.focus();
+      }, 100);
     }
-  }, [autoFocus, onAutoFocusComplete]);
+  }, [autoFocus]);
 
-  const renderEditor = () => {
+  const renderQuestionTypeEditor = () => {
     switch (question.questionType) {
       case 'mcq':
         return (
-          <div className="space-y-3">
-            <Textarea
-              ref={firstInputRef as React.RefObject<HTMLTextAreaElement>}
-              placeholder="Enter question text..."
-              value={question.text}
-              onChange={(e) => onUpdate({ text: e.target.value })}
-              className="min-h-[80px]"
-            />
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Options:</p>
-              {question.mcqOptions?.options.map((option, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <span className="text-sm font-medium shrink-0">
-                    {String.fromCharCode(97 + idx)})
-                  </span>
-                  <Input
-                    placeholder={`Option ${idx + 1}`}
-                    value={option}
-                    onChange={(e) => {
-                      const newOptions = [...(question.mcqOptions?.options || [])];
-                      newOptions[idx] = e.target.value;
-                      onUpdate({ mcqOptions: { options: newOptions } });
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Options</Label>
+            {question.mcqOptions?.options.map((option, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">{String.fromCharCode(65 + idx)}.</span>
+                <Input
+                  ref={idx === 0 && !question.text ? (firstInputRef as React.RefObject<HTMLInputElement>) : undefined}
+                  value={option}
+                  onChange={(e) => {
+                    const newOptions = [...(question.mcqOptions?.options || [])];
+                    newOptions[idx] = e.target.value;
+                    onUpdate({ mcqOptions: { options: newOptions } });
+                  }}
+                  placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                  className="flex-1"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                />
+              </div>
+            ))}
           </div>
-        );
-
-      case 'numerical':
-        return (
-          <Textarea
-            ref={firstInputRef as React.RefObject<HTMLTextAreaElement>}
-            placeholder="Enter numerical question..."
-            value={question.text}
-            onChange={(e) => onUpdate({ text: e.target.value })}
-            className="min-h-[80px]"
-          />
         );
 
       case 'fill-in-blank':
         return (
-          <div className="space-y-3">
-            <Textarea
-              ref={firstInputRef as React.RefObject<HTMLTextAreaElement>}
-              placeholder="Enter question text..."
-              value={question.text}
-              onChange={(e) => onUpdate({ text: e.target.value })}
-              className="min-h-[80px]"
-            />
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Blanks:</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const newBlanks = [...(question.fillInBlankData?.blanks || []), ''];
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Blanks (Answers)</Label>
+            {question.fillInBlankData?.blanks.map((blank, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">{idx + 1}.</span>
+                <Input
+                  ref={idx === 0 && !question.text ? (firstInputRef as React.RefObject<HTMLInputElement>) : undefined}
+                  value={blank}
+                  onChange={(e) => {
+                    const newBlanks = [...(question.fillInBlankData?.blanks || [])];
+                    newBlanks[idx] = e.target.value;
                     onUpdate({ fillInBlankData: { blanks: newBlanks } });
                   }}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add Blank
-                </Button>
-              </div>
-              {question.fillInBlankData?.blanks.map((blank, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <span className="text-sm font-medium shrink-0">{idx + 1}.</span>
-                  <Input
-                    placeholder={`Blank ${idx + 1}`}
-                    value={blank}
-                    onChange={(e) => {
-                      const newBlanks = [...(question.fillInBlankData?.blanks || [])];
-                      newBlanks[idx] = e.target.value;
-                      onUpdate({ fillInBlankData: { blanks: newBlanks } });
-                    }}
-                  />
+                  placeholder={`Answer ${idx + 1}`}
+                  className="flex-1"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                />
+                {idx > 0 && (
                   <Button
-                    size="icon"
                     variant="ghost"
-                    onClick={() => {
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       const newBlanks = question.fillInBlankData?.blanks.filter((_, i) => i !== idx) || [];
                       onUpdate({ fillInBlankData: { blanks: newBlanks } });
                     }}
                   >
-                    <X className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                </div>
-              ))}
-            </div>
+                )}
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                const newBlanks = [...(question.fillInBlankData?.blanks || []), ''];
+                onUpdate({ fillInBlankData: { blanks: newBlanks } });
+              }}
+            >
+              Add Blank
+            </Button>
           </div>
         );
 
       case 'true-false':
         return (
-          <Textarea
-            ref={firstInputRef as React.RefObject<HTMLTextAreaElement>}
-            placeholder="Enter true/false statement..."
-            value={question.text}
-            onChange={(e) => onUpdate({ text: e.target.value })}
-            className="min-h-[80px]"
-          />
+          <div className="rounded-md border border-border bg-muted/20 p-3">
+            <p className="text-sm text-muted-foreground">Students will answer True or False</p>
+          </div>
         );
 
       case 'match-pairs':
+        // Normalize pairs to rich content
+        const pairs = question.matchPairsData?.pairs || [];
+        
         return (
-          <div className="space-y-3">
-            <Textarea
-              ref={firstInputRef as React.RefObject<HTMLTextAreaElement>}
-              placeholder="Enter question text..."
-              value={question.text}
-              onChange={(e) => onUpdate({ text: e.target.value })}
-              className="min-h-[80px]"
-            />
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Pairs:</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const newPairs = [...(question.matchPairsData?.pairs || []), { left: '', right: '' }];
-                    onUpdate({ matchPairsData: { pairs: newPairs } });
-                  }}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add Pair
-                </Button>
-              </div>
-              <div className="space-y-3">
-                {question.matchPairsData?.pairs.map((pair, idx) => (
-                  <div key={idx} className="grid grid-cols-2 gap-3 rounded border border-border p-3">
-                    <div className="space-y-1 min-w-0">
-                      <label className="text-xs font-medium text-muted-foreground">Column A</label>
-                      <AutoGrowTextarea
-                        placeholder={`Item ${idx + 1}`}
-                        value={pair.left}
-                        onChange={(e) => {
-                          const newPairs = [...(question.matchPairsData?.pairs || [])];
-                          newPairs[idx] = { ...newPairs[idx], left: e.target.value };
-                          onUpdate({ matchPairsData: { pairs: newPairs } });
-                        }}
-                        minRows={2}
-                        maxRows={6}
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="space-y-1 min-w-0">
-                      <label className="text-xs font-medium text-muted-foreground">Column B</label>
-                      <AutoGrowTextarea
-                        placeholder={`Match ${idx + 1}`}
-                        value={pair.right}
-                        onChange={(e) => {
-                          const newPairs = [...(question.matchPairsData?.pairs || [])];
-                          newPairs[idx] = { ...newPairs[idx], right: e.target.value };
-                          onUpdate({ matchPairsData: { pairs: newPairs } });
-                        }}
-                        minRows={2}
-                        maxRows={6}
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="col-span-2 flex justify-end">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          const newPairs = question.matchPairsData?.pairs.filter((_, i) => i !== idx) || [];
-                          onUpdate({ matchPairsData: { pairs: newPairs } });
-                        }}
-                        className="print:hidden"
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Remove
-                      </Button>
-                    </div>
+          <div className="space-y-2" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+            <Label className="text-xs text-muted-foreground">Match Pairs</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Column A</Label>
+                {pairs.map((pair, idx) => (
+                  <div key={`left-${idx}`} className="border border-border rounded p-2">
+                    <RichCellEditor
+                      value={pair.left as CellContent}
+                      onChange={(content: RichCellContent) => {
+                        const newPairs = [...pairs];
+                        newPairs[idx] = { ...newPairs[idx], left: content as CellContent };
+                        onUpdate({ matchPairsData: { pairs: newPairs } });
+                      }}
+                      placeholder={`Item ${idx + 1}`}
+                      autoFocus={idx === 0 && !question.text && autoFocus}
+                    />
                   </div>
                 ))}
               </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Column B</Label>
+                {pairs.map((pair, idx) => (
+                  <div key={`right-${idx}`} className="border border-border rounded p-2">
+                    <RichCellEditor
+                      value={pair.right as CellContent}
+                      onChange={(content: RichCellContent) => {
+                        const newPairs = [...pairs];
+                        newPairs[idx] = { ...newPairs[idx], right: content as CellContent };
+                        onUpdate({ matchPairsData: { pairs: newPairs } });
+                      }}
+                      placeholder={`Match ${idx + 1}`}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newPairs = [...pairs, { left: '', right: '' }];
+                  onUpdate({ matchPairsData: { pairs: newPairs } });
+                }}
+              >
+                Add Pair
+              </Button>
+              {pairs.length > 1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newPairs = pairs.slice(0, -1);
+                    onUpdate({ matchPairsData: { pairs: newPairs } });
+                  }}
+                >
+                  Remove Last
+                </Button>
+              )}
             </div>
           </div>
         );
 
       case 'table':
+        const rows = question.tableData?.rows || 2;
+        const cols = question.tableData?.cols || 2;
+        const cells = question.tableData?.cells || Array(rows).fill(null).map(() => Array(cols).fill(''));
+
         return (
-          <div className="space-y-3">
-            <Textarea
-              ref={firstInputRef as React.RefObject<HTMLTextAreaElement>}
-              placeholder="Enter question text..."
-              value={question.text}
-              onChange={(e) => onUpdate({ text: e.target.value })}
-              className="min-h-[80px]"
-            />
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Table:</p>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const currentCells = question.tableData?.cells || [['', '']];
-                      const newRow = new Array(currentCells[0]?.length || 2).fill('');
-                      const newCells = [...currentCells, newRow];
-                      onUpdate({ 
-                        tableData: { 
-                          rows: newCells.length,
-                          cols: newCells[0]?.length || 2,
-                          cells: newCells 
-                        } 
-                      });
-                    }}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Row
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const currentCells = question.tableData?.cells || [['', '']];
-                      const newCells = currentCells.map(row => [...row, '']);
-                      onUpdate({ 
-                        tableData: { 
-                          rows: newCells.length,
-                          cols: newCells[0]?.length || 2,
-                          cells: newCells 
-                        } 
-                      });
-                    }}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Column
-                  </Button>
-                </div>
-              </div>
-              {question.tableData && question.tableData.cells.length > 0 && (
-                <div className="overflow-x-auto">
-                  <div className="min-w-full">
-                    {question.tableData.cells.map((row, rowIdx) => (
-                      <div key={rowIdx} className="space-y-2 mb-3">
-                        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))` }}>
-                          {row.map((cell, cellIdx) => (
-                            <div key={cellIdx} className="min-w-0">
-                              <AutoGrowTextarea
-                                placeholder={`R${rowIdx + 1}C${cellIdx + 1}`}
-                                value={cell}
-                                onChange={(e) => {
-                                  const newCells = question.tableData?.cells.map(r => [...r]) || [];
-                                  newCells[rowIdx][cellIdx] = e.target.value;
-                                  onUpdate({ 
-                                    tableData: { 
-                                      rows: newCells.length,
-                                      cols: newCells[0]?.length || 2,
-                                      cells: newCells 
-                                    } 
-                                  });
-                                }}
-                                minRows={2}
-                                maxRows={6}
-                                className="text-sm"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex gap-2 print:hidden">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              const newCells = question.tableData?.cells.filter((_, i) => i !== rowIdx) || [];
-                              if (newCells.length > 0) {
-                                onUpdate({ 
-                                  tableData: { 
-                                    rows: newCells.length,
-                                    cols: newCells[0]?.length || 2,
-                                    cells: newCells 
-                                  } 
-                                });
-                              }
+          <div className="space-y-2" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+            <Label className="text-xs text-muted-foreground">Table</Label>
+            <div className="overflow-x-auto">
+              <table className="equal-width-table border border-border">
+                <tbody>
+                  {cells.map((row, rowIdx) => (
+                    <tr key={rowIdx}>
+                      {row.map((cell, colIdx) => (
+                        <td
+                          key={colIdx}
+                          className="border border-border p-1"
+                          style={{ width: `${100 / cols}%` }}
+                        >
+                          <RichCellEditor
+                            value={cell as CellContent}
+                            onChange={(content: RichCellContent) => {
+                              const newCells = cells.map((r) => [...r]);
+                              newCells[rowIdx][colIdx] = content as CellContent;
+                              onUpdate({
+                                tableData: {
+                                  rows,
+                                  cols,
+                                  cells: newCells,
+                                },
+                              });
                             }}
-                            disabled={(question.tableData?.cells.length || 0) <= 1}
-                          >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            Delete Row
-                          </Button>
-                          {rowIdx === 0 && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                const newCells = question.tableData?.cells.map(r => r.slice(0, -1)) || [];
-                                if (newCells[0]?.length > 1) {
-                                  onUpdate({ 
-                                    tableData: { 
-                                      rows: newCells.length,
-                                      cols: newCells[0]?.length || 1,
-                                      cells: newCells 
-                                    } 
-                                  });
-                                }
-                              }}
-                              disabled={(question.tableData?.cells[0]?.length || 0) <= 1}
-                            >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              Delete Last Column
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                            placeholder={`R${rowIdx + 1}C${colIdx + 1}`}
+                            autoFocus={rowIdx === 0 && colIdx === 0 && !question.text && autoFocus}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newCells = [...cells, Array(cols).fill('')];
+                  onUpdate({
+                    tableData: {
+                      rows: rows + 1,
+                      cols,
+                      cells: newCells,
+                    },
+                  });
+                }}
+              >
+                Add Row
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newCells = cells.map((row) => [...row, '']);
+                  onUpdate({
+                    tableData: {
+                      rows,
+                      cols: cols + 1,
+                      cells: newCells,
+                    },
+                  });
+                }}
+              >
+                Add Column
+              </Button>
             </div>
           </div>
         );
@@ -357,48 +265,64 @@ export function QuestionBlockEditor({
       case 'short-answer':
       default:
         return (
-          <Textarea
-            ref={firstInputRef as React.RefObject<HTMLTextAreaElement>}
-            placeholder="Enter question text..."
-            value={question.text}
-            onChange={(e) => onUpdate({ text: e.target.value })}
-            className="min-h-[80px]"
-          />
+          <div className="rounded-md border border-border bg-muted/20 p-3">
+            <p className="text-sm text-muted-foreground">Students will write a short answer</p>
+          </div>
         );
     }
   };
 
   return (
-    <div className="space-y-3 p-4 rounded-lg border-2 border-dashed border-primary/30 bg-muted/30">
-      {renderEditor()}
-
-      {/* Image attachment display */}
-      {question.imageAttachment && (
-        <div className="relative">
-          <img
-            src={question.imageAttachment}
-            alt="Question attachment"
-            className="max-w-full h-auto rounded border border-border"
-            style={{ maxHeight: '300px', objectFit: 'contain' }}
-          />
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => onUpdate({ imageAttachment: undefined })}
-            className="absolute top-2 right-2 print:hidden"
-          >
-            <X className="h-3 w-3 mr-1" />
-            Remove Image
-          </Button>
+    <div className="space-y-3" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 space-y-2">
+          <div className="flex items-baseline gap-2">
+            <span className="text-sm font-semibold text-foreground">{questionNumber}.</span>
+            <AutoGrowTextarea
+              ref={firstInputRef as React.RefObject<HTMLTextAreaElement>}
+              value={question.text}
+              onChange={(e) => {
+                e.stopPropagation();
+                onUpdate({ text: e.target.value });
+              }}
+              placeholder="Enter question text..."
+              className="flex-1 resize-none border-0 p-0 text-sm focus:ring-0"
+              minRows={1}
+              maxRows={6}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            />
+          </div>
+          {question.imageAttachment && (
+            <div className="mt-2">
+              <img
+                src={question.imageAttachment}
+                alt="Question attachment"
+                className="max-h-48 rounded border border-border object-contain"
+              />
+            </div>
+          )}
         </div>
-      )}
-
-      <div className="flex justify-end gap-2 print:hidden">
-        <Button size="sm" variant="destructive" onClick={onDelete}>
-          <Trash2 className="h-3 w-3 mr-1" />
-          Delete Question
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
         </Button>
+      </div>
+
+      {renderQuestionTypeEditor()}
+
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <span>Type: {question.questionType}</span>
+        <span>Marks: {question.marks}</span>
       </div>
     </div>
   );
 }
+

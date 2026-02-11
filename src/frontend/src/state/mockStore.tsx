@@ -1,262 +1,246 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Profile, Question, Paper, defaultProfile, starterQuestions, samplePapers, PaperSection, QuestionHeading } from './mockData';
-import { safeGetItem, safeSetItem, safeRemoveItem, isStorageAvailable, getStorageError } from '../lib/storage/safeStorage';
+import { Profile, Paper, Question, defaultProfile, samplePapers, starterQuestions } from './mockData';
+import { safeGetItem, safeSetItem, safeRemoveItem, isStorageAvailable } from '../lib/storage/safeStorage';
+import { normalizeToRichContent } from '../lib/editor/richCellContent';
 
 interface MockStoreContextType {
   isInitialized: boolean;
   initializationError: string | null;
+  retryInitialization: () => void;
   isLoggedIn: boolean;
-  isGuest: boolean;
   onboardingCompleted: boolean;
   profile: Profile;
   papers: Paper[];
   personalQuestions: Question[];
-  login: (asGuest?: boolean) => void;
+  login: () => void;
   logout: () => void;
-  updateProfile: (profile: Profile) => void;
+  completeOnboarding: () => void;
+  updateProfile: (updates: Partial<Profile>) => void;
   addPaper: (paper: Paper) => void;
-  updatePaper: (paperId: string, paper: Partial<Paper>) => void;
+  updatePaper: (paperId: string, updates: Partial<Paper>) => void;
   deletePaper: (paperId: string) => void;
   getPaperById: (paperId: string) => Paper | undefined;
-  addQuestion: (question: Question) => void;
-  addQuestions: (questions: Question[]) => void;
+  addPersonalQuestion: (question: Question) => void;
+  updatePersonalQuestion: (questionId: string, updates: Partial<Question>) => void;
+  deletePersonalQuestion: (questionId: string) => void;
   getStarterQuestions: () => Question[];
-  completeOnboarding: () => void;
   resetTutorial: () => void;
   clearAllData: () => void;
-  retryInitialization: () => void;
 }
 
 const MockStoreContext = createContext<MockStoreContextType | undefined>(undefined);
-
-const STORAGE_KEY = 'test-paper-maker-store';
-
-interface PersistedState {
-  isLoggedIn: boolean;
-  isGuest: boolean;
-  onboardingCompleted: boolean;
-  toolboxSpotlightCompleted?: boolean;
-  profile: Profile;
-  papers: Array<Omit<Paper, 'createdAt'> & { createdAt: string }>;
-  personalQuestions: Question[];
-}
-
-function loadPersistedState(): Partial<PersistedState> | null {
-  try {
-    const stored = safeGetItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Failed to load persisted state:', error);
-  }
-  return null;
-}
-
-function savePersistedState(state: PersistedState): boolean {
-  try {
-    const serialized = JSON.stringify(state);
-    return safeSetItem(STORAGE_KEY, serialized);
-  } catch (error) {
-    console.error('Failed to save persisted state:', error);
-    return false;
-  }
-}
-
-// Normalize old papers to include headings structure
-function normalizePaper(paper: Paper): Paper {
-  const normalizedSections = paper.sections.map((section) => {
-    // If section doesn't have headings, create a default one
-    if (!section.headings || section.headings.length === 0) {
-      const defaultHeading: QuestionHeading = {
-        id: `heading-${section.id}-default`,
-        title: 'Questions',
-        plannedQuestionCount: section.questions.length || section.plannedQuestionCount || 0,
-      };
-      
-      // Associate all existing questions with the default heading
-      const updatedQuestions = section.questions.map((q) => ({
-        ...q,
-        headingId: q.headingId || defaultHeading.id,
-      }));
-
-      return {
-        ...section,
-        headings: [defaultHeading],
-        questions: updatedQuestions,
-      };
-    }
-    
-    // Ensure all questions have a headingId
-    const updatedQuestions = section.questions.map((q) => {
-      if (!q.headingId && section.headings && section.headings.length > 0) {
-        return { ...q, headingId: section.headings[0].id };
-      }
-      return q;
-    });
-
-    return {
-      ...section,
-      questions: updatedQuestions,
-    };
-  });
-
-  return {
-    ...paper,
-    sections: normalizedSections,
-  };
-}
 
 export function MockStoreProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isGuest, setIsGuest] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [papers, setPapers] = useState<Paper[]>(samplePapers);
   const [personalQuestions, setPersonalQuestions] = useState<Question[]>([]);
 
-  const initializeStore = () => {
-    setInitializationError(null);
-    
-    // Check storage availability
-    if (!isStorageAvailable()) {
-      const error = getStorageError() || 'Storage is not available';
-      setInitializationError(error);
-      setIsInitialized(true);
-      return;
-    }
+  // Normalize paper data to handle rich content migration
+  const normalizePaper = (paper: Paper): Paper => {
+    return {
+      ...paper,
+      sections: paper.sections.map((section) => ({
+        ...section,
+        headings: section.headings || [],
+        questions: section.questions.map((question) => {
+          // Normalize table cells
+          if (question.questionType === 'table' && question.tableData) {
+            return {
+              ...question,
+              tableData: {
+                ...question.tableData,
+                cells: question.tableData.cells.map((row) =>
+                  row.map((cell) => normalizeToRichContent(cell))
+                ),
+              },
+            };
+          }
+          // Normalize match-pairs
+          if (question.questionType === 'match-pairs' && question.matchPairsData) {
+            return {
+              ...question,
+              matchPairsData: {
+                pairs: question.matchPairsData.pairs.map((pair) => ({
+                  left: normalizeToRichContent(pair.left),
+                  right: normalizeToRichContent(pair.right),
+                })),
+              },
+            };
+          }
+          return question;
+        }),
+      })),
+    };
+  };
 
+  const initialize = () => {
     try {
-      const persisted = loadPersistedState();
-      if (persisted) {
-        if (persisted.isLoggedIn !== undefined) setIsLoggedIn(persisted.isLoggedIn);
-        if (persisted.isGuest !== undefined) setIsGuest(persisted.isGuest);
-        if (persisted.onboardingCompleted !== undefined) setOnboardingCompleted(persisted.onboardingCompleted);
-        if (persisted.profile) setProfile(persisted.profile);
-        if (persisted.personalQuestions) setPersonalQuestions(persisted.personalQuestions);
-        if (persisted.papers) {
-          // Restore Date objects from serialized strings and normalize
-          const restoredPapers = persisted.papers.map((p) => 
-            normalizePaper({
-              ...p,
-              createdAt: new Date(p.createdAt),
-            })
-          );
-          setPapers(restoredPapers);
+      setInitializationError(null);
+
+      // Check if storage is available
+      if (!isStorageAvailable()) {
+        throw new Error(
+          'Local storage is not available. Please check your browser settings and ensure cookies/site data are enabled.'
+        );
+      }
+
+      // Load state from localStorage
+      const storedIsLoggedIn = safeGetItem('isLoggedIn') === 'true';
+      const storedOnboardingCompleted = safeGetItem('onboardingCompleted') === 'true';
+      const storedProfile = safeGetItem('profile');
+      const storedPapers = safeGetItem('papers');
+      const storedPersonalQuestions = safeGetItem('personalQuestions');
+
+      setIsLoggedIn(storedIsLoggedIn);
+      setOnboardingCompleted(storedOnboardingCompleted);
+
+      if (storedProfile) {
+        try {
+          setProfile(JSON.parse(storedProfile));
+        } catch {
+          setProfile(defaultProfile);
         }
       }
+
+      if (storedPapers) {
+        try {
+          const parsedPapers = JSON.parse(storedPapers);
+          // Normalize all papers
+          setPapers(parsedPapers.map(normalizePaper));
+        } catch {
+          setPapers(samplePapers);
+        }
+      }
+
+      if (storedPersonalQuestions) {
+        try {
+          setPersonalQuestions(JSON.parse(storedPersonalQuestions));
+        } catch {
+          setPersonalQuestions([]);
+        }
+      }
+
       setIsInitialized(true);
     } catch (error) {
-      console.error('Failed to initialize store:', error);
-      setInitializationError(error instanceof Error ? error.message : 'Failed to load data');
-      setIsInitialized(true);
+      console.error('Initialization error:', error);
+      setInitializationError(
+        error instanceof Error ? error.message : 'Failed to initialize storage'
+      );
+      setIsInitialized(true); // Still mark as initialized to show error UI
     }
   };
 
-  // Hydrate state from localStorage on mount
   useEffect(() => {
-    initializeStore();
+    initialize();
   }, []);
 
-  // Persist state to localStorage whenever it changes
-  useEffect(() => {
-    if (!isInitialized || initializationError) return;
-    
-    const stateToPersist: PersistedState = {
-      isLoggedIn,
-      isGuest,
-      onboardingCompleted,
-      profile,
-      papers: papers.map((p) => ({
-        ...p,
-        createdAt: p.createdAt.toISOString(),
-      })),
-      personalQuestions,
-    };
-    savePersistedState(stateToPersist);
-  }, [isInitialized, initializationError, isLoggedIn, isGuest, onboardingCompleted, profile, papers, personalQuestions]);
+  const retryInitialization = () => {
+    setIsInitialized(false);
+    setInitializationError(null);
+    setTimeout(initialize, 100);
+  };
 
-  const login = (asGuest = false) => {
+  const login = () => {
     setIsLoggedIn(true);
-    setIsGuest(asGuest);
+    safeSetItem('isLoggedIn', 'true');
   };
 
   const logout = () => {
     setIsLoggedIn(false);
-    setIsGuest(false);
     setOnboardingCompleted(false);
-    setProfile(defaultProfile);
-    setPapers(samplePapers);
-    setPersonalQuestions([]);
-    safeRemoveItem(STORAGE_KEY);
+    safeRemoveItem('isLoggedIn');
+    safeRemoveItem('onboardingCompleted');
   };
 
-  const updateProfile = (newProfile: Profile) => {
+  const completeOnboarding = () => {
+    setOnboardingCompleted(true);
+    safeSetItem('onboardingCompleted', 'true');
+  };
+
+  const updateProfile = (updates: Partial<Profile>) => {
+    const newProfile = { ...profile, ...updates };
     setProfile(newProfile);
+    safeSetItem('profile', JSON.stringify(newProfile));
   };
 
   const addPaper = (paper: Paper) => {
     const normalizedPaper = normalizePaper(paper);
-    setPapers((prev) => [normalizedPaper, ...prev]);
+    const newPapers = [...papers, normalizedPaper];
+    setPapers(newPapers);
+    safeSetItem('papers', JSON.stringify(newPapers));
   };
 
   const updatePaper = (paperId: string, updates: Partial<Paper>) => {
-    setPapers((prev) => {
-      const paperIndex = prev.findIndex((p) => p.id === paperId);
-      if (paperIndex === -1) return prev;
-
-      const existingPaper = prev[paperIndex];
-      const updatedPaper = normalizePaper({ ...existingPaper, ...updates });
-
-      // Deep comparison to avoid unnecessary updates
-      if (JSON.stringify(existingPaper) === JSON.stringify(updatedPaper)) {
-        return prev;
+    const newPapers = papers.map((p) => {
+      if (p.id === paperId) {
+        const updatedPaper = { ...p, ...updates };
+        return normalizePaper(updatedPaper);
       }
-
-      const newPapers = [...prev];
-      newPapers[paperIndex] = updatedPaper;
-      return newPapers;
+      return p;
     });
+    setPapers(newPapers);
+    safeSetItem('papers', JSON.stringify(newPapers));
   };
 
   const deletePaper = (paperId: string) => {
-    setPapers((prev) => prev.filter((p) => p.id !== paperId));
+    const newPapers = papers.filter((p) => p.id !== paperId);
+    setPapers(newPapers);
+    safeSetItem('papers', JSON.stringify(newPapers));
   };
 
   const getPaperById = (paperId: string) => {
     return papers.find((p) => p.id === paperId);
   };
 
-  const addQuestion = (question: Question) => {
-    setPersonalQuestions((prev) => [...prev, question]);
+  const addPersonalQuestion = (question: Question) => {
+    const newQuestions = [...personalQuestions, question];
+    setPersonalQuestions(newQuestions);
+    safeSetItem('personalQuestions', JSON.stringify(newQuestions));
   };
 
-  const addQuestions = (questions: Question[]) => {
-    setPersonalQuestions((prev) => [...prev, ...questions]);
+  const updatePersonalQuestion = (questionId: string, updates: Partial<Question>) => {
+    const newQuestions = personalQuestions.map((q) =>
+      q.id === questionId ? { ...q, ...updates } : q
+    );
+    setPersonalQuestions(newQuestions);
+    safeSetItem('personalQuestions', JSON.stringify(newQuestions));
   };
 
-  const getStarterQuestions = () => starterQuestions;
+  const deletePersonalQuestion = (questionId: string) => {
+    const newQuestions = personalQuestions.filter((q) => q.id !== questionId);
+    setPersonalQuestions(newQuestions);
+    safeSetItem('personalQuestions', JSON.stringify(newQuestions));
+  };
 
-  const completeOnboarding = () => {
-    setOnboardingCompleted(true);
+  const getStarterQuestions = () => {
+    return starterQuestions;
   };
 
   const resetTutorial = () => {
     setOnboardingCompleted(false);
-    // Clear tutorial flags
+    safeRemoveItem('onboardingCompleted');
     safeRemoveItem('start-tutorial');
-    safeRemoveItem('real-paper-toolbox-spotlight-completed');
   };
 
   const clearAllData = () => {
-    logout();
-  };
-
-  const retryInitialization = () => {
-    setIsInitialized(false);
-    initializeStore();
+    // Clear all stored data
+    safeRemoveItem('isLoggedIn');
+    safeRemoveItem('onboardingCompleted');
+    safeRemoveItem('profile');
+    safeRemoveItem('papers');
+    safeRemoveItem('personalQuestions');
+    safeRemoveItem('start-tutorial');
+    
+    // Reset state
+    setIsLoggedIn(false);
+    setOnboardingCompleted(false);
+    setProfile(defaultProfile);
+    setPapers(samplePapers);
+    setPersonalQuestions([]);
   };
 
   return (
@@ -264,26 +248,26 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
       value={{
         isInitialized,
         initializationError,
+        retryInitialization,
         isLoggedIn,
-        isGuest,
         onboardingCompleted,
         profile,
         papers,
         personalQuestions,
         login,
         logout,
+        completeOnboarding,
         updateProfile,
         addPaper,
         updatePaper,
         deletePaper,
         getPaperById,
-        addQuestion,
-        addQuestions,
+        addPersonalQuestion,
+        updatePersonalQuestion,
+        deletePersonalQuestion,
         getStarterQuestions,
-        completeOnboarding,
         resetTutorial,
         clearAllData,
-        retryInitialization,
       }}
     >
       {children}
@@ -298,3 +282,4 @@ export function useMockStore() {
   }
   return context;
 }
+

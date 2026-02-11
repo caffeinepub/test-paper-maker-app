@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,78 +11,69 @@ interface AddQuestionHeadingDialogProps {
   onAdd: (heading: Omit<QuestionHeading, 'id'>) => void;
 }
 
-export function AddQuestionHeadingDialog({
-  open,
-  onOpenChange,
-  onAdd,
-}: AddQuestionHeadingDialogProps) {
+export function AddQuestionHeadingDialog({ open, onOpenChange, onAdd }: AddQuestionHeadingDialogProps) {
   const [title, setTitle] = useState('');
-  const [plannedCount, setPlannedCount] = useState(1);
+  const [plannedCount, setPlannedCount] = useState(5);
 
-  const handleAdd = () => {
-    if (title.trim()) {
-      onAdd({
-        title: title.trim(),
-        plannedQuestionCount: plannedCount,
-      });
-      setTitle('');
-      setPlannedCount(1);
-      onOpenChange(false);
-    }
-  };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
 
-  const handleCancel = () => {
+    onAdd({
+      title: title.trim(),
+      plannedCount: plannedCount,
+    });
+
+    // Reset form
     setTitle('');
-    setPlannedCount(1);
+    setPlannedCount(5);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add Question Heading</DialogTitle>
-          <DialogDescription>
-            Create a new heading to organize questions within this section.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="heading-title">Heading Title</Label>
-            <Input
-              id="heading-title"
-              placeholder="e.g., MCQ, True or False, Fill in the Blanks"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleAdd();
-                }
-              }}
-            />
+      <DialogContent>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Add Question Heading</DialogTitle>
+            <DialogDescription>
+              Create a new heading to organize questions within this section.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="heading-title">Heading Title</Label>
+              <Input
+                id="heading-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g., Short Answer Questions"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="planned-count">Planned Question Count</Label>
+              <Input
+                id="planned-count"
+                type="number"
+                min="0"
+                value={plannedCount}
+                onChange={(e) => setPlannedCount(parseInt(e.target.value) || 0)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Approximate number of questions you plan to add under this heading
+              </p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="planned-count">Number of Questions</Label>
-            <Input
-              id="planned-count"
-              type="number"
-              min="0"
-              value={plannedCount}
-              onChange={(e) => setPlannedCount(Math.max(0, parseInt(e.target.value) || 0))}
-            />
-            <p className="text-xs text-muted-foreground">
-              Planned number of questions under this heading
-            </p>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button onClick={handleAdd} disabled={!title.trim()}>
-            Add Heading
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!title.trim()}>
+              Add Heading
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -16,7 +17,9 @@ import {
 } from '@/components/ui/dialog';
 import { PaperSurface } from '../../components/paper/PaperSurface';
 import { PaperActionOverflowMenu } from '../../components/paper/PaperActionOverflowMenu';
-import { AlertCircle, Sparkles, Info } from 'lucide-react';
+import { AlertCircle, Sparkles, Info, Copy, Check, FileText, Printer } from 'lucide-react';
+import { downloadPaperAsText } from '../../lib/export/paperTextExport';
+import { toast } from 'sonner';
 
 export function ExportPrintPreviewWireframe() {
   const navigate = useNavigate();
@@ -25,7 +28,8 @@ export function ExportPrintPreviewWireframe() {
 
   const paper = getPaperById(paperId);
   const [showCleanupDialog, setShowCleanupDialog] = useState(false);
-  const [previewTab, setPreviewTab] = useState<'original' | 'professional'>('original');
+  const [previewTab, setPreviewTab] = useState<'original' | 'cleaned'>('original');
+  const [copied, setCopied] = useState(false);
 
   const currentLayoutMode = paper?.layoutMode || 'original';
 
@@ -36,7 +40,7 @@ export function ExportPrintPreviewWireframe() {
 
   const handleSaveCleanedVersion = () => {
     if (paper) {
-      updatePaper(paperId, { layoutMode: 'professional' });
+      updatePaper(paperId, { layoutMode: 'cleaned' });
     }
     setShowCleanupDialog(false);
   };
@@ -46,6 +50,42 @@ export function ExportPrintPreviewWireframe() {
       updatePaper(paperId, { layoutMode: 'original' });
     }
     setShowCleanupDialog(false);
+  };
+
+  const getShareUrl = () => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/export/${paperId}`;
+  };
+
+  const handleCopyLink = async () => {
+    const shareUrl = getShareUrl();
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast.success('Link copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const handleDownloadText = () => {
+    if (!paper) {
+      toast.error('Paper not found');
+      return;
+    }
+    
+    try {
+      downloadPaperAsText(paper);
+      toast.success('Text file downloaded successfully');
+    } catch (error) {
+      toast.error('Failed to download text file');
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+    toast.info('Use your browser\'s print dialog to save as PDF');
   };
 
   if (!paper) {
@@ -72,7 +112,7 @@ export function ExportPrintPreviewWireframe() {
     );
   }
 
-  const isProfessionalMode = currentLayoutMode === 'professional';
+  const isCleanedMode = currentLayoutMode === 'cleaned';
 
   return (
     <div className="container mx-auto max-w-6xl p-4 py-8">
@@ -100,7 +140,7 @@ export function ExportPrintPreviewWireframe() {
             <CardContent className="space-y-3">
               <div className="rounded-lg border border-border bg-muted/30 p-3">
                 <p className="text-sm font-medium">
-                  Active Mode: <span className="text-primary">{isProfessionalMode ? 'Professional' : 'Original'}</span>
+                  Active Mode: <span className="text-primary">{isCleanedMode ? 'Cleaned' : 'Original'}</span>
                 </p>
               </div>
               <Button variant="outline" className="w-full" size="lg" onClick={handleOpenCleanup}>
@@ -112,13 +152,51 @@ export function ExportPrintPreviewWireframe() {
 
           <Card>
             <CardHeader>
+              <CardTitle>Export Options</CardTitle>
+              <CardDescription>Download and share your paper</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="outline" className="w-full justify-start" onClick={handlePrint}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print / Save as PDF
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={handleDownloadText}>
+                <FileText className="mr-2 h-4 w-4" />
+                Download as Text
+              </Button>
+              <Separator />
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Share Link</p>
+                <div className="flex gap-2">
+                  <Input
+                    value={getShareUrl()}
+                    readOnly
+                    className="flex-1 text-xs"
+                  />
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={handleCopyLink}
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Copy this link to share via WhatsApp, email, SMS, or any app
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Print Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>• Paper Size: A4</p>
               <p>• Margins: Standard</p>
               <p>• Include Logo: {profile.schoolLogo ? 'Yes' : 'No'}</p>
-              <p>• Layout Mode: {isProfessionalMode ? 'Professional' : 'Original'}</p>
+              <p>• Layout Mode: {isCleanedMode ? 'Cleaned' : 'Original'}</p>
             </CardContent>
           </Card>
 
@@ -144,23 +222,23 @@ export function ExportPrintPreviewWireframe() {
         </div>
       </div>
 
-      {/* Professional Cleanup Dialog with Comparison */}
+      {/* Cleanup Dialog with Comparison */}
       <Dialog open={showCleanupDialog} onOpenChange={setShowCleanupDialog}>
         <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              Professional Auto Format (Layout Only)
+              Auto Format (Layout Only)
             </DialogTitle>
             <DialogDescription>
-              Compare the original and professionally formatted versions. <strong>No text content, wording, or spelling will be changed</strong> — only spacing, alignment, and layout will be improved.
+              Compare the original and cleaned versions. <strong>No text content, wording, or spelling will be changed</strong> — only spacing, alignment, and layout will be improved.
             </DialogDescription>
           </DialogHeader>
 
           <Tabs value={previewTab} onValueChange={(v) => setPreviewTab(v as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="original">Original Version</TabsTrigger>
-              <TabsTrigger value="professional">Cleaned Version</TabsTrigger>
+              <TabsTrigger value="cleaned">Cleaned Version</TabsTrigger>
             </TabsList>
 
             <TabsContent value="original" className="mt-4">
@@ -169,9 +247,9 @@ export function ExportPrintPreviewWireframe() {
               </div>
             </TabsContent>
 
-            <TabsContent value="professional" className="mt-4">
+            <TabsContent value="cleaned" className="mt-4">
               <div className="max-h-[60vh] overflow-y-auto rounded-lg border-2 border-primary">
-                <PaperSurface paper={{ ...paper, layoutMode: 'professional' }} isEditable={false} />
+                <PaperSurface paper={{ ...paper, layoutMode: 'cleaned' }} isEditable={false} />
               </div>
             </TabsContent>
           </Tabs>

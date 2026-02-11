@@ -44,6 +44,10 @@ export function PaperSurface({
       if (firstInput) {
         setTimeout(() => {
           firstInput.focus();
+          // Place cursor at the end if it's a textarea
+          if (firstInput instanceof HTMLTextAreaElement && firstInput.value === '') {
+            firstInput.setSelectionRange(0, 0);
+          }
         }, 300);
       }
       
@@ -72,6 +76,23 @@ export function PaperSurface({
       source: 'ai',
     });
     navigate({ to: '/ai' });
+  };
+
+  const handleQuestionClick = (e: React.MouseEvent, questionId: string) => {
+    // Only handle clicks on the container, not on inputs inside
+    if (isEditable && onSelectQuestion) {
+      const target = e.target as HTMLElement;
+      // Don't select if clicking on an input, textarea, or button
+      if (
+        target.tagName !== 'INPUT' &&
+        target.tagName !== 'TEXTAREA' &&
+        target.tagName !== 'BUTTON' &&
+        !target.closest('button') &&
+        !target.closest('.rich-cell-editor')
+      ) {
+        onSelectQuestion(questionId);
+      }
+    }
   };
 
   // Calculate total questions across all sections
@@ -139,74 +160,85 @@ export function PaperSurface({
                   headings.map((heading) => {
                     const headingQuestions = section.questions.filter((q) => q.headingId === heading.id);
                     const totalMarks = headingQuestions.length * section.marks;
-                    const displayCount = Math.max(headingQuestions.length, heading.plannedQuestionCount);
+                    const displayCount = Math.max(headingQuestions.length, heading.plannedCount);
 
                     return (
                       <div key={heading.id} className="space-y-3">
                         {/* Heading Title with Marks Info */}
                         <div className="flex items-baseline gap-2">
                           <span className="text-foreground">•</span>
-                          <h5 className="text-base font-medium text-foreground">
+                          <p className="text-sm font-medium text-foreground">
                             {heading.title}
-                            <span className="ml-2 text-sm text-muted-foreground">
-                              ({section.marks} mark{section.marks > 1 ? 's' : ''} each, Total {displayCount * section.marks})
+                            <span className="ml-2 text-muted-foreground">
+                              ({displayCount} × {section.marks} = {totalMarks} marks)
                             </span>
-                          </h5>
+                          </p>
                         </div>
 
-                        {/* Questions under this heading */}
-                        <div className="space-y-3 pl-6">
-                          {headingQuestions.map((question, qIdx) => (
-                            <div 
-                              key={question.id} 
-                              className="question-row grid grid-cols-[auto_1fr] gap-3 items-start"
-                              ref={autoFocusQuestionId === question.id ? autoFocusRef : undefined}
-                            >
-                              {/* Question Number */}
-                              <div className="pt-0.5 font-medium text-foreground shrink-0">
-                                {qIdx + 1}.
-                              </div>
+                        {/* Questions */}
+                        {headingQuestions.length === 0 ? (
+                          <div className="ml-6 rounded-md border border-dashed border-muted-foreground/30 bg-muted/10 p-3 text-center">
+                            <p className="text-xs text-muted-foreground italic">
+                              No questions yet. {isEditable && 'Use the toolbox to add questions to this heading.'}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="ml-6 space-y-4">
+                            {headingQuestions.map((question, qIdx) => {
+                              const isSelected = selectedQuestionId === question.id;
+                              const shouldAutoFocus = autoFocusQuestionId === question.id;
 
-                              {/* Question Content */}
-                              <div className="min-w-0 pr-4">
-                                {isEditable && selectedQuestionId === question.id ? (
-                                  <QuestionBlockEditor
-                                    question={question}
-                                    onUpdate={(updates) =>
-                                      onUpdateQuestion && onUpdateQuestion(section.id, question.id, updates)
-                                    }
-                                    onDelete={() => onDeleteQuestion && onDeleteQuestion(section.id, question.id)}
-                                    autoFocus={autoFocusQuestionId === question.id}
-                                    onAutoFocusComplete={onAutoFocusComplete}
-                                  />
-                                ) : (
-                                  <div
-                                    className={
-                                      isEditable
-                                        ? 'cursor-pointer rounded-md p-2 transition-colors hover:bg-muted/50'
-                                        : ''
-                                    }
-                                    onClick={() => isEditable && onSelectQuestion && onSelectQuestion(question.id)}
-                                  >
-                                    <PaperRenderer question={question} />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-
-                          {/* Empty state for heading with no questions */}
-                          {headingQuestions.length === 0 && (
-                            <div className="rounded-md border border-dashed border-muted-foreground/30 bg-muted/10 p-3 text-center">
-                              <p className="text-xs text-muted-foreground italic">
-                                No questions yet. {isEditable && 'Use the toolbox to add questions to this heading.'}
-                              </p>
-                            </div>
-                          )}
-                        </div>
+                              return (
+                                <div
+                                  key={question.id}
+                                  ref={shouldAutoFocus ? autoFocusRef : null}
+                                  className={`rounded-md border transition-colors ${
+                                    isEditable
+                                      ? isSelected
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-border bg-background hover:border-primary/50 cursor-pointer'
+                                      : 'border-border bg-background'
+                                  } p-3`}
+                                  onClick={(e) => handleQuestionClick(e, question.id)}
+                                >
+                                  {isEditable && isSelected && onUpdateQuestion && onDeleteQuestion ? (
+                                    <QuestionBlockEditor
+                                      question={question}
+                                      questionNumber={qIdx + 1}
+                                      onUpdate={(updates) => onUpdateQuestion(section.id, question.id, updates)}
+                                      onDelete={() => onDeleteQuestion(section.id, question.id)}
+                                      autoFocus={shouldAutoFocus}
+                                    />
+                                  ) : (
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-sm font-semibold text-foreground shrink-0">{qIdx + 1}.</span>
+                                      <div className="flex-1">
+                                        <PaperRenderer question={question} />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   })
+                )}
+
+                {/* Empty state actions */}
+                {isEditable && headings.length > 0 && section.questions.length === 0 && (
+                  <div className="flex justify-center gap-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={() => handleAddFromBank(section.id)}>
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Add from Bank
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleAddWithAI(section.id)}>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate with AI
+                    </Button>
+                  </div>
                 )}
               </div>
             );
@@ -216,3 +248,4 @@ export function PaperSurface({
     </Card>
   );
 }
+

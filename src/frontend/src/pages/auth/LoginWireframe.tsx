@@ -25,7 +25,7 @@ export function LoginWireframe() {
 
   const handleInternetIdentityLogin = () => {
     iiLogin();
-    mockLogin(false);
+    mockLogin();
     if (onboardingCompleted) {
       navigate({ to: '/home' });
     } else {
@@ -34,7 +34,7 @@ export function LoginWireframe() {
   };
 
   const handleGuestLogin = () => {
-    mockLogin(true);
+    mockLogin();
     if (onboardingCompleted) {
       navigate({ to: '/home' });
     } else {
@@ -85,3 +85,4 @@ export function LoginWireframe() {
     </div>
   );
 }
+

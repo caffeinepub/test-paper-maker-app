@@ -1,70 +1,199 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Restore real OCR.space extraction flow and enforce consistent purple theme (v18 app unchanged otherwise)",
+  "title": "Fix table/match-pairs cell editing, inline images with formatting, print-safe rendering, and theme updates",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Replace the OCR upload offline placeholder with a real OCR.space HTTPS extraction flow and continue into existing /ocr/review parsing + approval UI.",
+      "summary": "Update light-mode theme tokens so the navigation drawer is white and purple accents match the lighter screenshot purple globally without breaking dark mode.",
       "acceptanceCriteria": [
-        "On /ocr/upload, the app can extract text from a user-selected supported file (image/PDF) via OCR.space over HTTPS (no manual “paste text” requirement to proceed).",
-        "The “Offline Mode: This app cannot perform real OCR extraction…” messaging is removed/replaced with accurate user-facing copy describing the real OCR process.",
-        "When OCR extraction succeeds, the extracted text is saved to the OCR session storage and the user is navigated to /ocr/review with parsed questions populated (using the existing text-to-questions parsing logic).",
-        "When OCR extraction fails (network/API error, unsupported file, quota exceeded), the user sees a clear error message and can retry or choose a different file without the rest of the app breaking.",
-        "No other routes/screens/features outside the OCR flow are removed or altered."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/lib/ocr/ocrSpaceClient.ts",
-          "operation": "create",
-          "description": "Add a small OCR.space client wrapper that accepts an image/PDF File, performs HTTPS multipart upload to OCR.space, and returns extracted text plus any user-displayable error details (handle common failure cases like network errors, bad file types, and quota/limit responses)."
-        },
-        {
-          "path": "frontend/src/pages/ocr/OCRUploadWireframe.tsx",
-          "operation": "modify",
-          "description": "Replace the manual “paste text”/mock extraction flow with a real OCR.space extraction flow: validate supported file types, call the new OCR.space client, show loading/progress UI, show clear retryable errors, and on success save the session and navigate to /ocr/review. Use existing shadcn-ui components (Button, Alert, Card, Textarea/Label where still needed for display) for consistent UI; verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Update the OCR session utility to store sessions created from real OCR results while preserving existing session load/clear/convert APIs used by /ocr/review.",
-      "acceptanceCriteria": [
-        "The OCR review page (/ocr/review) continues to work without route changes and can render questions originating from real OCR extraction.",
-        "Session persistence still uses the existing localStorage key and supports clear/load behavior so cancel/back flows work as before.",
-        "Approved questions can still be inserted into the personal question bank exactly as before."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/lib/ocr/mockOcrExtractor.ts",
-          "operation": "modify",
-          "description": "Refactor the OCR session utility so it represents real OCR sessions (extractedText + parsed questions) while keeping the same localStorage key and the same exported APIs used by /ocr/review (loadOCRSession, clearOCRSession, convertOCRQuestionsToPersonalQuestions, and save behavior). Keep any legacy/mock-named exports working (as aliases if needed) so existing imports continue to work without changing non-OCR features."
-        },
-        {
-          "path": "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx",
-          "operation": "modify",
-          "description": "Adjust copy/error handling to reflect real OCR extraction (not manual pasted text), while continuing to load the session via the existing session utility and render/approve/edit/insert questions exactly as before. Use existing shadcn-ui components (Alert, Card, Button, Checkbox, Textarea) for messaging consistency; verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Ensure purple theme tokens and button/active-state styling render consistently across the app in light and dark mode without layout/feature changes.",
-      "acceptanceCriteria": [
-        "Primary actions (default buttons/active states) visibly use the purple primary color across all pages, including navigation and key CTAs.",
-        "Theme is consistent in both light and dark mode (no pages/components falling back to non-purple default styling).",
-        "No UI screens are removed or restructured as part of theme adjustments (token-level/styling-only changes)."
+        "On mobile and desktop, the NavigationDrawer background is white and visually matches the uploaded screenshots.",
+        "Purple accents throughout the app (e.g., primary buttons, selected nav item, outlines) use the lighter purple matching the uploaded screenshots, not the current darker purple.",
+        "No regressions in dark-mode toggling (dark mode can remain purple-themed, but light mode must match the screenshots)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Audit and adjust global theme tokens (primary/secondary/accent/ring and related foreground tokens) to ensure purple is consistently used in both light and dark mode; keep changes token-level only to avoid layout restructuring."
+          "description": "Adjust light-mode CSS variables (e.g., --primary, --ring, --sidebar-*) so the sidebar/drawer uses a white background with appropriate foreground, and the app-wide primary purple is lighter to match screenshots; keep dark-mode variables unchanged or only minimally adjusted to avoid regressions."
         },
         {
-          "path": "frontend/tailwind.config.js",
+          "path": "frontend/src/components/navigation/NavigationDrawer.tsx",
           "operation": "modify",
-          "description": "Verify Tailwind color mappings continue to reference the theme tokens (primary/secondary/accent/ring/etc.) so shadcn-ui variants (especially Button default/outline/ghost active states) consistently render purple across the app; verify the component's usage instructions before implementing."
+          "description": "Ensure drawer styling is fully driven by theme tokens (bg-sidebar / sidebar-* colors) and selected nav item uses the updated lighter purple accent in light mode; keep behavior consistent across mobile/desktop. Use shadcn-ui Button/Separator composition as already present (Verify the component's usage instructions before implementing.)"
+        },
+        {
+          "path": "frontend/src/components/layout/AppShell.tsx",
+          "operation": "modify",
+          "description": "Align mobile header + mobile SheetContent drawer backgrounds/borders with the updated light-mode sidebar tokens so the drawer/header are white in light mode while preserving dark mode. Use shadcn-ui Sheet/Button composition as already present (Verify the component's usage instructions before implementing.)"
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Fix focus/typing for table cells and match-pairs boxes so keystrokes update only the clicked cell/box and do not redirect to the main question text field.",
+      "acceptanceCriteria": [
+        "When a table cell is clicked and the user types, only that cell content changes; the question text at the top does not change.",
+        "When a match-pairs box (Column A or Column B) is clicked and the user types, only that box content changes; the question text at the top does not change.",
+        "Typing into table/match-pairs cells works consistently on mobile and desktop."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "operation": "modify",
+          "description": "Prevent event bubbling and unintended focusing that causes typing to go to the question text field (e.g., stopPropagation on mouse/touch events inside table/match-pairs editors; ensure autofocus logic only runs when intended and does not steal focus after a cell is focused)."
+        },
+        {
+          "path": "frontend/src/components/paper/PaperSurface.tsx",
+          "operation": "modify",
+          "description": "Harden the question selection click handler so interactions within active editors (table/match-pairs inputs) do not trigger parent click behaviors that re-focus the top question field."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Enable inline image insertion (upload + clipboard paste) inside table cells and match-pairs boxes while allowing mixed text+images and preventing overflow outside cell boundaries.",
+      "acceptanceCriteria": [
+        "Each table cell and each match-pairs box provides a UI affordance to insert an image via file upload.",
+        "Pasting an image from the clipboard into a focused table cell/match-pairs box inserts the image into that cell/box.",
+        "Text can be entered in the same cell/box that contains an inserted image (both are persisted and rendered together).",
+        "Cell/box content is constrained: images and text do not visually overflow outside the cell/box boundary (overflow is clipped/wrapped appropriately)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/editor/richCellContent.ts",
+          "operation": "create",
+          "description": "Add frontend-only helpers/types for rich cell/box content (text + images), including safe clipboard image extraction, data URL handling, and utilities to add/remove/update images within a cell."
+        },
+        {
+          "path": "frontend/src/components/editor/RichCellEditor.tsx",
+          "operation": "create",
+          "description": "Create a reusable editor for a single table cell or match-pairs box that supports: text input, an insert-image button (file input), clipboard image paste while focused, and overflow-safe rendering within a bounded container. Compose shadcn-ui primitives where helpful (e.g., Button, Input, Dialog/Popover) without editing files under frontend/src/components/ui (Verify the component's usage instructions before implementing.)"
+        },
+        {
+          "path": "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "operation": "modify",
+          "description": "Replace string-only table cell and match-pairs box inputs with RichCellEditor so each cell/box can store mixed text+images and paste/upload images directly into that specific cell/box."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add/adjust editor-only utility classes for rich cell containers to ensure content stays within boundaries (wrapping/clipping) and images scale within the cell; ensure this does not break existing global styles."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Add per-image formatting controls in cells/boxes: default 5×5 cm sizing, adjustable size, aspect ratio lock by default, alignment, and captions.",
+      "acceptanceCriteria": [
+        "Newly inserted images default to 5cm × 5cm sizing in a print-relevant unit (cm) and render consistently in the editor and print preview.",
+        "Users can adjust the image size; by default, resizing preserves aspect ratio until the user explicitly unlocks it.",
+        "Users can set image alignment within the cell/box (e.g., left/center/right).",
+        "Users can add/edit/remove an image caption that stays associated with the image and renders under/near the image inside the same cell/box."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/editor/richCellContent.ts",
+          "operation": "modify",
+          "description": "Extend rich image metadata to include print-relevant size in cm, aspect-lock flag, alignment, and caption; provide helpers to update these fields and to compute consistent rendering styles."
+        },
+        {
+          "path": "frontend/src/components/editor/RichCellEditor.tsx",
+          "operation": "modify",
+          "description": "Implement UI controls per image for sizing (default 5cm×5cm), aspect lock toggle, alignment (left/center/right), and caption editing; ensure controls are editor-only and not shown in print. Compose shadcn-ui primitives (e.g., Button, Input, Tabs/Dialog if needed) without editing frontend/src/components/ui (Verify the component's usage instructions before implementing.)"
+        },
+        {
+          "path": "frontend/src/components/paper/PaperRenderer.tsx",
+          "operation": "modify",
+          "description": "Render inline images (with captions and alignment) within table cells and match-pairs boxes using the saved rich metadata so output matches editor and is print-friendly."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add print/editor CSS for rich inline images to honor cm sizing, alignment, and captions, while ensuring images never overflow their cell/box."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Enforce equal-width table columns and row-based equal heights in editor and preserve behavior in print/preview as closely as possible.",
+      "acceptanceCriteria": [
+        "In the editor, a table with N columns renders with equal column widths regardless of per-cell content.",
+        "In the editor, all cells in a given row share the same height; rows can differ in height from other rows based on their content.",
+        "In print preview/printed output, the same equal-width and row-based height behavior is preserved as closely as the medium allows."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "operation": "modify",
+          "description": "Update table rendering in the editor to enforce equal column widths (e.g., fixed table layout + column sizing strategy) and ensure each row’s cell heights remain equal within the row (letting the row height be driven by the tallest cell)."
+        },
+        {
+          "path": "frontend/src/components/paper/PaperRenderer.tsx",
+          "operation": "modify",
+          "description": "Update print/preview table rendering to preserve equal column widths and natural row-based equal heights while rendering rich cell content (text + images + captions)."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add/adjust CSS classes for tables used in the editor and renderer to enforce equal-width columns, safe wrapping, and cell-boundary clipping appropriate for both screen and print."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Make print output A4-safe for tables/match-pairs with inline images and captions, ensuring no overflow and hiding editor-only UI in print.",
+      "acceptanceCriteria": [
+        "Printing/export preview for papers containing table/match-pairs images does not cause images to overflow outside their cell/box in the printed output.",
+        "Tables and match-pairs content remain readable in print: text wraps and images scale within cell boundaries.",
+        "No print-only UI controls (buttons, toolbars) appear in the printed output."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Refine @media print rules to avoid globally forcing overflow: visible in a way that breaks cell clipping; apply print-safe wrapping/clipping rules specifically for paper content and rich table/match-pairs cell containers; keep A4 sizing behavior predictable."
+        },
+        {
+          "path": "frontend/src/components/paper/PaperSurface.tsx",
+          "operation": "modify",
+          "description": "Ensure paper content wrappers use stable class names/structure that print CSS can reliably target for wrapping/clipping and for avoiding page-break issues in tables/match-pairs."
+        },
+        {
+          "path": "frontend/src/pages/export/ExportPrintPreviewWireframe.tsx",
+          "operation": "modify",
+          "description": "Confirm all non-paper UI is excluded from print (use existing print:hidden usage consistently) so controls/toolbars do not appear in printed output. Compose shadcn-ui components as currently used (Verify the component's usage instructions before implementing.)"
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Persist and load rich table/match-pairs cell content (text + images with formatting), including auto-migrating older localStorage papers with string[][] cells and string pairs.",
+      "acceptanceCriteria": [
+        "Existing saved papers that contain tableData.cells as string[][] continue to load without crashing, and are normalized into the new structure automatically.",
+        "After editing and reloading the app, table/match-pairs cell content (text, images, captions, size, alignment) is retained.",
+        "No runtime errors occur when rendering older or newer saved papers."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/state/mockData.ts",
+          "operation": "modify",
+          "description": "Update TypeScript types to represent richer table/match-pairs content (cell/box content that can include text plus zero or more images with formatting metadata) while keeping compatibility considerations in mind for persisted JSON."
+        },
+        {
+          "path": "frontend/src/state/mockStore.tsx",
+          "operation": "modify",
+          "description": "Extend normalization during load to migrate older saved papers (string[][] table cells and string-based match pairs) into the new rich structure; ensure save/load round-trips preserve all rich metadata without runtime errors."
+        },
+        {
+          "path": "frontend/src/lib/editor/richCellContent.ts",
+          "operation": "modify",
+          "description": "Add migration/normalization helpers to convert legacy cell/box string content into the new rich structure and to keep the normalization logic centralized and reusable."
+        },
+        {
+          "path": "frontend/src/components/paper/PaperRenderer.tsx",
+          "operation": "modify",
+          "description": "Make renderer resilient to any remaining legacy shapes (defensive rendering) while primarily targeting the normalized rich structure to prevent crashes when encountering older saved data."
         }
       ]
     }

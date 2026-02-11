@@ -1,151 +1,121 @@
 export interface Profile {
   teacherName: string;
   instituteName: string;
-  preferredBoard: 'CBSE' | 'GSEB' | 'Both';
-  defaultStandard?: string;
-  medium: 'English' | 'Gujarati';
-  schoolLogo?: string;
+  board: string;
+  standard: string;
+  medium: string;
+  logoUrl: string | null;
+  preferredBoard: string;
+  defaultStandard: string;
+  schoolLogo?: string | null;
 }
 
-export type QuestionType = 
-  | 'short-answer'
-  | 'mcq'
-  | 'numerical'
-  | 'fill-in-blank'
-  | 'true-false'
-  | 'match-pairs'
-  | 'table';
+export type QuestionType = 'mcq' | 'numerical' | 'fill-in-blank' | 'true-false' | 'match-pairs' | 'table' | 'short-answer';
 
-export interface MCQOptions {
-  options: string[];
-}
-
-export interface FillInBlankData {
-  blanks: string[];
-}
-
-export interface TrueFalseData {
-  correctAnswer?: boolean;
-}
-
-export interface MatchPairsData {
-  pairs: Array<{ left: string; right: string }>;
-}
-
-export interface TableData {
-  rows: number;
-  cols: number;
-  cells: string[][];
-}
+// Support for rich content in cells (can be string or RichCellContent)
+export type CellContent = string | any; // any to allow RichCellContent without circular dependency
 
 export interface Question {
   id: string;
   text: string;
-  marks: 1 | 2 | 3 | 4;
-  type?: string;
-  source: 'starter' | 'personal';
-  questionType?: QuestionType;
-  mcqOptions?: MCQOptions;
-  fillInBlankData?: FillInBlankData;
-  trueFalseData?: TrueFalseData;
-  matchPairsData?: MatchPairsData;
-  tableData?: TableData;
-  headingId?: string; // Associates question with a heading
-  imageAttachment?: string; // Base64 image data for attached images
+  questionType: QuestionType;
+  marks: number;
+  type: string;
+  headingId: string | null;
+  imageAttachment: string | null;
+  mcqOptions?: {
+    options: string[];
+    correctAnswer?: number;
+  };
+  fillInBlankData?: {
+    blanks: string[];
+  };
+  trueFalseData?: {
+    correctAnswer?: boolean;
+  };
+  matchPairsData?: {
+    pairs: Array<{ left: CellContent; right: CellContent }>;
+  };
+  tableData?: {
+    rows: number;
+    cols: number;
+    cells: CellContent[][];
+  };
 }
 
 export interface QuestionHeading {
   id: string;
   title: string;
-  plannedQuestionCount: number;
+  plannedCount: number;
 }
 
 export interface PaperSection {
   id: string;
-  marks: 1 | 2 | 3 | 4;
+  title: string;
+  totalMarks: number;
+  marks: number;
+  headings: QuestionHeading[];
   questions: Question[];
-  plannedQuestionCount?: number;
-  headings?: QuestionHeading[]; // Multiple headings per section
 }
 
 export interface Paper {
   id: string;
   title: string;
+  subject: string;
+  date: string;
+  duration: string;
   totalMarks: number;
-  timeMinutes: number;
   sections: PaperSection[];
+  questions: Question[];
+  layoutMode: 'original' | 'cleaned';
+  timeMinutes: number;
+  board: string;
+  standard: string;
+  medium: string;
   createdAt: Date;
-  board: 'CBSE' | 'GSEB' | 'Both';
-  standard?: string;
-  medium: 'English' | 'Gujarati';
-  layoutMode?: 'original' | 'professional';
 }
 
 export const defaultProfile: Profile = {
-  teacherName: '',
-  instituteName: '',
-  preferredBoard: 'CBSE',
+  teacherName: 'Teacher',
+  instituteName: 'My Institute',
+  board: 'CBSE',
+  standard: 'Standard 10',
   medium: 'English',
+  logoUrl: null,
+  preferredBoard: 'CBSE',
+  defaultStandard: 'Standard 10',
+  schoolLogo: null,
 };
 
 export const starterQuestions: Question[] = [
   {
-    id: 'sq1',
-    text: 'What is the capital of India?',
-    marks: 1,
-    type: 'Short Answer',
-    source: 'starter',
+    id: 'q1',
+    text: 'What is the capital of France?',
     questionType: 'short-answer',
-  },
-  {
-    id: 'sq2',
-    text: 'Explain the process of photosynthesis.',
     marks: 2,
-    type: 'Short Answer',
-    source: 'starter',
-    questionType: 'short-answer',
+    type: 'Conceptual',
+    headingId: null,
+    imageAttachment: null,
   },
   {
-    id: 'sq3',
-    text: 'Describe the water cycle with a diagram.',
+    id: 'q2',
+    text: 'Solve: 2x + 5 = 15',
+    questionType: 'numerical',
     marks: 3,
-    type: 'Descriptive',
-    source: 'starter',
-    questionType: 'short-answer',
+    type: 'Numerical',
+    headingId: null,
+    imageAttachment: null,
   },
   {
-    id: 'sq4',
-    text: 'Write an essay on the importance of education in modern society.',
-    marks: 4,
-    type: 'Essay',
-    source: 'starter',
+    id: 'q3',
+    text: 'Explain the process of photosynthesis.',
     questionType: 'short-answer',
+    marks: 5,
+    type: 'Conceptual',
+    headingId: null,
+    imageAttachment: null,
   },
 ];
 
-export const samplePapers: Paper[] = [
-  {
-    id: 'paper1',
-    title: 'Science Unit Test - Chapter 1',
-    totalMarks: 25,
-    timeMinutes: 45,
-    sections: [],
-    createdAt: new Date('2026-02-08'),
-    board: 'CBSE',
-    standard: '10',
-    medium: 'English',
-    layoutMode: 'original',
-  },
-  {
-    id: 'paper2',
-    title: 'Mathematics Mid-term',
-    totalMarks: 50,
-    timeMinutes: 90,
-    sections: [],
-    createdAt: new Date('2026-02-05'),
-    board: 'GSEB',
-    standard: '9',
-    medium: 'English',
-    layoutMode: 'original',
-  },
-];
+export const samplePapers: Paper[] = [];
+

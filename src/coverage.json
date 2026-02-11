@@ -1,51 +1,121 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T06:24:37.090Z",
+  "generatedAt": "2026-02-11T15:31:11.834Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 7,
+    "implemented": 7,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Replace the current OCR “Offline Mode” placeholder flow with a real online OCR integration using a legal free-tier external OCR API (OCR.space) so that selecting an image/PDF and clicking “Extract Questions” performs actual text extraction and proceeds to the existing review/approve flow.",
+        "summary": "Update the app theme to match the uploaded screenshots: make the home-screen navigation drawer/menu background white (not purple) and lighten the purple used across the UI to match the screenshots exactly (apply globally to buttons, borders, highlights, accents, and selected nav item).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/ocr/ocrSpaceClient.ts",
-          "frontend/src/pages/ocr/OCRUploadWireframe.tsx"
+          "frontend/src/index.css",
+          "frontend/src/components/navigation/NavigationDrawer.tsx",
+          "frontend/src/components/layout/AppShell.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/lib/ocr/ocrSpaceClient.ts",
-          "frontend/src/pages/ocr/OCRUploadWireframe.tsx"
+          "frontend/src/index.css",
+          "frontend/src/components/navigation/NavigationDrawer.tsx",
+          "frontend/src/components/layout/AppShell.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Update the OCR session utility currently named/mock-behaving as a mock extractor so it supports storing sessions created from real OCR results (extracted text + parsed questions) while keeping the existing session load/clear/convert APIs used by the OCR review screen.",
+        "summary": "Fix table and match-pairs editing so users can click inside each cell/box and type independently without text being redirected to the main/top question text field.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/ocr/mockOcrExtractor.ts",
-          "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx"
+          "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "frontend/src/components/paper/PaperSurface.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx"
+          "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "frontend/src/components/paper/PaperSurface.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Ensure a consistent purple theme across the entire app (all pages and buttons) by verifying that primary/secondary/accent tokens and button variants visually render as purple consistently in both light and dark mode, without changing layout or features.",
+        "summary": "Add inline image insertion inside table cells and match-pairs boxes supporting both upload-from-device and paste-from-clipboard, while allowing text and images within the same cell/box and ensuring nothing overflows outside the cell/box boundaries.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/lib/editor/richCellContent.ts",
+          "frontend/src/components/editor/RichCellEditor.tsx",
+          "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "frontend/src/index.css"
+        ],
+        "matchedFiles": [
+          "frontend/src/lib/editor/richCellContent.ts",
+          "frontend/src/components/editor/RichCellEditor.tsx",
+          "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "frontend/src/index.css"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "For inserted images inside table/match-pairs cells, implement formatting controls: default size 5 × 5 cm (user adjustable), aspect ratio locked by default, alignment controls, and optional caption per image.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/lib/editor/richCellContent.ts",
+          "frontend/src/components/editor/RichCellEditor.tsx",
+          "frontend/src/components/paper/PaperRenderer.tsx",
+          "frontend/src/index.css"
+        ],
+        "matchedFiles": [
+          "frontend/src/lib/editor/richCellContent.ts",
+          "frontend/src/components/editor/RichCellEditor.tsx",
+          "frontend/src/components/paper/PaperRenderer.tsx",
+          "frontend/src/index.css"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Enforce table sizing rules: all columns must have equal width across the table; within each row, all cells must share the same height (row-based equal heights), while different rows may have different heights.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "frontend/src/components/paper/PaperRenderer.tsx",
+          "frontend/src/index.css"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "frontend/src/components/paper/PaperRenderer.tsx",
+          "frontend/src/index.css"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Ensure print-safe PDF rendering for tables/match-pairs containing inline images and captions, including proper wrapping/clipping behavior and predictable sizing for A4 print output.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/index.css",
-          "frontend/tailwind.config.js"
+          "frontend/src/components/paper/PaperSurface.tsx",
+          "frontend/src/pages/export/ExportPrintPreviewWireframe.tsx"
         ],
         "matchedFiles": [
           "frontend/src/index.css",
-          "frontend/tailwind.config.js"
+          "frontend/src/components/paper/PaperSurface.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Update stored paper/question data handling to persist the new richer table/match-pairs cell content (text + zero or more images with formatting metadata), including backward compatibility for existing saved papers in localStorage.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/state/mockData.ts",
+          "frontend/src/state/mockStore.tsx",
+          "frontend/src/lib/editor/richCellContent.ts",
+          "frontend/src/components/paper/PaperRenderer.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/state/mockData.ts",
+          "frontend/src/state/mockStore.tsx",
+          "frontend/src/lib/editor/richCellContent.ts",
+          "frontend/src/components/paper/PaperRenderer.tsx"
         ]
       }
     ]
@@ -55,11 +125,22 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/components/editor/RichCellEditor.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/navigation/NavigationDrawer.tsx",
+    "frontend/src/components/paper/PaperRenderer.tsx",
+    "frontend/src/components/paper/PaperSurface.tsx",
+    "frontend/src/components/paper/QuestionBlockEditor.tsx",
     "frontend/src/index.css",
-    "frontend/src/lib/ocr/ocrSpaceClient.ts",
+    "frontend/src/lib/editor/richCellContent.ts",
+    "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+    "frontend/src/pages/auth/LoginWireframe.tsx",
+    "frontend/src/pages/editor/QuestionEntryWireframe.tsx",
     "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx",
-    "frontend/src/pages/ocr/OCRUploadWireframe.tsx",
-    "frontend/tailwind.config.js",
+    "frontend/src/pages/questionBank/QuestionBankWireframe.tsx",
+    "frontend/src/pages/settings/SettingsWireframe.tsx",
+    "frontend/src/state/mockData.ts",
+    "frontend/src/state/mockStore.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -1,230 +1,171 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { useMockStore } from '../../state/mockStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Info, AlertCircle, FileText, CheckCircle2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Check, X, Edit2, AlertCircle, FileText } from 'lucide-react';
+import { Question } from '../../state/mockData';
 import { loadOCRSession, clearOCRSession, convertOCRQuestionsToPersonalQuestions } from '../../lib/ocr/mockOcrExtractor';
-import { useMockStore } from '../../state/mockStore';
 
 export function OCRReviewApproveWireframe() {
   const navigate = useNavigate();
-  const { addQuestions } = useMockStore();
-  const [questions, setQuestions] = useState<Array<{ id: string; text: string; approved: boolean; editing: boolean }>>([]);
-  const [sessionInfo, setSessionInfo] = useState<{ fileName: string; extractedAt: string; extractedText: string; extractionFailed: boolean } | null>(null);
+  const { addPersonalQuestion } = useMockStore();
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const session = loadOCRSession();
-    if (session) {
-      setQuestions(session.questions);
-      setSessionInfo({
-        fileName: session.fileName,
-        extractedAt: new Date(session.extractedAt).toLocaleString(),
-        extractedText: session.extractedText,
-        extractionFailed: session.extractionFailed || false,
-      });
+    if (!session || !session.questions) {
+      // No OCR session, redirect to upload
+      navigate({ to: '/ocr/upload' });
+      return;
     }
-  }, []);
 
-  const handleToggleApprove = (id: string) => {
-    setQuestions(questions.map((q) => (q.id === id ? { ...q, approved: !q.approved } : q)));
+    // Convert OCR questions to Question format
+    const convertedQuestions = convertOCRQuestionsToPersonalQuestions(session.questions);
+    setQuestions(convertedQuestions);
+    // Select all questions by default
+    setSelectedQuestions(new Set(convertedQuestions.map((q) => q.id)));
+  }, [navigate]);
+
+  const handleToggleQuestion = (id: string) => {
+    setSelectedQuestions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
   };
 
-  const handleEdit = (id: string) => {
-    setQuestions(questions.map((q) => (q.id === id ? { ...q, editing: !q.editing } : q)));
-  };
-
-  const handleTextChange = (id: string, text: string) => {
-    setQuestions(questions.map((q) => (q.id === id ? { ...q, text } : q)));
-  };
-
-  const handleInsert = () => {
-    const approvedQuestions = questions.filter((q) => q.approved);
-    if (approvedQuestions.length > 0) {
-      const personalQuestions = convertOCRQuestionsToPersonalQuestions(approvedQuestions);
-      addQuestions(personalQuestions);
-      clearOCRSession();
-      navigate({ to: '/question-bank', search: { tab: 'personal' } });
+  const handleApprove = () => {
+    const selectedQuestionsArray = questions.filter((q) => selectedQuestions.has(q.id));
+    
+    if (selectedQuestionsArray.length === 0) {
+      alert('Please select at least one question to approve');
+      return;
     }
-  };
 
-  const handleCancel = () => {
+    // Add selected questions to personal bank
+    selectedQuestionsArray.forEach((q) => addPersonalQuestion(q));
+
     clearOCRSession();
-    navigate({ to: '/home' });
+    alert(`${selectedQuestionsArray.length} question(s) added to your personal bank!`);
+    navigate({ to: '/question-bank', search: { tab: 'personal' } });
   };
 
-  const handleGoBackToUpload = () => {
+  const handleReject = () => {
     clearOCRSession();
     navigate({ to: '/ocr/upload' });
   };
 
-  // Show error if extraction failed or no text was provided
-  if (sessionInfo?.extractionFailed || (questions.length === 0 && sessionInfo)) {
+  if (questions.length === 0) {
     return (
       <div className="container mx-auto max-w-4xl p-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Review Extracted Questions</h1>
-          <p className="mt-2 text-muted-foreground">
-            No questions could be extracted from the OCR result
-          </p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              Extraction Failed
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert variant="destructive">
-              <AlertTitle>No Questions Found</AlertTitle>
-              <AlertDescription className="mt-2">
-                {sessionInfo?.extractionFailed 
-                  ? 'The OCR extraction did not return any text. This could be due to poor image quality, unsupported format, or API limits.'
-                  : 'Could not find any questions in the extracted text. Please check the format and try again with a clearer image.'}
-              </AlertDescription>
-            </Alert>
-
-            {sessionInfo?.extractedText && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-foreground">Extracted Text:</h3>
-                <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground max-h-40 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap font-mono text-xs">
-                    {sessionInfo.extractedText}
-                  </pre>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Tips for better OCR extraction:</p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Use clear, high-resolution images with good lighting</li>
-                <li>Ensure text is horizontal and not skewed</li>
-                <li>Format questions with numbers (1., 2., etc.)</li>
-                <li>End questions with a question mark (?)</li>
-                <li>Use bullet points or clear line breaks</li>
-                <li>Keep file size under 1MB</li>
-              </ul>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={handleGoBackToUpload}>
-                <FileText className="mr-2 h-4 w-4" />
-                Try Another File
-              </Button>
-              <Button onClick={handleCancel} variant="outline">
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Show error if no session found at all
-  if (!sessionInfo) {
-    return (
-      <div className="container mx-auto max-w-4xl p-4 py-8">
-        <Alert variant="destructive">
+        <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            No OCR session found. Please upload a document first.
-          </AlertDescription>
+          <AlertDescription>No questions found. Redirecting to upload...</AlertDescription>
         </Alert>
-        <div className="mt-4">
-          <Button onClick={() => navigate({ to: '/ocr/upload' })}>
-            Go to Upload
-          </Button>
-        </div>
       </div>
     );
   }
-
-  const approvedCount = questions.filter((q) => q.approved).length;
 
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Review Extracted Questions</h1>
+        <h1 className="text-3xl font-bold text-foreground">Review OCR Results</h1>
         <p className="mt-2 text-muted-foreground">
-          Review and approve questions extracted via OCR before adding to your question bank
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          From: {sessionInfo.fileName} • Extracted: {sessionInfo.extractedAt}
+          Review and approve the questions extracted from your document
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Extracted Questions ({questions.length})</CardTitle>
-          <CardDescription>
-            Check each question for accuracy. Edit if needed, then approve to insert into your question bank.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              Questions were automatically extracted using OCR technology. Review each one carefully and edit if needed.
-              Only approved questions will be added to your question bank.
-            </AlertDescription>
-          </Alert>
+      <Alert className="mb-6">
+        <FileText className="h-4 w-4" />
+        <AlertDescription>
+          {selectedQuestions.size} of {questions.length} question(s) selected. Review each question and approve to add
+          them to your personal bank.
+        </AlertDescription>
+      </Alert>
 
-          <div className="space-y-4">
-            {questions.map((question, index) => (
-              <Card key={question.id} className={question.approved ? 'border-primary' : ''}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <Checkbox
-                      checked={question.approved}
-                      onCheckedChange={() => handleToggleApprove(question.id)}
-                    />
-                    <div className="flex-1 space-y-2">
-                      <div className="text-xs text-muted-foreground">Question {index + 1}</div>
-                      {question.editing ? (
-                        <Textarea
-                          value={question.text}
-                          onChange={(e) => handleTextChange(question.id, e.target.value)}
-                          rows={3}
-                        />
-                      ) : (
-                        <p className="text-foreground">{question.text}</p>
-                      )}
+      <div className="space-y-4">
+        {questions.map((question, index) => {
+          const isSelected = selectedQuestions.has(question.id);
+          return (
+            <Card key={question.id} className={isSelected ? 'border-primary' : 'border-muted'}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">Question {index + 1}</CardTitle>
+                      <Badge variant={isSelected ? 'default' : 'outline'}>
+                        {isSelected ? 'Selected' : 'Not Selected'}
+                      </Badge>
+                      <Badge variant="secondary">{question.questionType}</Badge>
                     </div>
+                    <CardDescription className="mt-1">
+                      {question.marks} mark{question.marks > 1 ? 's' : ''} • {question.type}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="icon" title="Edit question">
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(question.id)}
+                      variant={isSelected ? 'default' : 'outline'}
+                      size="icon"
+                      onClick={() => handleToggleQuestion(question.id)}
+                      title={isSelected ? 'Deselect' : 'Select'}
                     >
-                      {question.editing ? 'Done' : 'Edit'}
+                      {isSelected ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap text-foreground">{question.text}</p>
+                {question.mcqOptions && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Options:</p>
+                    {question.mcqOptions.options.map((option, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-sm">
+                        <span className="font-medium">{String.fromCharCode(65 + idx)}.</span>
+                        <span>{option}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {question.fillInBlankData && question.fillInBlankData.blanks.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Answers:</p>
+                    {question.fillInBlankData.blanks.map((blank, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <span className="font-medium">{idx + 1}.</span>
+                        <span className="rounded bg-muted px-2 py-1">{blank}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-          <div className="flex items-center justify-between pt-4 border-t">
-            <div className="text-sm text-muted-foreground">
-              {approvedCount} of {questions.length} questions approved
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={handleCancel} variant="outline">
-                Cancel
-              </Button>
-              <Button onClick={handleInsert} disabled={approvedCount === 0}>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Insert Approved ({approvedCount})
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mt-6 flex gap-4">
+        <Button onClick={handleReject} variant="outline" className="flex-1">
+          <X className="mr-2 h-4 w-4" />
+          Reject & Start Over
+        </Button>
+        <Button onClick={handleApprove} className="flex-1" disabled={selectedQuestions.size === 0}>
+          <Check className="mr-2 h-4 w-4" />
+          Approve Selected ({selectedQuestions.size})
+        </Button>
+      </div>
     </div>
   );
 }
+

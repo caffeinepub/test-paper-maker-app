@@ -3,6 +3,17 @@ import { useMockStore } from '../../state/mockStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { FileText, Download, Edit, Trash2 } from 'lucide-react';
 
 export function GeneratedPapersWireframe() {
@@ -10,7 +21,6 @@ export function GeneratedPapersWireframe() {
   const { isInitialized, papers, deletePaper } = useMockStore();
 
   const handleEdit = (paperId: string) => {
-    // Only navigate if store is initialized
     if (!isInitialized) return;
     navigate({ to: `/editor/${paperId}` });
   };
@@ -20,9 +30,7 @@ export function GeneratedPapersWireframe() {
   };
 
   const handleDelete = (paperId: string) => {
-    if (confirm('Are you sure you want to delete this paper?')) {
-      deletePaper(paperId);
-    }
+    deletePaper(paperId);
   };
 
   const formatDate = (date: Date | string) => {
@@ -49,9 +57,7 @@ export function GeneratedPapersWireframe() {
           <CardContent className="flex flex-col items-center justify-center py-16">
             <FileText className="mb-4 h-16 w-16 text-muted-foreground" />
             <h3 className="mb-2 text-xl font-semibold text-foreground">No papers yet</h3>
-            <p className="mb-6 text-center text-muted-foreground">
-              Create your first exam paper to get started
-            </p>
+            <p className="mb-6 text-center text-muted-foreground">Create your first exam paper to get started</p>
             <Button onClick={() => navigate({ to: '/home' })}>Create New Paper</Button>
           </CardContent>
         </Card>
@@ -81,9 +87,7 @@ export function GeneratedPapersWireframe() {
                       <TableCell className="hidden sm:table-cell">{paper.board}</TableCell>
                       <TableCell className="hidden sm:table-cell">{paper.standard || '-'}</TableCell>
                       <TableCell>{paper.totalMarks}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {formatDate(paper.createdAt)}
-                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{formatDate(paper.createdAt)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -95,22 +99,31 @@ export function GeneratedPapersWireframe() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleExport(paper.id)}
-                            title="Export"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleExport(paper.id)} title="Export">
                             <Download className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(paper.id)}
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" title="Delete">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Paper</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{paper.title || 'Untitled Paper'}"? This action
+                                  cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(paper.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>

@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileImage, FileText, Info, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, FileImage, FileText, Info, Loader2, AlertCircle, CheckCircle2, Camera } from 'lucide-react';
 import { generateMockExtractedQuestions, saveOCRSession } from '../../lib/ocr/mockOcrExtractor';
 import { extractTextFromFile } from '../../lib/ocr/ocrSpaceClient';
 
@@ -15,6 +15,7 @@ export function OCRUploadWireframe() {
   const [extractionError, setExtractionError] = useState<{ message: string; details?: string } | null>(null);
   const [extractionProgress, setExtractionProgress] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (file: File | null) => {
     if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
@@ -87,6 +88,9 @@ export function OCRUploadWireframe() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
   };
 
   return (
@@ -100,7 +104,7 @@ export function OCRUploadWireframe() {
         <CardHeader>
           <CardTitle>Upload Document</CardTitle>
           <CardDescription>
-            Upload an image or PDF containing questions to extract automatically
+            Upload an image or PDF containing text to extract questions automatically
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -148,18 +152,35 @@ export function OCRUploadWireframe() {
                 <h3 className="mb-2 text-lg font-semibold text-foreground">
                   Drag & drop files here
                 </h3>
-                <p className="mb-4 text-sm text-muted-foreground">or click to browse</p>
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <FileImage className="mr-2 h-4 w-4" />
-                  Choose File
-                </Button>
+                <p className="mb-4 text-sm text-muted-foreground">or choose from options below</p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <FileImage className="mr-2 h-4 w-4" />
+                    Choose File
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => cameraInputRef.current?.click()}
+                  >
+                    <Camera className="mr-2 h-4 w-4" />
+                    Take Photo
+                  </Button>
+                </div>
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*,application/pdf"
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
                   onChange={handleFileInputChange}
                   className="hidden"
                 />

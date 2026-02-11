@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useMockStore } from '../../state/mockStore';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PaperSurface } from '../../components/paper/PaperSurface';
 import { FloatingRealPaperToolbox } from '../../components/editor/FloatingRealPaperToolbox';
@@ -11,8 +10,10 @@ import { PaperActionOverflowMenu } from '../../components/paper/PaperActionOverf
 import { AddQuestionHeadingDialog } from '../../components/editor/AddQuestionHeadingDialog';
 import { RealPaperToolboxSpotlight } from '../../components/editor/RealPaperToolboxSpotlight';
 import { useRealPaperToolboxSpotlight } from '../../hooks/useRealPaperToolboxSpotlight';
-import { AlertCircle, ArrowLeft, Save, Image as ImageIcon } from 'lucide-react';
-import { Question, QuestionType, QuestionHeading } from '../../state/mockData';
+import { useUndoRedo } from '../../hooks/useUndoRedo';
+import { useDebouncedEffect } from '../../hooks/useDebouncedEffect';
+import { AlertCircle, ArrowLeft, Undo, Redo, Image as ImageIcon } from 'lucide-react';
+import { Question, QuestionType, QuestionHeading, Paper } from '../../state/mockData';
 import { toast } from 'sonner';
 
 export function RealPaperEditorWireframe() {
@@ -30,21 +31,60 @@ export function RealPaperEditorWireframe() {
   const [autoFocusQuestionId, setAutoFocusQuestionId] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
+  const isInitialLoadRef = useRef(true);
+
+  const { state: paperState, setState: setPaperState, undo, redo, canUndo, canRedo, reset } = useUndoRedo<Paper | null>(
+    paper || null,
+    {
+      maxHistorySize: 50,
+    }
+  );
+
+  // Initialize state from paper
+  useEffect(() => {
+    if (paper && isInitialized) {
+      isInitialLoadRef.current = true;
+      reset(paper);
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 100);
+    }
+  }, [paper?.id, isInitialized]);
+
   // Initialize section and heading selection
   useEffect(() => {
-    if (paper && paper.sections.length > 0 && !selectedSectionId) {
-      const firstSection = paper.sections[0];
+    if (paperState && paperState.sections.length > 0 && !selectedSectionId) {
+      const firstSection = paperState.sections[0];
       setSelectedSectionId(firstSection.id);
       if (firstSection.headings && firstSection.headings.length > 0) {
         setSelectedHeadingId(firstSection.headings[0].id);
       }
     }
-  }, [paper, selectedSectionId]);
+  }, [paperState, selectedSectionId]);
+
+  // Debounced autosave
+  useDebouncedEffect(
+    () => {
+      if (!paperState || !isInitialized || isInitialLoadRef.current) {
+        return;
+      }
+
+      setAutoSaveStatus('saving');
+      updatePaper(paperId, paperState);
+
+      setTimeout(() => {
+        setAutoSaveStatus('saved');
+        setTimeout(() => setAutoSaveStatus('idle'), 2000);
+      }, 300);
+    },
+    500,
+    [paperState, isInitialized]
+  );
 
   // Update heading selection when section changes
   const handleSelectSection = (sectionId: string) => {
     setSelectedSectionId(sectionId);
-    const section = paper?.sections.find((s) => s.id === sectionId);
+    const section = paperState?.sections.find((s) => s.id === sectionId);
     if (section?.headings && section.headings.length > 0) {
       setSelectedHeadingId(section.headings[0].id);
     } else {
@@ -53,18 +93,19 @@ export function RealPaperEditorWireframe() {
   };
 
   const handleAddQuestion = (sectionId: string, headingId: string, questionType: QuestionType) => {
-    if (!paper) return;
+    if (!paperState) return;
 
-    const section = paper.sections.find((s) => s.id === sectionId);
+    const section = paperState.sections.find((s) => s.id === sectionId);
     if (!section) return;
 
     const newQuestion: Question = {
       id: `q-${Date.now()}`,
       text: '',
       marks: section.marks,
-      source: 'personal',
+      type: 'General',
       questionType,
       headingId: headingId,
+      imageAttachment: null,
       ...(questionType === 'mcq' && {
         mcqOptions: { options: ['', '', '', ''] },
       }),
@@ -82,132 +123,130 @@ export function RealPaperEditorWireframe() {
       }),
     };
 
-    const updatedSections = paper.sections.map((s) => {
-      if (s.id === sectionId) {
-        return { ...s, questions: [...s.questions, newQuestion] };
-      }
-      return s;
+    setPaperState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sections: prev.sections.map((s) => {
+          if (s.id === sectionId) {
+            return { ...s, questions: [...s.questions, newQuestion] };
+          }
+          return s;
+        }),
+      };
     });
 
-    setAutoSaveStatus('saving');
-    updatePaper(paperId, { sections: updatedSections });
-    setTimeout(() => setAutoSaveStatus('saved'), 500);
-    setTimeout(() => setAutoSaveStatus('idle'), 2000);
-
-    // Select and auto-focus the new question
+    // Set both selected and autofocus
     setSelectedQuestionId(newQuestion.id);
     setAutoFocusQuestionId(newQuestion.id);
+    toast.success('Question added');
+  };
+
+  const handleUpdateQuestion = (sectionId: string, questionId: string, updates: Partial<Question>) => {
+    setPaperState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sections: prev.sections.map((s) => {
+          if (s.id === sectionId) {
+            return {
+              ...s,
+              questions: s.questions.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
+            };
+          }
+          return s;
+        }),
+      };
+    });
+  };
+
+  const handleDeleteQuestion = (sectionId: string, questionId: string) => {
+    setPaperState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sections: prev.sections.map((s) => {
+          if (s.id === sectionId) {
+            return {
+              ...s,
+              questions: s.questions.filter((q) => q.id !== questionId),
+            };
+          }
+          return s;
+        }),
+      };
+    });
+    if (selectedQuestionId === questionId) {
+      setSelectedQuestionId(null);
+    }
+    toast.success('Question deleted');
+  };
+
+  const handleSelectQuestion = (questionId: string | null) => {
+    setSelectedQuestionId(questionId);
+    // Also trigger autofocus when clicking existing questions
+    if (questionId) {
+      setAutoFocusQuestionId(questionId);
+    }
+  };
+
+  const handleAutoFocusComplete = () => {
+    setAutoFocusQuestionId(null);
   };
 
   const handleAddHeading = (heading: Omit<QuestionHeading, 'id'>) => {
-    if (!paper || !selectedSectionId) return;
+    if (!selectedSectionId) return;
 
     const newHeading: QuestionHeading = {
       id: `heading-${Date.now()}`,
       ...heading,
     };
 
-    const updatedSections = paper.sections.map((s) => {
-      if (s.id === selectedSectionId) {
-        return {
-          ...s,
-          headings: [...(s.headings || []), newHeading],
-        };
-      }
-      return s;
+    setPaperState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sections: prev.sections.map((s) => {
+          if (s.id === selectedSectionId) {
+            return {
+              ...s,
+              headings: [...(s.headings || []), newHeading],
+            };
+          }
+          return s;
+        }),
+      };
     });
-
-    setAutoSaveStatus('saving');
-    updatePaper(paperId, { sections: updatedSections });
-    setTimeout(() => setAutoSaveStatus('saved'), 500);
-    setTimeout(() => setAutoSaveStatus('idle'), 2000);
 
     setSelectedHeadingId(newHeading.id);
-  };
-
-  const handleUpdateQuestion = (sectionId: string, questionId: string, updates: Partial<Question>) => {
-    if (!paper) return;
-
-    const updatedSections = paper.sections.map((section) => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          questions: section.questions.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
-        };
-      }
-      return section;
-    });
-
-    setAutoSaveStatus('saving');
-    updatePaper(paperId, { sections: updatedSections });
-    setTimeout(() => setAutoSaveStatus('saved'), 500);
-    setTimeout(() => setAutoSaveStatus('idle'), 2000);
-  };
-
-  const handleDeleteQuestion = (sectionId: string, questionId: string) => {
-    if (!paper) return;
-
-    const updatedSections = paper.sections.map((section) => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          questions: section.questions.filter((q) => q.id !== questionId),
-        };
-      }
-      return section;
-    });
-
-    updatePaper(paperId, { sections: updatedSections });
-    if (selectedQuestionId === questionId) {
-      setSelectedQuestionId(null);
-    }
+    setShowAddHeadingDialog(false);
+    toast.success('Heading added');
   };
 
   const handleInsertImage = () => {
-    if (!selectedQuestionId) {
-      toast.error('Please select a question first to insert an image');
-      return;
-    }
     imageInputRef.current?.click();
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !selectedQuestionId || !paper) return;
+    if (!file) return;
+
+    if (!selectedQuestionId || !selectedSectionId) {
+      toast.error('Please select a question first');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const imageData = event.target?.result as string;
-      
-      // Find the question and add the image attachment
-      const updatedSections = paper.sections.map((section) => {
-        return {
-          ...section,
-          questions: section.questions.map((q) => {
-            if (q.id === selectedQuestionId) {
-              return {
-                ...q,
-                imageAttachment: imageData,
-              };
-            }
-            return q;
-          }),
-        };
+      const base64 = event.target?.result as string;
+      handleUpdateQuestion(selectedSectionId, selectedQuestionId, {
+        imageAttachment: base64,
       });
-
-      setAutoSaveStatus('saving');
-      updatePaper(paperId, { sections: updatedSections });
-      setTimeout(() => setAutoSaveStatus('saved'), 500);
-      setTimeout(() => setAutoSaveStatus('idle'), 2000);
-      
       toast.success('Image attached to question');
     };
     reader.readAsDataURL(file);
-    
-    // Reset input
-    if (imageInputRef.current) {
-      imageInputRef.current.value = '';
-    }
+
+    e.target.value = '';
   };
 
   if (!isInitialized) {
@@ -218,12 +257,12 @@ export function RealPaperEditorWireframe() {
     );
   }
 
-  if (!paper) {
+  if (!paperState) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <Alert variant="destructive" className="max-w-md">
+      <div className="container mx-auto max-w-4xl p-4 py-8">
+        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Paper not found. Please return to the papers list.</AlertDescription>
+          <AlertDescription>Paper not found or has been deleted.</AlertDescription>
         </Alert>
       </div>
     );
@@ -232,27 +271,28 @@ export function RealPaperEditorWireframe() {
   return (
     <div className="relative min-h-screen bg-muted/30">
       {/* Fixed Top Bar */}
-      <header className="fixed top-0 left-0 right-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 print:hidden">
-        <div className="container flex h-14 items-center justify-between">
+      <div className="sticky top-0 z-10 border-b bg-background shadow-sm">
+        <div className="container mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/papers' })}>
+            <Button variant="ghost" size="icon" onClick={() => navigate({ to: `/editor/${paperId}` })}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-lg font-semibold">{paper.title}</h1>
+              <h1 className="text-lg font-semibold text-foreground">{paperState.title || 'Untitled Paper'}</h1>
               <p className="text-xs text-muted-foreground">
-                {autoSaveStatus === 'saving' && (
-                  <span className="flex items-center gap-1">
-                    <Save className="h-3 w-3 animate-pulse" />
-                    Saving...
-                  </span>
-                )}
-                {autoSaveStatus === 'saved' && <span className="text-green-600">Saved</span>}
-                {autoSaveStatus === 'idle' && <span>Real Paper Editor</span>}
+                {autoSaveStatus === 'saving' && 'Saving...'}
+                {autoSaveStatus === 'saved' && 'Saved'}
+                {autoSaveStatus === 'idle' && 'Real Paper Editor'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={undo} disabled={!canUndo} title="Undo">
+              <Undo className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={redo} disabled={!canRedo} title="Redo">
+              <Redo className="h-4 w-4" />
+            </Button>
             <Button variant="outline" size="sm" onClick={handleInsertImage}>
               <ImageIcon className="mr-2 h-4 w-4" />
               Insert Image
@@ -260,35 +300,26 @@ export function RealPaperEditorWireframe() {
             <PaperActionOverflowMenu paperId={paperId} />
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Hidden file input for image selection */}
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleImageSelect}
-        className="hidden"
-      />
-
-      {/* Main Content with top padding for fixed header */}
-      <main className="container py-8 pt-20">
+      {/* Paper Surface */}
+      <div className="container mx-auto max-w-4xl p-4 py-8">
         <PaperSurface
-          paper={paper}
-          isEditable={true}
+          paper={paperState}
+          isEditable
           selectedQuestionId={selectedQuestionId}
-          onSelectQuestion={setSelectedQuestionId}
+          onSelectQuestion={handleSelectQuestion}
           onUpdateQuestion={handleUpdateQuestion}
           onDeleteQuestion={handleDeleteQuestion}
           autoFocusQuestionId={autoFocusQuestionId}
-          onAutoFocusComplete={() => setAutoFocusQuestionId(null)}
+          onAutoFocusComplete={handleAutoFocusComplete}
         />
-      </main>
+      </div>
 
-      {/* Desktop Floating Toolbox */}
-      <div className="hidden md:block">
+      {/* Desktop Toolbox */}
+      <div className="hidden lg:block">
         <FloatingRealPaperToolbox
-          paper={paper}
+          paper={paperState}
           selectedSectionId={selectedSectionId}
           selectedHeadingId={selectedHeadingId}
           onSelectSection={handleSelectSection}
@@ -298,10 +329,10 @@ export function RealPaperEditorWireframe() {
         />
       </div>
 
-      {/* Mobile FAB Toolbox */}
-      <div className="md:hidden">
+      {/* Mobile Toolbox */}
+      <div className="lg:hidden">
         <MobileRealPaperFabToolbox
-          paper={paper}
+          paper={paperState}
           selectedSectionId={selectedSectionId}
           selectedHeadingId={selectedHeadingId}
           onSelectSection={handleSelectSection}
@@ -312,16 +343,29 @@ export function RealPaperEditorWireframe() {
       </div>
 
       {/* Add Heading Dialog */}
-      <AddQuestionHeadingDialog
-        open={showAddHeadingDialog}
-        onOpenChange={setShowAddHeadingDialog}
-        onAdd={handleAddHeading}
-      />
+      {showAddHeadingDialog && selectedSectionId && (
+        <AddQuestionHeadingDialog
+          open={showAddHeadingDialog}
+          onOpenChange={setShowAddHeadingDialog}
+          onAdd={handleAddHeading}
+        />
+      )}
 
       {/* Toolbox Spotlight */}
       {toolboxSpotlight.shouldShow && (
-        <RealPaperToolboxSpotlight onComplete={toolboxSpotlight.complete} />
+        <RealPaperToolboxSpotlight
+          onComplete={toolboxSpotlight.complete}
+        />
       )}
+
+      {/* Hidden file input */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageSelected}
+      />
     </div>
   );
 }

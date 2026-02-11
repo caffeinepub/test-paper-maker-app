@@ -98,8 +98,8 @@ export function FloatingRealPaperToolbox({
                       className="w-full justify-start"
                       onClick={() => onSelectSection(section.id)}
                     >
-                      Section {String.fromCharCode(65 + idx)} ({section.marks} mark
-                      {section.marks > 1 ? 's' : ''})
+                      Section {String.fromCharCode(65 + idx)} ({section.totalMarks} mark
+                      {section.totalMarks > 1 ? 's' : ''})
                     </Button>
                   ))}
                 </div>

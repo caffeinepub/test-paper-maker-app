@@ -43,20 +43,24 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-sidebar">
       {/* Header */}
-      <div className="border-b border-border p-4">
-        <h2 className="text-xl font-bold text-foreground">Test Paper Maker</h2>
-        <p className="text-sm text-muted-foreground">{profile.teacherName || 'Teacher'}</p>
+      <div className="border-b border-sidebar-border p-4 bg-sidebar">
+        <h2 className="text-xl font-bold text-sidebar-foreground">Test Paper Maker</h2>
+        <p className="text-sm text-sidebar-foreground/80">{profile.teacherName || 'Teacher'}</p>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 bg-sidebar">
         <Button
           data-coachmark="nav-create-paper"
           id="nav-create-paper"
           variant={isActive('/editor') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          className={
+            isActive('/editor')
+              ? 'w-full justify-start bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90'
+              : 'w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }
           onClick={handleCreatePaper}
           disabled={!isInitialized}
         >
@@ -65,8 +69,12 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
         </Button>
 
         <Button
-          variant={isActive('/home') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          variant="ghost"
+          className={
+            isActive('/home')
+              ? 'w-full justify-start bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }
           onClick={() => handleNavigation('/home')}
         >
           <Home className="mr-2 h-4 w-4" />
@@ -74,8 +82,12 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
         </Button>
 
         <Button
-          variant={isActive('/papers') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          variant="ghost"
+          className={
+            isActive('/papers')
+              ? 'w-full justify-start bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }
           onClick={() => handleNavigation('/papers')}
         >
           <FileText className="mr-2 h-4 w-4" />
@@ -83,8 +95,12 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
         </Button>
 
         <Button
-          variant={isActive('/draft') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          variant="ghost"
+          className={
+            isActive('/draft')
+              ? 'w-full justify-start bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }
           onClick={() => handleNavigation('/draft')}
         >
           <FilePenLine className="mr-2 h-4 w-4" />
@@ -94,8 +110,12 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
         <Button
           data-coachmark="nav-question-bank"
           id="nav-question-bank"
-          variant={isActive('/question-bank') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          variant="ghost"
+          className={
+            isActive('/question-bank')
+              ? 'w-full justify-start bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }
           onClick={() => handleNavigation('/question-bank')}
         >
           <BookOpen className="mr-2 h-4 w-4" />
@@ -103,8 +123,12 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
         </Button>
 
         <Button
-          variant={isActive('/ai') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          variant="ghost"
+          className={
+            isActive('/ai')
+              ? 'w-full justify-start bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }
           onClick={() => handleNavigation('/ai')}
         >
           <Sparkles className="mr-2 h-4 w-4" />
@@ -112,19 +136,27 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
         </Button>
 
         <Button
-          variant={isActive('/ocr/upload') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          variant="ghost"
+          className={
+            isActive('/ocr/upload')
+              ? 'w-full justify-start bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }
           onClick={() => handleNavigation('/ocr/upload')}
         >
           <Upload className="mr-2 h-4 w-4" />
           OCR Upload
         </Button>
 
-        <Separator className="my-4" />
+        <Separator className="my-2 bg-sidebar-border" />
 
         <Button
-          variant={isActive('/profile') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          variant="ghost"
+          className={
+            isActive('/profile')
+              ? 'w-full justify-start bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }
           onClick={() => handleNavigation('/profile')}
         >
           <User className="mr-2 h-4 w-4" />
@@ -132,9 +164,12 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
         </Button>
 
         <Button
-          data-coachmark="nav-settings"
-          variant={isActive('/settings') ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          variant="ghost"
+          className={
+            isActive('/settings')
+              ? 'w-full justify-start bg-sidebar-accent text-sidebar-accent-foreground'
+              : 'w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }
           onClick={() => handleNavigation('/settings')}
         >
           <Settings className="mr-2 h-4 w-4" />
@@ -143,12 +178,17 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-4">
-        <Button variant="ghost" className="w-full justify-start text-destructive" onClick={handleLogout}>
+      <div className="border-t border-sidebar-border p-4 bg-sidebar">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          onClick={handleLogout}
+        >
           <LogOut className="mr-2 h-4 w-4" />
-          Sign Out
+          Logout
         </Button>
       </div>
     </div>
   );
 }
+

@@ -1,43 +1,85 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T06:24:37.087Z",
-  "summary": "Diff adds a real OCR.space client and wires /ocr/upload to call it, plus updates global CSS tokens toward a purple theme. However, the OCR session utility (mockOcrExtractor) does not appear to be updated in the provided diff summary, and some implementation details (hardcoded API key, 1MB limit) were introduced without being requested.",
+  "generatedAt": "2026-02-11T15:31:11.830Z",
+  "summary": "Diff implements rich cell content utilities and editor components to support text+images in table/match-pairs cells, updates theme tokens for a white sidebar and lighter purple accents, and adds data normalization for backward compatibility. However, table sizing rules (equal column widths and row-based equal heights) and explicit print/PDF-safe layout controls are not evidenced in the provided diff summary. Several unrelated wireframe/feature updates (AI/OCR/undo-redo/etc.) also appear beyond the BuildRequest scope.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "Update the OCR session utility (currently named/mock-behaving as a mock extractor) to support storing sessions created from real OCR results (extracted text + parsed questions) while keeping the existing session load/clear/convert APIs used by the OCR review screen.",
-      "reason": "The diff shows OCRUploadWireframe still calling `generateMockExtractedQuestions` and saving via `saveOCRSession` from `../../lib/ocr/mockOcrExtractor`, and OCRReviewApproveWireframe still loading via `loadOCRSession` from the same module, but no changes to that session utility file are shown/mentioned in the diff summary. Therefore it is not evidenced that the session utility was updated to handle real OCR results while preserving existing APIs and localStorage behavior.",
+      "id": "REQ-5",
+      "requirement": "Enforce table sizing rules: all columns must have equal width across the table; within each row, all cells must share the same height (row-based equal heights), while different rows may have different heights.",
+      "reason": "The diff shows rich cell rendering/editing and theme updates, but does not show any table layout CSS/logic enforcing equal column widths and row-based equal heights in editor or print output. PaperRenderer changes shown focus on rendering rich content, not table sizing constraints.",
       "evidence": [
-        "frontend/src/pages/ocr/OCRUploadWireframe.tsx",
-        "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx"
+        "frontend/src/components/paper/PaperRenderer.tsx (truncated)",
+        "frontend/src/components/editor/RichCellEditor.tsx (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Ensure print-safe PDF rendering for tables/match-pairs containing inline images and captions, including proper wrapping/clipping behavior and predictable sizing for A4 print output; and no print-only UI controls appear in printed output.",
+      "reason": "While PaperSurface includes some print classes (e.g., print:max-w-none, print:shadow-none), the diff summary does not show explicit print CSS/rules for table/match-pairs cells to prevent overflow in print, nor evidence of hiding editor-only controls/toolbars specifically for print. The RichCellEditor file is truncated, so print-specific handling cannot be confirmed.",
+      "evidence": [
+        "frontend/src/components/paper/PaperSurface.tsx (truncated)",
+        "frontend/src/components/paper/PaperRenderer.tsx (truncated)",
+        "frontend/src/components/editor/RichCellEditor.tsx (truncated)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Hardcoded OCR.space API key embedded in frontend source (`FREE_API_KEY = 'K87899142388957'`).",
-      "reason": "BuildRequest requires using OCR.space over HTTPS but does not request committing an API key into the client code (and this is a security/config concern not specified).",
+      "description": "AI question generation/preferences workflow and related UI behaviors (generate/edit/select/add to bank/paper).",
+      "reason": "Not requested by any REQ; BuildRequest focuses on theme + table/match-pairs editing, inline images, sizing, print safety, and persistence.",
       "evidence": [
-        "frontend/src/lib/ocr/ocrSpaceClient.ts"
+        "frontend/src/pages/ai/AIPreferencesWireframe.tsx (truncated)"
       ]
     },
     {
-      "description": "Client-side enforcement of a 1MB max file size for the 'free tier'.",
-      "reason": "BuildRequest did not require imposing a 1MB limit; it only required supporting image/PDF selection and performing OCR, with clear errors on failure. Adding a strict size cap is an unrequested product constraint.",
+      "description": "OCR review/approve flow changes and UI for selecting extracted questions.",
+      "reason": "Not requested by any REQ; outside scope of table/match-pairs editor and theme changes.",
       "evidence": [
-        "frontend/src/lib/ocr/ocrSpaceClient.ts"
+        "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx (truncated)"
+      ]
+    },
+    {
+      "description": "Question entry autosave draft storage with undo/redo controls.",
+      "reason": "Not requested by any REQ; BuildRequest does not mention drafts, autosave, or undo/redo for question entry.",
+      "evidence": [
+        "frontend/src/pages/editor/QuestionEntryWireframe.tsx (truncated)"
+      ]
+    },
+    {
+      "description": "Multiple general navigation/app shell behaviors (storage error screen/recovery UI, coachmark overlay integration changes).",
+      "reason": "Not requested by any REQ; BuildRequest does not ask for initialization error UX or coachmark fixes.",
+      "evidence": [
+        "frontend/src/components/layout/AppShell.tsx (truncated)"
+      ]
+    },
+    {
+      "description": "Login screen behavior changes including Guest mode and messaging about cloud storage.",
+      "reason": "Not requested by any REQ; BuildRequest explicitly notes non-goals around new auth providers and focuses on editor/theme changes.",
+      "evidence": [
+        "frontend/src/pages/auth/LoginWireframe.tsx"
       ]
     }
   ],
   "confidence": 0.66,
   "changed_files": [
     "frontend-file-summaries.txt",
+    "frontend/src/components/editor/RichCellEditor.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/navigation/NavigationDrawer.tsx",
+    "frontend/src/components/paper/PaperRenderer.tsx",
+    "frontend/src/components/paper/PaperSurface.tsx",
+    "frontend/src/components/paper/QuestionBlockEditor.tsx",
     "frontend/src/index.css",
-    "frontend/src/lib/ocr/ocrSpaceClient.ts",
+    "frontend/src/lib/editor/richCellContent.ts",
+    "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+    "frontend/src/pages/auth/LoginWireframe.tsx",
+    "frontend/src/pages/editor/QuestionEntryWireframe.tsx",
     "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx",
-    "frontend/src/pages/ocr/OCRUploadWireframe.tsx",
-    "frontend/tailwind.config.js",
+    "frontend/src/pages/questionBank/QuestionBankWireframe.tsx",
+    "frontend/src/pages/settings/SettingsWireframe.tsx",
+    "frontend/src/state/mockData.ts",
+    "frontend/src/state/mockStore.tsx",
     "project_state.json"
   ]
 }

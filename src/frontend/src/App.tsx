@@ -16,6 +16,7 @@ import { OCRReviewApproveWireframe } from './pages/ocr/OCRReviewApproveWireframe
 import { SettingsWireframe } from './pages/settings/SettingsWireframe';
 import { DraftWireframe } from './pages/draft/DraftWireframe';
 import { MockStoreProvider } from './state/mockStore';
+import { AppErrorBoundary } from './components/errors/AppErrorBoundary';
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -139,8 +140,10 @@ declare module '@tanstack/react-router' {
 
 export default function App() {
   return (
-    <MockStoreProvider>
-      <RouterProvider router={router} />
-    </MockStoreProvider>
+    <AppErrorBoundary>
+      <MockStoreProvider>
+        <RouterProvider router={router} />
+      </MockStoreProvider>
+    </AppErrorBoundary>
   );
 }

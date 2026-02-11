@@ -33,6 +33,7 @@ export function CoachmarkOverlay({
   const calloutRef = useRef<HTMLDivElement>(null);
   const retryTimerRef = useRef<NodeJS.Timeout | null>(null);
   const observerRef = useRef<MutationObserver | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -42,7 +43,8 @@ export function CoachmarkOverlay({
     const updateTargetRect = () => {
       const target = document.querySelector(targetSelector);
       if (target && isMounted) {
-        setTargetRect(target.getBoundingClientRect());
+        const rect = target.getBoundingClientRect();
+        setTargetRect(rect);
         setShowFallback(false);
         setRetryCount(0);
         return true;
@@ -59,24 +61,44 @@ export function CoachmarkOverlay({
       }
     };
 
+    // Reset targetRect when selector changes
+    setTargetRect(null);
+    setRetryCount(0);
+    setShowFallback(false);
+
     // Initial attempt
     attemptUpdate();
 
     // Set up MutationObserver to watch for DOM changes
     observerRef.current = new MutationObserver(() => {
-      if (!targetRect && !showFallback) {
-        updateTargetRect();
+      if (isMounted) {
+        // Use requestAnimationFrame to throttle updates
+        if (rafRef.current) {
+          cancelAnimationFrame(rafRef.current);
+        }
+        rafRef.current = requestAnimationFrame(() => {
+          updateTargetRect();
+        });
       }
     });
 
     observerRef.current.observe(document.body, {
       childList: true,
       subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class'],
     });
 
-    // Listen to scroll and resize
+    // Listen to scroll and resize with throttling
     const handleUpdate = () => {
-      if (isMounted) updateTargetRect();
+      if (isMounted) {
+        if (rafRef.current) {
+          cancelAnimationFrame(rafRef.current);
+        }
+        rafRef.current = requestAnimationFrame(() => {
+          updateTargetRect();
+        });
+      }
     };
 
     window.addEventListener('resize', handleUpdate);
@@ -90,10 +112,13 @@ export function CoachmarkOverlay({
       if (observerRef.current) {
         observerRef.current.disconnect();
       }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
       window.removeEventListener('resize', handleUpdate);
       window.removeEventListener('scroll', handleUpdate, true);
     };
-  }, [targetSelector, retryCount, targetRect, showFallback]);
+  }, [targetSelector, retryCount]);
 
   useEffect(() => {
     if (calloutRef.current) {
@@ -152,7 +177,7 @@ export function CoachmarkOverlay({
     );
   }
 
-  const spotlightPadding = 8;
+  const spotlightPadding = 12;
   const spotlightX = targetRect.left - spotlightPadding;
   const spotlightY = targetRect.top - spotlightPadding;
   const spotlightWidth = targetRect.width + spotlightPadding * 2;
@@ -258,13 +283,51 @@ export function CoachmarkOverlay({
   const calloutPosition = getCalloutPosition();
 
   return (
-    <div className="fixed inset-0 z-[9999] print:hidden">
-      {/* Darkened backdrop with blur */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-
-      {/* Spotlight highlight */}
+    <div className="fixed inset-0 z-[9999] print:hidden pointer-events-none">
+      {/* Four blurred panels creating spotlight hole effect */}
+      {/* Top panel */}
       <div
-        className="absolute rounded-md border-2 border-dashed border-primary shadow-[0_0_0_4px_rgba(var(--primary-rgb),0.2)]"
+        className="absolute left-0 right-0 bg-black/60 backdrop-blur-sm"
+        style={{
+          top: 0,
+          height: `${Math.max(0, spotlightY)}px`,
+        }}
+      />
+      
+      {/* Bottom panel */}
+      <div
+        className="absolute left-0 right-0 bg-black/60 backdrop-blur-sm"
+        style={{
+          top: `${spotlightY + spotlightHeight}px`,
+          bottom: 0,
+        }}
+      />
+      
+      {/* Left panel */}
+      <div
+        className="absolute bg-black/60 backdrop-blur-sm"
+        style={{
+          top: `${spotlightY}px`,
+          left: 0,
+          width: `${Math.max(0, spotlightX)}px`,
+          height: `${spotlightHeight}px`,
+        }}
+      />
+      
+      {/* Right panel */}
+      <div
+        className="absolute bg-black/60 backdrop-blur-sm"
+        style={{
+          top: `${spotlightY}px`,
+          left: `${spotlightX + spotlightWidth}px`,
+          right: 0,
+          height: `${spotlightHeight}px`,
+        }}
+      />
+
+      {/* Spotlight highlight border with purple primary */}
+      <div
+        className="absolute rounded-md border-2 border-primary shadow-[0_0_0_4px_rgba(var(--primary-rgb),0.3),0_0_20px_rgba(var(--primary-rgb),0.4)]"
         style={{
           left: `${spotlightX}px`,
           top: `${spotlightY}px`,
@@ -274,11 +337,11 @@ export function CoachmarkOverlay({
         }}
       />
 
-      {/* Connector line with arrowhead */}
+      {/* Connector line with arrowhead - purple primary */}
       <svg className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%' }}>
         <defs>
           <marker
-            id="arrowhead"
+            id="arrowhead-primary"
             markerWidth="10"
             markerHeight="10"
             refX="9"
@@ -286,22 +349,22 @@ export function CoachmarkOverlay({
             orient="auto"
             markerUnits="strokeWidth"
           >
-            <path d="M0,0 L0,6 L9,3 z" fill="oklch(var(--primary))" />
+            <path d="M0,0 L0,6 L9,3 z" fill="hsl(var(--primary))" />
           </marker>
         </defs>
         <path
           d={getConnectorPath()}
-          stroke="oklch(var(--primary))"
+          stroke="hsl(var(--primary))"
           strokeWidth="2"
           fill="none"
-          markerEnd="url(#arrowhead)"
+          markerEnd="url(#arrowhead-primary)"
         />
       </svg>
 
-      {/* Callout card */}
+      {/* Callout card - enable pointer events */}
       <Card
         ref={calloutRef}
-        className="absolute w-80 max-w-[calc(100vw-32px)] shadow-2xl"
+        className="absolute w-80 max-w-[calc(100vw-32px)] shadow-2xl pointer-events-auto"
         style={{
           left: calloutPosition.left !== undefined ? `${calloutPosition.left}px` : undefined,
           top: calloutPosition.top !== undefined ? `${calloutPosition.top}px` : undefined,

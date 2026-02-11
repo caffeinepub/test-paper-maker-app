@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FloatingAIButton } from '../../components/ai/FloatingAIButton';
 import { getSectionInsertContext, clearSectionInsertContext } from '../../lib/editor/sectionInsertContext';
 import { BookOpen, Info } from 'lucide-react';
+import { Question } from '../../state/mockData';
 
 export function QuestionBankWireframe() {
   const navigate = useNavigate();
@@ -29,18 +30,20 @@ export function QuestionBankWireframe() {
     setInsertContext(getSectionInsertContext());
   }, []);
 
-  const handleUseQuestion = (questionText: string, marks: 1 | 2 | 3 | 4) => {
+  const handleUseQuestion = (questionText: string, marks: number) => {
     if (!insertContext) return;
 
     const paper = getPaperById(insertContext.paperId);
     if (!paper) return;
 
-    const newQuestion = {
+    const newQuestion: Question = {
       id: `q-${Date.now()}`,
       text: questionText,
       marks,
-      source: 'personal' as const,
-      questionType: 'short-answer' as const,
+      type: 'General',
+      questionType: 'short-answer',
+      headingId: null,
+      imageAttachment: null,
     };
 
     const updatedSections = paper.sections.map((s) => {
@@ -200,3 +203,4 @@ export function QuestionBankWireframe() {
     </div>
   );
 }
+
