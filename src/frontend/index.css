@@ -3,81 +3,162 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --radius: 0.625rem;
-        --background: 1 0 0;
-        --foreground: 0.145 0 0;
-        --card: 1 0 0;
-        --card-foreground: 0.145 0 0;
-        --popover: 1 0 0;
-        --popover-foreground: 0.145 0 0;
-        --primary: 0.205 0 0;
-        --primary-foreground: 0.985 0 0;
-        --secondary: 0.97 0 0;
-        --secondary-foreground: 0.205 0 0;
-        --muted: 0.97 0 0;
-        --muted-foreground: 0.556 0 0;
-        --accent: 0.97 0 0;
-        --accent-foreground: 0.205 0 0;
-        --destructive: 0.577 0.245 27.325;
-        --destructive-foreground: 0.985 0 0;
-        --border: 0.922 0 0;
-        --input: 0.922 0 0;
-        --ring: 0.708 0 0;
-        --chart-1: 0.646 0.222 41.116;
-        --chart-2: 0.6 0.118 184.704;
-        --chart-3: 0.398 0.07 227.392;
-        --chart-4: 0.828 0.189 84.429;
-        --chart-5: 0.769 0.188 70.08;
-        --sidebar: 0.985 0 0;
-        --sidebar-foreground: 0.145 0 0;
-        --sidebar-primary: 0.205 0 0;
-        --sidebar-primary-foreground: 0.985 0 0;
-        --sidebar-accent: 0.97 0 0;
-        --sidebar-accent-foreground: 0.205 0 0;
-        --sidebar-border: 0.922 0 0;
-        --sidebar-ring: 0.708 0 0;
-    }
+  :root {
+    /* Purple and white OKLCH color palette - Light mode */
+    --background: oklch(98% 0.01 280);
+    --foreground: oklch(20% 0.02 280);
+    --card: oklch(100% 0 0);
+    --card-foreground: oklch(20% 0.02 280);
+    --popover: oklch(100% 0 0);
+    --popover-foreground: oklch(20% 0.02 280);
+    --primary: oklch(55% 0.22 280);
+    --primary-foreground: oklch(98% 0.01 280);
+    --secondary: oklch(90% 0.05 280);
+    --secondary-foreground: oklch(25% 0.02 280);
+    --muted: oklch(94% 0.02 280);
+    --muted-foreground: oklch(50% 0.02 280);
+    --accent: oklch(92% 0.04 280);
+    --accent-foreground: oklch(25% 0.02 280);
+    --destructive: oklch(55% 0.22 25);
+    --destructive-foreground: oklch(98% 0.01 25);
+    --border: oklch(88% 0.02 280);
+    --input: oklch(88% 0.02 280);
+    --ring: oklch(55% 0.22 280);
+    --radius: 0.5rem;
+    --success: oklch(60% 0.18 145);
+    --warning: oklch(70% 0.18 70);
+    --sidebar: oklch(98% 0.01 280);
+    --sidebar-foreground: oklch(20% 0.02 280);
+    --sidebar-primary: oklch(55% 0.22 280);
+    --sidebar-primary-foreground: oklch(98% 0.01 280);
+    --sidebar-accent: oklch(92% 0.04 280);
+    --sidebar-accent-foreground: oklch(25% 0.02 280);
+    --sidebar-border: oklch(88% 0.02 280);
+    --sidebar-ring: oklch(55% 0.22 280);
+    --chart-1: oklch(60% 0.20 25);
+    --chart-2: oklch(55% 0.15 200);
+    --chart-3: oklch(50% 0.12 280);
+    --chart-4: oklch(65% 0.18 140);
+    --chart-5: oklch(70% 0.16 60);
+  }
 
-    .dark {
-        --background: 0.145 0 0;
-        --foreground: 0.985 0 0;
-        --card: 0.205 0 0;
-        --card-foreground: 0.985 0 0;
-        --popover: 0.269 0 0;
-        --popover-foreground: 0.985 0 0;
-        --primary: 0.922 0 0;
-        --primary-foreground: 0.205 0 0;
-        --secondary: 0.269 0 0;
-        --secondary-foreground: 0.985 0 0;
-        --muted: 0.269 0 0;
-        --muted-foreground: 0.708 0 0;
-        --accent: 0.371 0 0;
-        --accent-foreground: 0.985 0 0;
-        --destructive: 0.704 0.191 22.216;
-        --destructive-foreground: 0.205 0 0;
-        --border: 1 0 0 / 10%;
-        --input: 1 0 0 / 15%;
-        --ring: 0.556 0 0;
-        --chart-1: 0.488 0.243 264.376;
-        --chart-2: 0.696 0.17 162.48;
-        --chart-3: 0.769 0.188 70.08;
-        --chart-4: 0.627 0.265 303.9;
-        --chart-5: 0.645 0.246 16.439;
-        --sidebar: 0.205 0 0;
-        --sidebar-foreground: 0.985 0 0;
-        --sidebar-primary: 0.488 0.243 264.376;
-        --sidebar-primary-foreground: 0.985 0 0;
-        --sidebar-accent: 0.269 0 0;
-        --sidebar-accent-foreground: 0.985 0 0;
-        --sidebar-border: 1 0 0 / 10%;
-        --sidebar-ring: 0.439 0 0;
-    }
+  .dark {
+    /* Purple OKLCH color palette - Dark mode */
+    --background: oklch(15% 0.02 280);
+    --foreground: oklch(95% 0.01 280);
+    --card: oklch(18% 0.02 280);
+    --card-foreground: oklch(95% 0.01 280);
+    --popover: oklch(18% 0.02 280);
+    --popover-foreground: oklch(95% 0.01 280);
+    --primary: oklch(65% 0.22 280);
+    --primary-foreground: oklch(15% 0.02 280);
+    --secondary: oklch(25% 0.05 280);
+    --secondary-foreground: oklch(95% 0.01 280);
+    --muted: oklch(25% 0.02 280);
+    --muted-foreground: oklch(65% 0.02 280);
+    --accent: oklch(28% 0.04 280);
+    --accent-foreground: oklch(95% 0.01 280);
+    --destructive: oklch(55% 0.22 25);
+    --destructive-foreground: oklch(98% 0.01 25);
+    --border: oklch(30% 0.02 280);
+    --input: oklch(30% 0.02 280);
+    --ring: oklch(65% 0.22 280);
+    --success: oklch(60% 0.18 145);
+    --warning: oklch(70% 0.18 70);
+    --sidebar: oklch(15% 0.02 280);
+    --sidebar-foreground: oklch(95% 0.01 280);
+    --sidebar-primary: oklch(65% 0.22 280);
+    --sidebar-primary-foreground: oklch(15% 0.02 280);
+    --sidebar-accent: oklch(28% 0.04 280);
+    --sidebar-accent-foreground: oklch(95% 0.01 280);
+    --sidebar-border: oklch(30% 0.02 280);
+    --sidebar-ring: oklch(65% 0.22 280);
+    --chart-1: oklch(60% 0.20 25);
+    --chart-2: oklch(55% 0.15 200);
+    --chart-3: oklch(50% 0.12 280);
+    --chart-4: oklch(65% 0.18 140);
+    --chart-5: oklch(70% 0.16 60);
+  }
+}
 
-    * {
-        @apply border-border;
-    }
-    body {
-        @apply bg-background text-foreground;
-    }
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Paper surface styles - using theme tokens */
+.paper-surface {
+  @apply bg-card border-2 border-border;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: visible;
+}
+
+/* Print styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  .paper-surface {
+    box-shadow: none;
+    border: 2px solid black;
+    page-break-after: always;
+    overflow: visible !important;
+  }
+
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Prevent page breaks inside questions and tables */
+  .question-block,
+  table {
+    page-break-inside: avoid;
+  }
+
+  /* Force visibility and wrapping for match-pairs and tables in print */
+  .match-pairs-container,
+  .table-container {
+    overflow: visible !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure table cells wrap text properly */
+  table td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal !important;
+  }
+
+  /* Match pairs should not overflow */
+  .match-pairs-container > div {
+    overflow: visible !important;
+  }
+}
+
+/* Question and table layout */
+.question-block {
+  page-break-inside: avoid;
+}
+
+table {
+  page-break-inside: avoid;
+  table-layout: fixed;
+}
+
+/* Ensure proper text wrapping in all contexts */
+.break-words {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }

@@ -1,4 +1,5 @@
 import { Question } from '../../state/mockData';
+import { parseQuestionsFromText, ParsedQuestion } from './extractedTextQuestionParser';
 
 interface ExtractedOCRSession {
   sessionId: string;
@@ -6,6 +7,8 @@ interface ExtractedOCRSession {
   fileType: string;
   fileSize: number;
   extractedAt: string;
+  extractedText: string;
+  extractionFailed: boolean;
   questions: Array<{
     id: string;
     text: string;
@@ -16,35 +19,43 @@ interface ExtractedOCRSession {
 
 const STORAGE_KEY = 'ocr-extraction-session';
 
-export function generateMockExtractedQuestions(file: File): ExtractedOCRSession {
-  // Generate deterministic questions based on file metadata
-  const seed = file.name.length + file.size + file.lastModified;
-  const questionCount = 3 + (seed % 5); // 3-7 questions
+export function generateMockExtractedQuestions(file: File, extractedText?: string): ExtractedOCRSession {
+  const sessionId = `session-${Date.now()}`;
+  const extractedAt = new Date().toISOString();
 
-  const sampleQuestions = [
-    'What is the capital of France?',
-    'Explain the process of photosynthesis.',
-    'Calculate the area of a circle with radius 5cm.',
-    'Define the term "democracy".',
-    'List three renewable energy sources.',
-    'What is the chemical formula for water?',
-    'Describe the water cycle.',
-    'What are the three states of matter?',
-  ];
+  // If no extracted text provided, mark as extraction failed
+  if (!extractedText || extractedText.trim().length === 0) {
+    return {
+      sessionId,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      extractedAt,
+      extractedText: '',
+      extractionFailed: true,
+      questions: [],
+    };
+  }
 
-  const questions = Array.from({ length: questionCount }, (_, idx) => ({
+  // Parse questions from the extracted text
+  const parsedQuestions = parseQuestionsFromText(extractedText);
+
+  // Convert parsed questions to OCR session format
+  const questions = parsedQuestions.map((pq, idx) => ({
     id: `ocr-${Date.now()}-${idx}`,
-    text: sampleQuestions[idx % sampleQuestions.length] || `Sample question ${idx + 1} from ${file.name}`,
+    text: pq.text,
     approved: false,
     editing: false,
   }));
 
   const session: ExtractedOCRSession = {
-    sessionId: `session-${Date.now()}`,
+    sessionId,
     fileName: file.name,
     fileType: file.type,
     fileSize: file.size,
-    extractedAt: new Date().toISOString(),
+    extractedAt,
+    extractedText,
+    extractionFailed: false,
     questions,
   };
 

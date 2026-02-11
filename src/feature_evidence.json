@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-restore-the-app-s-previous-purple-and-white-color-theme-across-all-screens-by-reverting-any-recent-theme-token-changes-and-ensuring-the-ui-consistently-uses-the-purple-primary-accent-with-white-light-surfaces-and-appropriate-dark-mode-equivalents",
-      "featureTitle": "Restore the app’s previous purple-and-white color theme across all screens by reverting any recent theme/token changes and ensuring the UI consistently uses the purple primary accent with white/light surfaces (and appropriate dark-mode equivalents).",
+      "featureId": "feature-replace-the-current-ocr-offline-mode-placeholder-flow-with-a-real-online-ocr-integration-using-a-legal-free-tier-external-ocr-api-ocr-space-so-that-selecting-an-image-pdf-and-clicking-extract-questions-performs-actual-text-extraction-and-proceeds-to-the-existing-review-approve-flow",
+      "featureTitle": "Replace the current OCR “Offline Mode” placeholder flow with a real online OCR integration using a legal free-tier external OCR API (OCR.space) so that selecting an image/PDF and clicking “Extract Questions” performs actual text extraction and proceeds to the existing review/approve flow.",
       "files": [
-        "frontend/src/index.css"
+        "frontend/src/lib/ocr/ocrSpaceClient.ts",
+        "frontend/src/pages/ocr/OCRUploadWireframe.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -20,12 +21,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-the-app-s-draft-option-screen-so-it-no-longer-renders-an-empty-blank-page-and-instead-reliably-shows-meaningful-content-or-a-clear-empty-state-message-in-english-when-there-is-no-draft-data-to-display",
-      "featureTitle": "Fix the app’s “Draft” option/screen so it no longer renders an empty/blank page and instead reliably shows meaningful content or a clear empty-state message (in English) when there is no draft data to display.",
+      "featureId": "feature-update-the-ocr-session-utility-currently-named-mock-behaving-as-a-mock-extractor-so-it-supports-storing-sessions-created-from-real-ocr-results-extracted-text-parsed-questions-while-keeping-the-existing-session-load-clear-convert-apis-used-by-the-ocr-review-screen",
+      "featureTitle": "Update the OCR session utility currently named/mock-behaving as a mock extractor so it supports storing sessions created from real OCR results (extracted text + parsed questions) while keeping the existing session load/clear/convert APIs used by the OCR review screen.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/navigation/NavigationDrawer.tsx",
-        "frontend/src/pages/draft/DraftWireframe.tsx"
+        "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -36,6 +35,25 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-a-consistent-purple-theme-across-the-entire-app-all-pages-and-buttons-by-verifying-that-primary-secondary-accent-tokens-and-button-variants-visually-render-as-purple-consistently-in-both-light-and-dark-mode-without-changing-layout-or-features",
+      "featureTitle": "Ensure a consistent purple theme across the entire app (all pages and buttons) by verifying that primary/secondary/accent tokens and button variants visually render as purple consistently in both light and dark mode, without changing layout or features.",
+      "files": [
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

@@ -1,27 +1,37 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Caffeine AI app: restore previous purple/white theme and fix Caffeine builder Draft tab showing blank/empty screen.",
-  "architectural_notes": [],
+  "summary": "Restore and maintain the full previous app (v18), updating only the OCR to a real online OCR integration and applying a purple color theme across all pages/buttons without changing other screens/features.",
+  "architectural_notes": [
+    "Keep existing v18 app screens/features unchanged; only modify OCR implementation and global theme styling.",
+    "Real OCR requires calling an external OCR API with a free-tier quota (monthly request limits may apply)."
+  ],
   "known_issues": [
-    "Theme color changed unexpectedly (purple/white theme not applied).",
-    "Caffeine builder Draft tab loads blank/empty."
+    "Current OCR is not working and shows an offline-mode message instead of performing real text extraction."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-restore-the-app-s-previous-purple-and-white-color-theme-across-all-screens-by-reverting-any-recent-theme-token-changes-and-ensuring-the-ui-consistently-uses-the-purple-primary-accent-with-white-light-surfaces-and-appropriate-dark-mode-equivalents",
-      "title": "Restore the app’s previous purple-and-white color theme across all screens by reverting any recent theme/token changes and ensuring the UI consistently uses the purple primary accent with white/light surfaces (and appropriate dark-mode equivalents).",
+      "id": "feature-replace-the-current-ocr-offline-mode-placeholder-flow-with-a-real-online-ocr-integration-using-a-legal-free-tier-external-ocr-api-ocr-space-so-that-selecting-an-image-pdf-and-clicking-extract-questions-performs-actual-text-extraction-and-proceeds-to-the-existing-review-approve-flow",
+      "title": "Replace the current OCR “Offline Mode” placeholder flow with a real online OCR integration using a legal free-tier external OCR API (OCR.space) so that selecting an image/PDF and clicking “Extract Questions” performs actual text extraction and proceeds to the existing review/approve flow.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-the-app-s-draft-option-screen-so-it-no-longer-renders-an-empty-blank-page-and-instead-reliably-shows-meaningful-content-or-a-clear-empty-state-message-in-english-when-there-is-no-draft-data-to-display",
-      "title": "Fix the app’s “Draft” option/screen so it no longer renders an empty/blank page and instead reliably shows meaningful content or a clear empty-state message (in English) when there is no draft data to display.",
+      "id": "feature-update-the-ocr-session-utility-currently-named-mock-behaving-as-a-mock-extractor-so-it-supports-storing-sessions-created-from-real-ocr-results-extracted-text-parsed-questions-while-keeping-the-existing-session-load-clear-convert-apis-used-by-the-ocr-review-screen",
+      "title": "Update the OCR session utility currently named/mock-behaving as a mock extractor so it supports storing sessions created from real OCR results (extracted text + parsed questions) while keeping the existing session load/clear/convert APIs used by the OCR review screen.",
       "reqIds": [
         "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-a-consistent-purple-theme-across-the-entire-app-all-pages-and-buttons-by-verifying-that-primary-secondary-accent-tokens-and-button-variants-visually-render-as-purple-consistently-in-both-light-and-dark-mode-without-changing-layout-or-features",
+      "title": "Ensure a consistent purple theme across the entire app (all pages and buttons) by verifying that primary/secondary/accent tokens and button variants visually render as purple consistently in both light and dark mode, without changing layout or features.",
+      "reqIds": [
+        "REQ-3"
       ],
       "version": 1
     }
@@ -29,18 +39,19 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Restore the app’s previous purple + white theme (revert recent color change).",
+      "summary": "Integrate real OCR using a legal free-tier external OCR API (e.g., OCR.space) via REST, replacing the current offline placeholder behavior.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Fix Caffeine builder’s Draft tab showing an empty/blank screen.",
+      "summary": "Apply a purple color theme across the entire app (all pages and buttons) without changing other UI/screens/features.",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Caffeine AI",
+  "gameProjectType": "none",
+  "projectName": "Restore working real OCR (OCR.space) while keeping v18 app unchanged + ensure purple theme everywhere",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

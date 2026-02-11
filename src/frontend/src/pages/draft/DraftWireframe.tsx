@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { FileText, AlertCircle, RefreshCw } from 'lucide-react';
+import { safeGetItem, isStorageAvailable, getStorageError } from '../../lib/storage/safeStorage';
 
 interface DraftItem {
   id: string;
@@ -22,9 +23,17 @@ export function DraftWireframe() {
     setIsLoading(true);
     setError(null);
 
+    // Check storage availability first
+    if (!isStorageAvailable()) {
+      const storageError = getStorageError() || 'Storage is not available';
+      setError(`Cannot access storage: ${storageError}`);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Attempt to load drafts from localStorage
-      const storedDrafts = localStorage.getItem('app-drafts');
+      const storedDrafts = safeGetItem('app-drafts');
       
       if (storedDrafts) {
         const parsed = JSON.parse(storedDrafts);
@@ -34,7 +43,7 @@ export function DraftWireframe() {
       }
     } catch (err) {
       console.error('Failed to load drafts:', err);
-      setError('Failed to load drafts. Please try again.');
+      setError('Failed to load drafts. Storage may be blocked or corrupted.');
     } finally {
       setIsLoading(false);
     }
@@ -60,17 +69,29 @@ export function DraftWireframe() {
   if (error) {
     return (
       <div className="container mx-auto max-w-4xl p-6">
-        <Card>
+        <Card className="border-border">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <AlertCircle className="h-5 w-5 text-destructive" />
               Error Loading Drafts
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertTitle>Storage Access Error</AlertTitle>
+              <AlertDescription className="mt-2">
+                {error}
+              </AlertDescription>
             </Alert>
+            <div className="space-y-2 text-sm text-muted-foreground mb-4">
+              <p>To fix this issue:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Check your browser's privacy settings</li>
+                <li>Disable private/incognito mode</li>
+                <li>Allow cookies and site data for this site</li>
+                <li>Clear browser cache and reload</li>
+              </ul>
+            </div>
             <div className="flex gap-2">
               <Button onClick={loadDrafts} variant="outline">
                 <RefreshCw className="mr-2 h-4 w-4" />
@@ -96,10 +117,10 @@ export function DraftWireframe() {
       </div>
 
       {drafts.length === 0 ? (
-        <Card>
+        <Card className="border-border">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-            <CardTitle className="mb-2">No Drafts Yet</CardTitle>
+            <CardTitle className="mb-2 text-foreground">No Drafts Yet</CardTitle>
             <CardDescription className="text-center mb-6 max-w-md">
               You don't have any saved drafts. Start creating a new test paper or add questions to your question bank.
             </CardDescription>
@@ -116,12 +137,12 @@ export function DraftWireframe() {
       ) : (
         <div className="grid gap-4">
           {drafts.map((draft) => (
-            <Card key={draft.id} className="hover:border-primary transition-colors cursor-pointer">
+            <Card key={draft.id} className="hover:border-primary transition-colors cursor-pointer border-border">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-foreground">
+                      <FileText className="h-5 w-5 text-primary" />
                       {draft.title}
                     </CardTitle>
                     <CardDescription className="mt-1">

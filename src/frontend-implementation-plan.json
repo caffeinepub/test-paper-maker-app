@@ -1,57 +1,70 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Restore purple/white theme and fix Draft screen blank state",
+  "title": "Restore real OCR.space extraction flow and enforce consistent purple theme (v18 app unchanged otherwise)",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Restore the prior purple primary accent with white/light surfaces (and accessible dark-mode equivalents) via theme token and global-style fixes.",
+      "summary": "Replace the OCR upload offline placeholder with a real OCR.space HTTPS extraction flow and continue into existing /ocr/review parsing + approval UI.",
       "acceptanceCriteria": [
-        "In light mode, primary accents (buttons, active nav items, highlights) render in the purple theme and primary surfaces render with a white/very-light background consistent with the prior look.",
-        "In dark mode, contrast remains accessible and the purple accent remains the primary highlight color.",
-        "No major UI surfaces/components rely on hard-coded colors that override the theme tokens (e.g., background/foreground/primary), preventing the theme from appearing inconsistent page-to-page."
+        "On /ocr/upload, the app can extract text from a user-selected supported file (image/PDF) via OCR.space over HTTPS (no manual “paste text” requirement to proceed).",
+        "The “Offline Mode: This app cannot perform real OCR extraction…” messaging is removed/replaced with accurate user-facing copy describing the real OCR process.",
+        "When OCR extraction succeeds, the extracted text is saved to the OCR session storage and the user is navigated to /ocr/review with parsed questions populated (using the existing text-to-questions parsing logic).",
+        "When OCR extraction fails (network/API error, unsupported file, quota exceeded), the user sees a clear error message and can retry or choose a different file without the rest of the app breaking.",
+        "No other routes/screens/features outside the OCR flow are removed or altered."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Revert/adjust global theme tokens to ensure a consistent purple primary and white/light surfaces in light mode, with accessible dark-mode equivalents. Also replace hard-coded surface colors in global classes (e.g., .paper-surface background/border/shadow) to use theme tokens instead of fixed values, preventing page-to-page inconsistency. (Use shadcn-ui token conventions already in the app; verify the component's usage instructions before implementing.)"
+          "path": "frontend/src/lib/ocr/ocrSpaceClient.ts",
+          "operation": "create",
+          "description": "Add a small OCR.space client wrapper that accepts an image/PDF File, performs HTTPS multipart upload to OCR.space, and returns extracted text plus any user-displayable error details (handle common failure cases like network errors, bad file types, and quota/limit responses)."
         },
         {
-          "path": "frontend/tailwind.config.js",
+          "path": "frontend/src/pages/ocr/OCRUploadWireframe.tsx",
           "operation": "modify",
-          "description": "Confirm Tailwind color mappings consistently reference the global theme tokens (background/foreground/primary/etc.) so shadcn-ui-based components render purple accents and white/light surfaces across screens in light/dark modes. Verify no recent token mapping changes introduced non-purple primaries or inconsistent surface colors. (Verify the component's usage instructions before implementing.)"
-        },
-        {
-          "path": "frontend/src/components/layout/AppShell.tsx",
-          "operation": "modify",
-          "description": "Audit/adjust any top-level layout surface classes to ensure app chrome (sidebar/header/background) uses theme token utilities (bg-background, bg-card, border-border, text-foreground) without hard-coded overrides that could break the restored purple/white look. (Verify the component's usage instructions before implementing.)"
+          "description": "Replace the manual “paste text”/mock extraction flow with a real OCR.space extraction flow: validate supported file types, call the new OCR.space client, show loading/progress UI, show clear retryable errors, and on success save the session and navigate to /ocr/review. Use existing shadcn-ui components (Button, Alert, Card, Textarea/Label where still needed for display) for consistent UI; verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Ensure the Draft option routes to a non-blank screen with a clear empty state and visible error handling with a retry/navigation action.",
+      "summary": "Update the OCR session utility to store sessions created from real OCR results while preserving existing session load/clear/convert APIs used by /ocr/review.",
       "acceptanceCriteria": [
-        "Navigating to the “Draft” option no longer results in a blank/empty screen (no missing content area).",
-        "If there is no data to show, the screen renders a visible empty state (title + short guidance text) rather than appearing broken.",
-        "If an error occurs while loading draft data, the screen renders a visible error state and a retry or navigation action instead of staying blank."
+        "The OCR review page (/ocr/review) continues to work without route changes and can render questions originating from real OCR extraction.",
+        "Session persistence still uses the existing localStorage key and supports clear/load behavior so cancel/back flows work as before.",
+        "Approved questions can still be inserted into the personal question bank exactly as before."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/draft/DraftWireframe.tsx",
-          "operation": "create",
-          "description": "Create a Draft screen that always renders meaningful content: (1) a title/header, (2) an English empty-state when no drafts exist, and (3) an English error-state with a retry action if loading/parsing draft data fails (e.g., localStorage read failure). Use shadcn-ui building blocks (e.g., Card/Alert/Button) for consistent styling. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/lib/ocr/mockOcrExtractor.ts",
+          "operation": "modify",
+          "description": "Refactor the OCR session utility so it represents real OCR sessions (extractedText + parsed questions) while keeping the same localStorage key and the same exported APIs used by /ocr/review (loadOCRSession, clearOCRSession, convertOCRQuestionsToPersonalQuestions, and save behavior). Keep any legacy/mock-named exports working (as aliases if needed) so existing imports continue to work without changing non-OCR features."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx",
           "operation": "modify",
-          "description": "Wire the Draft screen into the router so navigating to the Draft option loads the DraftWireframe component (no blank route). Verify the component's usage instructions before implementing."
+          "description": "Adjust copy/error handling to reflect real OCR extraction (not manual pasted text), while continuing to load the session via the existing session utility and render/approve/edit/insert questions exactly as before. Use existing shadcn-ui components (Alert, Card, Button, Checkbox, Textarea) for messaging consistency; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Ensure purple theme tokens and button/active-state styling render consistently across the app in light and dark mode without layout/feature changes.",
+      "acceptanceCriteria": [
+        "Primary actions (default buttons/active states) visibly use the purple primary color across all pages, including navigation and key CTAs.",
+        "Theme is consistent in both light and dark mode (no pages/components falling back to non-purple default styling).",
+        "No UI screens are removed or restructured as part of theme adjustments (token-level/styling-only changes)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Audit and adjust global theme tokens (primary/secondary/accent/ring and related foreground tokens) to ensure purple is consistently used in both light and dark mode; keep changes token-level only to avoid layout restructuring."
         },
         {
-          "path": "frontend/src/components/navigation/NavigationDrawer.tsx",
+          "path": "frontend/tailwind.config.js",
           "operation": "modify",
-          "description": "Add (or restore) a visible “Draft” navigation action that routes to the Draft screen, ensuring users can reliably reach it and see an active state when selected. Use existing shadcn-ui Button styling patterns for nav items. Verify the component's usage instructions before implementing."
+          "description": "Verify Tailwind color mappings continue to reference the theme tokens (primary/secondary/accent/ring/etc.) so shadcn-ui variants (especially Button default/outline/ghost active states) consistently render purple across the app; verify the component's usage instructions before implementing."
         }
       ]
     }

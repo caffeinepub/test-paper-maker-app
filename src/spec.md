@@ -1,12 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Restore the app’s previous purple-and-white theme across the UI and fix the “Draft” screen so it never appears blank.
+**Goal:** Restore real OCR extraction using OCR.space (replacing the current “Offline Mode” placeholder) while keeping the rest of the v18 app unchanged, and ensure a consistent purple theme across all pages and buttons.
 
 **Planned changes:**
-- Revert recent theme/token changes to consistently apply the prior purple primary accent with white/light surfaces in light mode and appropriate dark-mode equivalents.
-- Remove any hard-coded component colors that override theme tokens and cause page-to-page inconsistency.
-- Fix Draft navigation/screen rendering so it reliably shows draft content when available.
-- Add clear, English empty-state messaging when no drafts exist, plus a visible error state with a retry or navigation action if loading fails.
+- Replace the OCR upload “Offline Mode” placeholder with a real HTTPS OCR.space integration that extracts text from user-selected images/PDFs when “Extract Questions” is clicked.
+- Update OCR upload UI copy to describe the real OCR process (remove the offline/placeholder messaging).
+- Store OCR.space extracted text and the parsed questions into the existing OCR session storage so the current /ocr/review approve flow continues to work unchanged.
+- Add error handling for OCR failures (network/API/quota/unsupported files) with clear messaging and retry/select-another-file behavior.
+- Adjust global theme tokens/styles so primary/secondary/accent and button variants render consistently purple across the entire app in both light and dark mode, without layout or feature changes.
 
-**User-visible outcome:** The app looks consistently purple-and-white again (with accessible dark mode), and the Draft screen always displays content, an empty state, or an actionable error message instead of a blank page.
+**User-visible outcome:** Users can select an image/PDF on the OCR upload screen, run real OCR to extract text and auto-populate questions in the existing review/approve screen, and the app’s buttons and primary UI styling appear consistently purple across all pages (light and dark mode).

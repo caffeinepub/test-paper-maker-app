@@ -68,23 +68,23 @@ export function PaperRenderer({ question }: PaperRendererProps) {
           <div className="space-y-2">
             <p className="break-words whitespace-pre-wrap">{question.text || '[Question text]'}</p>
             {question.matchPairsData && question.matchPairsData.pairs.length > 0 && (
-              <div className="ml-4 max-w-full overflow-x-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
-                  <div className="space-y-1">
+              <div className="ml-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <p className="font-semibold text-sm">Column A</p>
                     {question.matchPairsData.pairs.map((pair, idx) => (
-                      <div key={idx} className="flex items-start gap-2">
+                      <div key={idx} className="flex items-start gap-2 border border-border rounded p-2 min-h-[3rem]">
                         <span className="font-medium shrink-0">{idx + 1}.</span>
-                        <span className="break-words">{pair.left || `[Item ${idx + 1}]`}</span>
+                        <span className="break-words flex-1">{pair.left || `[Item ${idx + 1}]`}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <p className="font-semibold text-sm">Column B</p>
                     {question.matchPairsData.pairs.map((pair, idx) => (
-                      <div key={idx} className="flex items-start gap-2">
+                      <div key={idx} className="flex items-start gap-2 border border-border rounded p-2 min-h-[3rem]">
                         <span className="font-medium shrink-0">{String.fromCharCode(97 + idx)})</span>
-                        <span className="break-words">{pair.right || `[Item ${String.fromCharCode(97 + idx)}]`}</span>
+                        <span className="break-words flex-1">{pair.right || `[Item ${String.fromCharCode(97 + idx)}]`}</span>
                       </div>
                     ))}
                   </div>
@@ -99,15 +99,16 @@ export function PaperRenderer({ question }: PaperRendererProps) {
           <div className="space-y-2">
             <p className="break-words whitespace-pre-wrap">{question.text || '[Question text]'}</p>
             {question.tableData && (
-              <div className="ml-4 max-w-full overflow-x-auto">
-                <table className="min-w-0 w-full border-collapse border border-foreground/30">
+              <div className="ml-4">
+                <table className="w-full border-collapse border border-foreground/30">
                   <tbody>
                     {question.tableData.cells.map((row, rowIdx) => (
                       <tr key={rowIdx}>
                         {row.map((cell, cellIdx) => (
                           <td
                             key={cellIdx}
-                            className="border border-foreground/30 px-3 py-2 break-words"
+                            className="border border-foreground/30 px-3 py-2 break-words align-top"
+                            style={{ width: `${100 / row.length}%` }}
                           >
                             {cell || ''}
                           </td>

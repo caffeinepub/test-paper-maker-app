@@ -1,8 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Profile, Question, Paper, defaultProfile, starterQuestions, samplePapers, PaperSection, QuestionHeading } from './mockData';
+import { safeGetItem, safeSetItem, safeRemoveItem, isStorageAvailable, getStorageError } from '../lib/storage/safeStorage';
 
 interface MockStoreContextType {
   isInitialized: boolean;
+  initializationError: string | null;
   isLoggedIn: boolean;
   isGuest: boolean;
   onboardingCompleted: boolean;
@@ -22,6 +24,7 @@ interface MockStoreContextType {
   completeOnboarding: () => void;
   resetTutorial: () => void;
   clearAllData: () => void;
+  retryInitialization: () => void;
 }
 
 const MockStoreContext = createContext<MockStoreContextType | undefined>(undefined);
@@ -40,7 +43,7 @@ interface PersistedState {
 
 function loadPersistedState(): Partial<PersistedState> | null {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = safeGetItem(STORAGE_KEY);
     if (stored) {
       return JSON.parse(stored);
     }
@@ -50,11 +53,13 @@ function loadPersistedState(): Partial<PersistedState> | null {
   return null;
 }
 
-function savePersistedState(state: PersistedState) {
+function savePersistedState(state: PersistedState): boolean {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const serialized = JSON.stringify(state);
+    return safeSetItem(STORAGE_KEY, serialized);
   } catch (error) {
     console.error('Failed to save persisted state:', error);
+    return false;
   }
 }
 
@@ -104,6 +109,7 @@ function normalizePaper(paper: Paper): Paper {
 
 export function MockStoreProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
@@ -111,32 +117,52 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   const [papers, setPapers] = useState<Paper[]>(samplePapers);
   const [personalQuestions, setPersonalQuestions] = useState<Question[]>([]);
 
+  const initializeStore = () => {
+    setInitializationError(null);
+    
+    // Check storage availability
+    if (!isStorageAvailable()) {
+      const error = getStorageError() || 'Storage is not available';
+      setInitializationError(error);
+      setIsInitialized(true);
+      return;
+    }
+
+    try {
+      const persisted = loadPersistedState();
+      if (persisted) {
+        if (persisted.isLoggedIn !== undefined) setIsLoggedIn(persisted.isLoggedIn);
+        if (persisted.isGuest !== undefined) setIsGuest(persisted.isGuest);
+        if (persisted.onboardingCompleted !== undefined) setOnboardingCompleted(persisted.onboardingCompleted);
+        if (persisted.profile) setProfile(persisted.profile);
+        if (persisted.personalQuestions) setPersonalQuestions(persisted.personalQuestions);
+        if (persisted.papers) {
+          // Restore Date objects from serialized strings and normalize
+          const restoredPapers = persisted.papers.map((p) => 
+            normalizePaper({
+              ...p,
+              createdAt: new Date(p.createdAt),
+            })
+          );
+          setPapers(restoredPapers);
+        }
+      }
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('Failed to initialize store:', error);
+      setInitializationError(error instanceof Error ? error.message : 'Failed to load data');
+      setIsInitialized(true);
+    }
+  };
+
   // Hydrate state from localStorage on mount
   useEffect(() => {
-    const persisted = loadPersistedState();
-    if (persisted) {
-      if (persisted.isLoggedIn !== undefined) setIsLoggedIn(persisted.isLoggedIn);
-      if (persisted.isGuest !== undefined) setIsGuest(persisted.isGuest);
-      if (persisted.onboardingCompleted !== undefined) setOnboardingCompleted(persisted.onboardingCompleted);
-      if (persisted.profile) setProfile(persisted.profile);
-      if (persisted.personalQuestions) setPersonalQuestions(persisted.personalQuestions);
-      if (persisted.papers) {
-        // Restore Date objects from serialized strings and normalize
-        const restoredPapers = persisted.papers.map((p) => 
-          normalizePaper({
-            ...p,
-            createdAt: new Date(p.createdAt),
-          })
-        );
-        setPapers(restoredPapers);
-      }
-    }
-    setIsInitialized(true);
+    initializeStore();
   }, []);
 
   // Persist state to localStorage whenever it changes
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || initializationError) return;
     
     const stateToPersist: PersistedState = {
       isLoggedIn,
@@ -150,7 +176,7 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
       personalQuestions,
     };
     savePersistedState(stateToPersist);
-  }, [isInitialized, isLoggedIn, isGuest, onboardingCompleted, profile, papers, personalQuestions]);
+  }, [isInitialized, initializationError, isLoggedIn, isGuest, onboardingCompleted, profile, papers, personalQuestions]);
 
   const login = (asGuest = false) => {
     setIsLoggedIn(true);
@@ -164,7 +190,7 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     setProfile(defaultProfile);
     setPapers(samplePapers);
     setPersonalQuestions([]);
-    localStorage.removeItem(STORAGE_KEY);
+    safeRemoveItem(STORAGE_KEY);
   };
 
   const updateProfile = (newProfile: Profile) => {
@@ -220,22 +246,24 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   const resetTutorial = () => {
     setOnboardingCompleted(false);
     // Clear tutorial flags
-    try {
-      localStorage.removeItem('start-tutorial');
-      localStorage.removeItem('real-paper-toolbox-spotlight-completed');
-    } catch (error) {
-      console.error('Failed to reset tutorial flags:', error);
-    }
+    safeRemoveItem('start-tutorial');
+    safeRemoveItem('real-paper-toolbox-spotlight-completed');
   };
 
   const clearAllData = () => {
     logout();
   };
 
+  const retryInitialization = () => {
+    setIsInitialized(false);
+    initializeStore();
+  };
+
   return (
     <MockStoreContext.Provider
       value={{
         isInitialized,
+        initializationError,
         isLoggedIn,
         isGuest,
         onboardingCompleted,
@@ -255,6 +283,7 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
         completeOnboarding,
         resetTutorial,
         clearAllData,
+        retryInitialization,
       }}
     >
       {children}

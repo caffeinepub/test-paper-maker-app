@@ -4,14 +4,17 @@ import { CoachmarkOverlay } from '../onboarding/CoachmarkOverlay';
 import { useMockStore } from '../../state/mockStore';
 import { useCoachmarks } from '../../hooks/useCoachmarks';
 import { useEffect, useState } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { safeGetItem } from '../../lib/storage/safeStorage';
 
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isInitialized, isLoggedIn, onboardingCompleted } = useMockStore();
+  const { isInitialized, initializationError, isLoggedIn, onboardingCompleted, retryInitialization, logout } = useMockStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const coachmarks = useCoachmarks();
 
@@ -23,7 +26,7 @@ export function AppShell() {
     if (!isInitialized) return;
 
     // Check if tutorial is being started
-    const startingTutorial = localStorage.getItem('start-tutorial') === 'true';
+    const startingTutorial = safeGetItem('start-tutorial') === 'true';
 
     if (!isLoggedIn && !isLoginPage) {
       navigate({ to: '/' });
@@ -43,6 +46,47 @@ export function AppShell() {
           <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
           <p className="text-muted-foreground">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Show initialization error with recovery options
+  if (initializationError) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              Storage Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertTitle>Cannot Access Local Storage</AlertTitle>
+              <AlertDescription className="mt-2">
+                {initializationError}
+              </AlertDescription>
+            </Alert>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>This app requires local storage to save your data. Please:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Check your browser's privacy settings</li>
+                <li>Disable private/incognito mode</li>
+                <li>Allow cookies and site data</li>
+                <li>Try a different browser</li>
+              </ul>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={retryInitialization} className="flex-1">
+                Retry
+              </Button>
+              <Button onClick={() => navigate({ to: '/' })} variant="outline" className="flex-1">
+                Go to Login
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

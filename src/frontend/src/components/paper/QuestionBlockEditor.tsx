@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Trash2, Plus, X } from 'lucide-react';
+import { AutoGrowTextarea } from '../editor/AutoGrowTextarea';
 
 interface QuestionBlockEditorProps {
   question: Question;
@@ -164,44 +165,56 @@ export function QuestionBlockEditor({
                   Add Pair
                 </Button>
               </div>
-              {question.matchPairsData?.pairs.map((pair, idx) => (
-                <div key={idx} className="space-y-2 rounded border p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium shrink-0">Column A:</span>
-                    <Input
-                      placeholder={`Item ${idx + 1}`}
-                      value={pair.left}
-                      onChange={(e) => {
-                        const newPairs = [...(question.matchPairsData?.pairs || [])];
-                        newPairs[idx] = { ...newPairs[idx], left: e.target.value };
-                        onUpdate({ matchPairsData: { pairs: newPairs } });
-                      }}
-                    />
+              <div className="space-y-3">
+                {question.matchPairsData?.pairs.map((pair, idx) => (
+                  <div key={idx} className="grid grid-cols-2 gap-3 rounded border border-border p-3">
+                    <div className="space-y-1 min-w-0">
+                      <label className="text-xs font-medium text-muted-foreground">Column A</label>
+                      <AutoGrowTextarea
+                        placeholder={`Item ${idx + 1}`}
+                        value={pair.left}
+                        onChange={(e) => {
+                          const newPairs = [...(question.matchPairsData?.pairs || [])];
+                          newPairs[idx] = { ...newPairs[idx], left: e.target.value };
+                          onUpdate({ matchPairsData: { pairs: newPairs } });
+                        }}
+                        minRows={2}
+                        maxRows={6}
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1 min-w-0">
+                      <label className="text-xs font-medium text-muted-foreground">Column B</label>
+                      <AutoGrowTextarea
+                        placeholder={`Match ${idx + 1}`}
+                        value={pair.right}
+                        onChange={(e) => {
+                          const newPairs = [...(question.matchPairsData?.pairs || [])];
+                          newPairs[idx] = { ...newPairs[idx], right: e.target.value };
+                          onUpdate({ matchPairsData: { pairs: newPairs } });
+                        }}
+                        minRows={2}
+                        maxRows={6}
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="col-span-2 flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          const newPairs = question.matchPairsData?.pairs.filter((_, i) => i !== idx) || [];
+                          onUpdate({ matchPairsData: { pairs: newPairs } });
+                        }}
+                        className="print:hidden"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium shrink-0">Column B:</span>
-                    <Input
-                      placeholder={`Item ${String.fromCharCode(97 + idx)}`}
-                      value={pair.right}
-                      onChange={(e) => {
-                        const newPairs = [...(question.matchPairsData?.pairs || [])];
-                        newPairs[idx] = { ...newPairs[idx], right: e.target.value };
-                        onUpdate({ matchPairsData: { pairs: newPairs } });
-                      }}
-                    />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => {
-                        const newPairs = question.matchPairsData?.pairs.filter((_, i) => i !== idx) || [];
-                        onUpdate({ matchPairsData: { pairs: newPairs } });
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -224,123 +237,119 @@ export function QuestionBlockEditor({
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      const tableData = question.tableData;
-                      if (!tableData) return;
-                      const newCells = [...tableData.cells, Array(tableData.cols).fill('')];
-                      onUpdate({
-                        tableData: {
-                          rows: tableData.rows + 1,
-                          cols: tableData.cols,
-                          cells: newCells,
-                        },
+                      const currentCells = question.tableData?.cells || [['', '']];
+                      const newRow = new Array(currentCells[0]?.length || 2).fill('');
+                      const newCells = [...currentCells, newRow];
+                      onUpdate({ 
+                        tableData: { 
+                          rows: newCells.length,
+                          cols: newCells[0]?.length || 2,
+                          cells: newCells 
+                        } 
                       });
                     }}
                   >
                     <Plus className="h-3 w-3 mr-1" />
-                    Add Row
+                    Row
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      const tableData = question.tableData;
-                      if (!tableData) return;
-                      const newCells = tableData.cells.map((row) => [...row, '']);
-                      onUpdate({
-                        tableData: {
-                          rows: tableData.rows,
-                          cols: tableData.cols + 1,
-                          cells: newCells,
-                        },
+                      const currentCells = question.tableData?.cells || [['', '']];
+                      const newCells = currentCells.map(row => [...row, '']);
+                      onUpdate({ 
+                        tableData: { 
+                          rows: newCells.length,
+                          cols: newCells[0]?.length || 2,
+                          cells: newCells 
+                        } 
                       });
                     }}
                   >
                     <Plus className="h-3 w-3 mr-1" />
-                    Add Column
+                    Column
                   </Button>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-border">
-                  <tbody>
-                    {question.tableData?.cells.map((row, rowIdx) => (
-                      <tr key={rowIdx}>
-                        {row.map((cell, cellIdx) => (
-                          <td key={cellIdx} className="border border-border p-1">
-                            <Input
-                              value={cell}
-                              onChange={(e) => {
-                                const newCells = question.tableData?.cells.map((r, ri) =>
-                                  ri === rowIdx
-                                    ? r.map((c, ci) => (ci === cellIdx ? e.target.value : c))
-                                    : r
-                                ) || [];
-                                onUpdate({
-                                  tableData: {
-                                    ...question.tableData!,
-                                    cells: newCells,
-                                  },
+              {question.tableData && question.tableData.cells.length > 0 && (
+                <div className="overflow-x-auto">
+                  <div className="min-w-full">
+                    {question.tableData.cells.map((row, rowIdx) => (
+                      <div key={rowIdx} className="space-y-2 mb-3">
+                        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))` }}>
+                          {row.map((cell, cellIdx) => (
+                            <div key={cellIdx} className="min-w-0">
+                              <AutoGrowTextarea
+                                placeholder={`R${rowIdx + 1}C${cellIdx + 1}`}
+                                value={cell}
+                                onChange={(e) => {
+                                  const newCells = question.tableData?.cells.map(r => [...r]) || [];
+                                  newCells[rowIdx][cellIdx] = e.target.value;
+                                  onUpdate({ 
+                                    tableData: { 
+                                      rows: newCells.length,
+                                      cols: newCells[0]?.length || 2,
+                                      cells: newCells 
+                                    } 
+                                  });
+                                }}
+                                minRows={2}
+                                maxRows={6}
+                                className="text-sm"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex gap-2 print:hidden">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const newCells = question.tableData?.cells.filter((_, i) => i !== rowIdx) || [];
+                              if (newCells.length > 0) {
+                                onUpdate({ 
+                                  tableData: { 
+                                    rows: newCells.length,
+                                    cols: newCells[0]?.length || 2,
+                                    cells: newCells 
+                                  } 
                                 });
+                              }
+                            }}
+                            disabled={(question.tableData?.cells.length || 0) <= 1}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete Row
+                          </Button>
+                          {rowIdx === 0 && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                const newCells = question.tableData?.cells.map(r => r.slice(0, -1)) || [];
+                                if (newCells[0]?.length > 1) {
+                                  onUpdate({ 
+                                    tableData: { 
+                                      rows: newCells.length,
+                                      cols: newCells[0]?.length || 1,
+                                      cells: newCells 
+                                    } 
+                                  });
+                                }
                               }}
-                              className="h-8"
-                            />
-                          </td>
-                        ))}
-                        <td className="border-0 p-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            disabled={question.tableData!.rows <= 1}
-                            onClick={() => {
-                              const tableData = question.tableData;
-                              if (!tableData || tableData.rows <= 1) return;
-                              const newCells = tableData.cells.filter((_, i) => i !== rowIdx);
-                              onUpdate({
-                                tableData: {
-                                  rows: tableData.rows - 1,
-                                  cols: tableData.cols,
-                                  cells: newCells,
-                                },
-                              });
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </td>
-                      </tr>
+                              disabled={(question.tableData?.cells[0]?.length || 0) <= 1}
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Delete Last Column
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     ))}
-                    <tr>
-                      {question.tableData?.cells[0]?.map((_, cellIdx) => (
-                        <td key={cellIdx} className="border-0 p-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            disabled={question.tableData!.cols <= 1}
-                            onClick={() => {
-                              const tableData = question.tableData;
-                              if (!tableData || tableData.cols <= 1) return;
-                              const newCells = tableData.cells.map((row) =>
-                                row.filter((_, i) => i !== cellIdx)
-                              );
-                              onUpdate({
-                                tableData: {
-                                  rows: tableData.rows,
-                                  cols: tableData.cols - 1,
-                                  cells: newCells,
-                                },
-                              });
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -360,10 +369,10 @@ export function QuestionBlockEditor({
   };
 
   return (
-    <div className="space-y-3 rounded-lg border-2 border-primary bg-background p-4 print:hidden">
+    <div className="space-y-3 p-4 rounded-lg border-2 border-dashed border-primary/30 bg-muted/30">
       {renderEditor()}
-      
-      {/* Show attached image in edit mode */}
+
+      {/* Image attachment display */}
       {question.imageAttachment && (
         <div className="relative">
           <img
@@ -375,8 +384,8 @@ export function QuestionBlockEditor({
           <Button
             size="sm"
             variant="destructive"
-            className="absolute top-2 right-2"
             onClick={() => onUpdate({ imageAttachment: undefined })}
+            className="absolute top-2 right-2 print:hidden"
           >
             <X className="h-3 w-3 mr-1" />
             Remove Image
@@ -384,9 +393,9 @@ export function QuestionBlockEditor({
         </div>
       )}
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2 print:hidden">
         <Button size="sm" variant="destructive" onClick={onDelete}>
-          <Trash2 className="mr-2 h-3 w-3" />
+          <Trash2 className="h-3 w-3 mr-1" />
           Delete Question
         </Button>
       </div>

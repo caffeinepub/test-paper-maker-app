@@ -1,41 +1,51 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T04:20:04.346Z",
+  "generatedAt": "2026-02-11T06:24:37.090Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Restore the app’s previous purple-and-white color theme across all screens by reverting any recent theme/token changes and ensuring the UI consistently uses the purple primary accent with white/light surfaces (and appropriate dark-mode equivalents).",
+        "summary": "Replace the current OCR “Offline Mode” placeholder flow with a real online OCR integration using a legal free-tier external OCR API (OCR.space) so that selecting an image/PDF and clicking “Extract Questions” performs actual text extraction and proceeds to the existing review/approve flow.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/components/layout/AppShell.tsx"
+          "frontend/src/lib/ocr/ocrSpaceClient.ts",
+          "frontend/src/pages/ocr/OCRUploadWireframe.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/index.css"
+          "frontend/src/lib/ocr/ocrSpaceClient.ts",
+          "frontend/src/pages/ocr/OCRUploadWireframe.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Fix the app’s “Draft” option/screen so it no longer renders an empty/blank page and instead reliably shows meaningful content or a clear empty-state message (in English) when there is no draft data to display.",
+        "summary": "Update the OCR session utility currently named/mock-behaving as a mock extractor so it supports storing sessions created from real OCR results (extracted text + parsed questions) while keeping the existing session load/clear/convert APIs used by the OCR review screen.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/draft/DraftWireframe.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/components/navigation/NavigationDrawer.tsx"
+          "frontend/src/lib/ocr/mockOcrExtractor.ts",
+          "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/draft/DraftWireframe.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/components/navigation/NavigationDrawer.tsx"
+          "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Ensure a consistent purple theme across the entire app (all pages and buttons) by verifying that primary/secondary/accent tokens and button variants visually render as purple consistently in both light and dark mode, without changing layout or features.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js"
         ]
       }
     ]
@@ -45,10 +55,11 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
-    "frontend/src/components/navigation/NavigationDrawer.tsx",
     "frontend/src/index.css",
-    "frontend/src/pages/draft/DraftWireframe.tsx",
+    "frontend/src/lib/ocr/ocrSpaceClient.ts",
+    "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx",
+    "frontend/src/pages/ocr/OCRUploadWireframe.tsx",
+    "frontend/tailwind.config.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",
