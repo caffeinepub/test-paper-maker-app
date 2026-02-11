@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Caffeine AI app: restore previous purple/white theme and fix Caffeine builder Draft tab showing blank/empty screen.",
+  "architectural_notes": [],
+  "known_issues": [
+    "Theme color changed unexpectedly (purple/white theme not applied).",
+    "Caffeine builder Draft tab loads blank/empty."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-restore-the-app-s-previous-purple-and-white-color-theme-across-all-screens-by-reverting-any-recent-theme-token-changes-and-ensuring-the-ui-consistently-uses-the-purple-primary-accent-with-white-light-surfaces-and-appropriate-dark-mode-equivalents",
+      "title": "Restore the app’s previous purple-and-white color theme across all screens by reverting any recent theme/token changes and ensuring the UI consistently uses the purple primary accent with white/light surfaces (and appropriate dark-mode equivalents).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-app-s-draft-option-screen-so-it-no-longer-renders-an-empty-blank-page-and-instead-reliably-shows-meaningful-content-or-a-clear-empty-state-message-in-english-when-there-is-no-draft-data-to-display",
+      "title": "Fix the app’s “Draft” option/screen so it no longer renders an empty/blank page and instead reliably shows meaningful content or a clear empty-state message (in English) when there is no draft data to display.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Restore the app’s previous purple + white theme (revert recent color change).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Fix Caffeine builder’s Draft tab showing an empty/blank screen.",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Caffeine AI",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

@@ -1,0 +1,59 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Restore purple/white theme and fix Draft screen blank state",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Restore the prior purple primary accent with white/light surfaces (and accessible dark-mode equivalents) via theme token and global-style fixes.",
+      "acceptanceCriteria": [
+        "In light mode, primary accents (buttons, active nav items, highlights) render in the purple theme and primary surfaces render with a white/very-light background consistent with the prior look.",
+        "In dark mode, contrast remains accessible and the purple accent remains the primary highlight color.",
+        "No major UI surfaces/components rely on hard-coded colors that override the theme tokens (e.g., background/foreground/primary), preventing the theme from appearing inconsistent page-to-page."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Revert/adjust global theme tokens to ensure a consistent purple primary and white/light surfaces in light mode, with accessible dark-mode equivalents. Also replace hard-coded surface colors in global classes (e.g., .paper-surface background/border/shadow) to use theme tokens instead of fixed values, preventing page-to-page inconsistency. (Use shadcn-ui token conventions already in the app; verify the component's usage instructions before implementing.)"
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Confirm Tailwind color mappings consistently reference the global theme tokens (background/foreground/primary/etc.) so shadcn-ui-based components render purple accents and white/light surfaces across screens in light/dark modes. Verify no recent token mapping changes introduced non-purple primaries or inconsistent surface colors. (Verify the component's usage instructions before implementing.)"
+        },
+        {
+          "path": "frontend/src/components/layout/AppShell.tsx",
+          "operation": "modify",
+          "description": "Audit/adjust any top-level layout surface classes to ensure app chrome (sidebar/header/background) uses theme token utilities (bg-background, bg-card, border-border, text-foreground) without hard-coded overrides that could break the restored purple/white look. (Verify the component's usage instructions before implementing.)"
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Ensure the Draft option routes to a non-blank screen with a clear empty state and visible error handling with a retry/navigation action.",
+      "acceptanceCriteria": [
+        "Navigating to the “Draft” option no longer results in a blank/empty screen (no missing content area).",
+        "If there is no data to show, the screen renders a visible empty state (title + short guidance text) rather than appearing broken.",
+        "If an error occurs while loading draft data, the screen renders a visible error state and a retry or navigation action instead of staying blank."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/draft/DraftWireframe.tsx",
+          "operation": "create",
+          "description": "Create a Draft screen that always renders meaningful content: (1) a title/header, (2) an English empty-state when no drafts exist, and (3) an English error-state with a retry action if loading/parsing draft data fails (e.g., localStorage read failure). Use shadcn-ui building blocks (e.g., Card/Alert/Button) for consistent styling. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire the Draft screen into the router so navigating to the Draft option loads the DraftWireframe component (no blank route). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/navigation/NavigationDrawer.tsx",
+          "operation": "modify",
+          "description": "Add (or restore) a visible “Draft” navigation action that routes to the Draft screen, ensuring users can reliably reach it and see an active state when selected. Use existing shadcn-ui Button styling patterns for nav items. Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

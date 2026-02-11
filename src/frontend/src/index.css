@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Purple OKLCH color palette */
+    --background: oklch(98% 0.01 270);
+    --foreground: oklch(20% 0.02 270);
+    --card: oklch(100% 0 0);
+    --card-foreground: oklch(20% 0.02 270);
+    --popover: oklch(100% 0 0);
+    --popover-foreground: oklch(20% 0.02 270);
+    --primary: oklch(55% 0.22 280);
+    --primary-foreground: oklch(98% 0.01 280);
+    --secondary: oklch(90% 0.05 280);
+    --secondary-foreground: oklch(25% 0.02 280);
+    --muted: oklch(94% 0.02 270);
+    --muted-foreground: oklch(50% 0.02 270);
+    --accent: oklch(92% 0.04 280);
+    --accent-foreground: oklch(25% 0.02 280);
+    --destructive: oklch(55% 0.22 25);
+    --destructive-foreground: oklch(98% 0.01 25);
+    --border: oklch(88% 0.02 270);
+    --input: oklch(88% 0.02 270);
+    --ring: oklch(55% 0.22 280);
+    --radius: 0.5rem;
+    --success: oklch(60% 0.18 145);
+    --warning: oklch(70% 0.18 70);
+  }
+
+  .dark {
+    --background: oklch(15% 0.02 270);
+    --foreground: oklch(95% 0.01 270);
+    --card: oklch(18% 0.02 270);
+    --card-foreground: oklch(95% 0.01 270);
+    --popover: oklch(18% 0.02 270);
+    --popover-foreground: oklch(95% 0.01 270);
+    --primary: oklch(65% 0.22 280);
+    --primary-foreground: oklch(15% 0.02 280);
+    --secondary: oklch(25% 0.05 280);
+    --secondary-foreground: oklch(95% 0.01 280);
+    --muted: oklch(25% 0.02 270);
+    --muted-foreground: oklch(65% 0.02 270);
+    --accent: oklch(28% 0.04 280);
+    --accent-foreground: oklch(95% 0.01 280);
+    --destructive: oklch(55% 0.22 25);
+    --destructive-foreground: oklch(98% 0.01 25);
+    --border: oklch(30% 0.02 270);
+    --input: oklch(30% 0.02 270);
+    --ring: oklch(65% 0.22 280);
+    --success: oklch(60% 0.18 145);
+    --warning: oklch(70% 0.18 70);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Paper surface styles - using theme tokens */
+.paper-surface {
+  @apply bg-card border-2 border-border;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: visible;
+}
+
+/* Print styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  .paper-surface {
+    box-shadow: none;
+    border: 2px solid black;
+    page-break-after: always;
+    overflow: visible;
+  }
+
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Prevent page breaks inside questions and tables */
+  .question-block,
+  table {
+    page-break-inside: avoid;
+  }
+}
+
+/* Question and table layout */
+.question-block {
+  page-break-inside: avoid;
+}
+
+table {
+  page-break-inside: avoid;
+}

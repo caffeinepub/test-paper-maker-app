@@ -1,0 +1,57 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-11T04:20:04.346Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 2,
+    "implemented": 2,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Restore the app’s previous purple-and-white color theme across all screens by reverting any recent theme/token changes and ensuring the UI consistently uses the purple primary accent with white/light surfaces (and appropriate dark-mode equivalents).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/components/layout/AppShell.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Fix the app’s “Draft” option/screen so it no longer renders an empty/blank page and instead reliably shows meaningful content or a clear empty-state message (in English) when there is no draft data to display.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/draft/DraftWireframe.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/navigation/NavigationDrawer.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/draft/DraftWireframe.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/navigation/NavigationDrawer.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
+    "frontend/src/components/navigation/NavigationDrawer.tsx",
+    "frontend/src/index.css",
+    "frontend/src/pages/draft/DraftWireframe.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}
