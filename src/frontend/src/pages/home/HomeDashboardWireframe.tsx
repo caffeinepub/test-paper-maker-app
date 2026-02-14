@@ -3,7 +3,7 @@ import { useMockStore } from '../../state/mockStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FloatingAIButton } from '../../components/ai/FloatingAIButton';
-import { Plus, FileText, Clock, Calendar } from 'lucide-react';
+import { Plus, FileText, Clock, Calendar, PlusCircle } from 'lucide-react';
 import { createNewPaper } from '../../lib/papers/createNewPaper';
 
 export function HomeDashboardWireframe() {
@@ -19,6 +19,10 @@ export function HomeDashboardWireframe() {
     navigate({ to: `/editor/${newPaper.id}` });
   };
 
+  const handleAddQuestions = () => {
+    navigate({ to: '/add-questions' });
+  };
+
   const recentPapers = papers.slice(0, 3);
 
   const handlePaperClick = (paperId: string) => {
@@ -28,13 +32,19 @@ export function HomeDashboardWireframe() {
   };
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 py-8">
-      {/* Header */}
-      <div className="mb-8" data-coachmark="home-welcome">
-        <h1 className="text-3xl font-bold text-foreground">Welcome back, {profile.teacherName || 'Teacher'}!</h1>
-        <p className="mt-2 text-muted-foreground">
-          {profile.instituteName} • {profile.preferredBoard} • Standard {profile.defaultStandard}
-        </p>
+    <div className="container mx-auto max-w-6xl p-4 py-8 page-with-floating-ui">
+      {/* Header with Add Questions button */}
+      <div className="mb-8 flex items-start justify-between gap-4" data-coachmark="home-welcome">
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-foreground">Welcome back, {profile.teacherName || 'Teacher'}!</h1>
+          <p className="mt-2 text-muted-foreground">
+            {profile.instituteName} • {profile.preferredBoard} • Standard {profile.defaultStandard}
+          </p>
+        </div>
+        <Button onClick={handleAddQuestions} variant="outline" size="sm" className="shrink-0">
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Questions
+        </Button>
       </div>
 
       {/* Quick Actions */}
@@ -90,65 +100,56 @@ export function HomeDashboardWireframe() {
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription>Generate question suggestions with AI</CardDescription>
+            <CardDescription>Generate questions using AI</CardDescription>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your recently created or edited papers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {recentPapers.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">
-              <p>No papers yet. Create your first paper to get started!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentPapers.map((paper) => (
-                <Card
-                  key={paper.id}
-                  className={`transition-all ${
-                    isInitialized
-                      ? 'cursor-pointer hover:border-primary hover:shadow-md'
-                      : 'cursor-not-allowed opacity-50'
-                  }`}
-                  onClick={() => handlePaperClick(paper.id)}
-                >
-                  <CardContent className="flex items-center justify-between p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="rounded-lg bg-muted p-2">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-foreground">{paper.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {paper.board} • Standard {paper.standard} • {paper.totalMarks} marks
-                        </p>
-                      </div>
+      {/* Recent Papers */}
+      <div className="mb-8">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-foreground">Recent Papers</h2>
+          <Button variant="ghost" onClick={() => navigate({ to: '/papers' })}>
+            View All
+          </Button>
+        </div>
+
+        {recentPapers.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <FileText className="mb-4 h-16 w-16 text-muted-foreground" />
+              <p className="text-muted-foreground">No papers yet. Create your first paper to get started!</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {recentPapers.map((paper) => (
+              <Card
+                key={paper.id}
+                className="cursor-pointer transition-all hover:shadow-md"
+                onClick={() => handlePaperClick(paper.id)}
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg">{paper.title}</CardTitle>
+                  <CardDescription>{paper.subject}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {paper.date}
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {paper.timeMinutes} min
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {paper.createdAt instanceof Date
-                          ? paper.createdAt.toLocaleDateString()
-                          : new Date(paper.createdAt).toLocaleDateString()}
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {paper.duration}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       <FloatingAIButton />
     </div>

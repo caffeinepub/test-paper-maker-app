@@ -2,10 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-question-bank-use-action-so-that-it-inserts-the-full-selected-question-object-into-the-target-paper-section-not-only-plain-text-the-inserted-question-must-preserve-all-supported-fields-e-g-questiontype-mcqoptions-fillinblankdata-truefalsedata-matchpairsdata-tabledata-imageattachment-and-any-rich-cell-content-images-while-generating-a-new-unique-question-id-and-setting-headingid-appropriately-for-the-destination-section",
-      "featureTitle": "Fix the Question Bank “Use” action so that it inserts the full selected question object into the target paper section (not only plain text). The inserted question must preserve all supported fields (e.g., questionType, mcqOptions, fillInBlankData, trueFalseData, matchPairsData, tableData, imageAttachment, and any rich cell content/images), while generating a new unique question id and setting headingId appropriately for the destination section.",
+      "featureId": "feature-fix-mobile-desktop-layouts-so-bottom-action-buttons-never-overflow-outside-the-visible-viewport-on-all-affected-screens-including-question-bank-ai-assistant-editor-preview-export-screens-ensure-primary-actions-remain-reachable-without-being-covered-by-fixed-floating-ui-elements",
+      "featureTitle": "Fix mobile/desktop layouts so bottom action buttons never overflow outside the visible viewport on all affected screens (including Question Bank, AI Assistant, editor/preview/export screens). Ensure primary actions remain reachable without being covered by fixed/floating UI elements.",
       "files": [
-        "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
+        "frontend/src/components/ai/FloatingAIButton.tsx",
+        "frontend/src/index.css",
+        "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+        "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx",
         "frontend/src/pages/questionBank/QuestionBankWireframe.tsx"
       ],
       "components": [
@@ -13,7 +16,9 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
       ],
       "testIds": [
         "REQ-1"
@@ -21,28 +26,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-the-ai-add-to-paper-insertion-so-that-it-reliably-inserts-questions-into-the-paper-editor-section-indicated-by-the-insert-context-and-ensure-the-inserted-items-are-full-question-objects-consistent-with-the-app-s-question-model-including-correct-questiontype-and-headingid-assignment",
-      "featureTitle": "Fix the AI “Add to Paper” insertion so that it reliably inserts questions into the paper editor section indicated by the insert context, and ensure the inserted items are full Question objects consistent with the app’s Question model (including correct questionType and headingId assignment).",
+      "featureId": "feature-add-a-small-add-questions-button-at-the-top-of-the-question-bank-screen-and-at-the-top-of-the-home-screen-styled-consistently-with-existing-home-quick-action-buttons-the-button-must-open-the-new-add-questions-flow-as-a-full-screen-page",
+      "featureTitle": "Add a small \"Add Questions\" button at the top of the Question Bank screen and at the top of the Home screen, styled consistently with existing home quick-action buttons. The button must open the new Add Questions flow as a full-screen page.",
       "files": [
-        "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
-        "frontend/src/pages/ai/AIPreferencesWireframe.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-enable-inline-editing-for-personal-questions-in-the-question-bank-the-edit-action-must-allow-editing-the-question-text-directly-within-the-list-item-card-and-persist-changes-to-the-personal-question-store",
-      "featureTitle": "Enable inline editing for personal questions in the Question Bank. The “Edit” action must allow editing the question text directly within the list item/card and persist changes to the personal question store.",
-      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/pages/home/HomeDashboardWireframe.tsx",
         "frontend/src/pages/questionBank/QuestionBankWireframe.tsx"
       ],
       "components": [
@@ -50,7 +38,31 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-enable-a-full-screen-add-questions-flow-that-supports-manual-entry-paste-of-questions-into-the-question-bank-without-requiring-the-user-to-pre-select-a-question-type-before-adding-the-flow-must-save-questions-into-the-user-s-personal-question-bank-categorized-by-board-and-standard-question-bank-location-not-into-a-paper-section-heading",
+      "featureTitle": "Create/enable a full-screen \"Add Questions\" flow that supports manual entry/paste of questions into the Question Bank without requiring the user to pre-select a question type before adding. The flow must save questions into the user’s personal Question Bank categorized by Board and Standard (Question Bank location), not into a paper section/heading.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/pages/questionBank/AddQuestionsWireframe.tsx",
+        "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
       ],
       "testIds": [
         "REQ-3"
@@ -58,19 +70,21 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-match-pairs-column-a-column-b-editor-and-renderer-so-that-column-a-and-column-b-are-always-displayed-strictly-side-by-side-including-on-narrow-mobile-screens-use-horizontal-scrolling-or-constrained-layout-rather-than-stacking-vertically",
-      "featureTitle": "Update the match-pairs (Column A / Column B) editor and renderer so that Column A and Column B are always displayed strictly side-by-side, including on narrow/mobile screens (use horizontal scrolling or constrained layout rather than stacking vertically).",
+      "featureId": "feature-implement-immediate-question-type-auto-detection-when-a-question-is-added-pasted-in-the-add-questions-flow-after-detection-prompt-the-user-to-confirm-the-detected-type-if-the-user-rejects-it-require-the-user-to-choose-the-type-for-that-question-save-each-question-with-its-confirmed-question-type",
+      "featureTitle": "Implement immediate question-type auto-detection when a question is added/pasted in the Add Questions flow. After detection, prompt the user to confirm the detected type; if the user rejects it, require the user to choose the type for that question. Save each question with its confirmed question type.",
       "files": [
-        "frontend/src/components/paper/PaperRenderer.tsx",
-        "frontend/src/components/paper/QuestionBlockEditor.tsx",
-        "frontend/src/index.css"
+        "frontend/src/lib/questionBank/detectQuestionType.ts",
+        "frontend/src/pages/questionBank/AddQuestionsWireframe.tsx",
+        "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
       ],
       "testIds": [
         "REQ-4"
@@ -78,20 +92,21 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-improve-the-table-question-ui-show-column-a-and-column-b-headers-make-those-headers-editable-and-render-darker-borders-inner-grid-lines-darker-than-current-outermost-border-also-dark-and-clearly-visible",
-      "featureTitle": "Improve the table question UI: show “Column A” and “Column B” headers, make those headers editable, and render darker borders (inner grid lines darker than current; outermost border also dark and clearly visible).",
+      "featureId": "feature-update-per-screen-informational-help-text-exactly-as-specified-by-the-user-1-question-bank-screen-info-text-2-ai-assistant-screen-description-text-3-the-screen-that-opens-after-selecting-a-standard-change-the-help-text-to-the-provided-copy-and-replace-the-empty-state-label-empty-add-questions-with-the-provided-two-line-message-do-not-globally-replace-unrelated-text-on-other-screens",
+      "featureTitle": "Update per-screen informational/help text exactly as specified by the user: (1) Question Bank screen info text, (2) AI Assistant screen description text, (3) the screen that opens after selecting a standard: change the help text to the provided copy and replace the empty-state label \"empty add questions\" with the provided two-line message. Do not globally replace unrelated text on other screens.",
       "files": [
-        "frontend/src/components/paper/PaperRenderer.tsx",
-        "frontend/src/components/paper/QuestionBlockEditor.tsx",
-        "frontend/src/index.css",
-        "frontend/src/state/mockData.ts"
+        "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+        "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx",
+        "frontend/src/pages/questionBank/QuestionBankWireframe.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
       ],
       "testIds": [
         "REQ-5"
@@ -99,11 +114,9 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-reduce-excessive-blank-unused-space-when-an-image-is-inserted-into-a-table-cell-so-that-the-cell-height-more-closely-fits-the-image-and-surrounding-content-minimize-extra-whitespace-while-keeping-resizing-controls-functional",
-      "featureTitle": "Reduce excessive blank/unused space when an image is inserted into a table cell so that the cell height more closely fits the image and surrounding content (minimize extra whitespace while keeping resizing controls functional).",
+      "featureId": "feature-ensure-images-and-tables-in-questions-render-correctly-in-export-print-preview-and-print-pdf-output-images-must-auto-resize-to-fit-within-page-margins-while-preserving-aspect-ratio-and-tables-must-not-be-clipped-this-applies-to-rich-cell-images-e-g-match-pairs-table-cells-and-question-attachments",
+      "featureTitle": "Ensure images and tables in questions render correctly in export/print preview and print/PDF output. Images must auto-resize to fit within page margins while preserving aspect ratio, and tables must not be clipped. This applies to rich-cell images (e.g., match-pairs/table cells) and question attachments.",
       "files": [
-        "frontend/src/components/editor/RichCellEditor.tsx",
-        "frontend/src/components/paper/PaperRenderer.tsx",
         "frontend/src/index.css"
       ],
       "components": [
@@ -111,10 +124,12 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-6"
+        "REQ-8"
       ],
       "confidence": "high"
     }

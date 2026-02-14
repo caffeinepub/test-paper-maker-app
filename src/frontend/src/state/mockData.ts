@@ -23,6 +23,8 @@ export interface Question {
   type: string;
   headingId: string | null;
   imageAttachment: string | null;
+  board?: string;
+  standard?: string;
   mcqOptions?: {
     options: string[];
     correctAnswer?: number;
@@ -97,6 +99,8 @@ export const starterQuestions: Question[] = [
     type: 'Conceptual',
     headingId: null,
     imageAttachment: null,
+    board: 'CBSE',
+    standard: 'Standard 10',
   },
   {
     id: 'q2',
@@ -106,6 +110,8 @@ export const starterQuestions: Question[] = [
     type: 'Numerical',
     headingId: null,
     imageAttachment: null,
+    board: 'CBSE',
+    standard: 'Standard 10',
   },
   {
     id: 'q3',
@@ -115,6 +121,8 @@ export const starterQuestions: Question[] = [
     type: 'Conceptual',
     headingId: null,
     imageAttachment: null,
+    board: 'CBSE',
+    standard: 'Standard 9',
   },
 ];
 

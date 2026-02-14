@@ -157,6 +157,17 @@
   }
 }
 
+/* Safe bottom spacing for pages with floating UI */
+.page-with-floating-ui {
+  padding-bottom: 6rem;
+}
+
+@media (min-width: 768px) {
+  .page-with-floating-ui {
+    padding-bottom: 2rem;
+  }
+}
+
 /* Rich cell editor styles */
 .rich-cell-container {
   position: relative;
@@ -267,10 +278,20 @@
     display: none !important;
   }
 
+  /* Ensure images fit within printable area */
+  .rich-cell-image,
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+    object-fit: contain;
+  }
+
   /* Ensure tables and cells wrap properly */
   .equal-width-table {
     table-layout: fixed !important;
     width: 100% !important;
+    max-width: 100% !important;
   }
 
   .equal-width-table td {
@@ -283,12 +304,6 @@
   /* Rich cell content in print */
   .rich-cell-container {
     overflow: visible !important;
-    page-break-inside: avoid;
-  }
-
-  .rich-cell-image {
-    max-width: 100% !important;
-    height: auto !important;
     page-break-inside: avoid;
   }
 
@@ -322,5 +337,10 @@
   .paper-content {
     overflow: visible !important;
     page-break-inside: auto;
+  }
+
+  /* Prevent page breaks inside questions */
+  .question-block {
+    page-break-inside: avoid;
   }
 }

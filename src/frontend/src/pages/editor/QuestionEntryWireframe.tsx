@@ -2,236 +2,101 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useMockStore } from '../../state/mockStore';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Plus, Save, Undo, Redo } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Question, QuestionType } from '../../state/mockData';
-import { getSectionInsertContext } from '../../lib/editor/sectionInsertContext';
-import { useUndoRedo } from '../../hooks/useUndoRedo';
-import { useDebouncedEffect } from '../../hooks/useDebouncedEffect';
-import { saveQuestionDraft, loadQuestionDraft, clearQuestionDraft } from '../../lib/storage/questionDraftStorage';
-
-interface QuestionFormState {
-  questionText: string;
-  marks: number;
-  questionType: QuestionType;
-}
+import { loadQuestionDraft, saveQuestionDraft, clearQuestionDraft } from '../../lib/storage/questionDraftStorage';
 
 export function QuestionEntryWireframe() {
   const navigate = useNavigate();
-  const { paperId } = useParams({ from: '/editor/$paperId/question' });
-  const { isInitialized, getPaperById, addPersonalQuestion, updatePaper } = useMockStore();
-
+  const { paperId } = useParams({ from: '/editor/$paperId/question-entry' });
+  const { getPaperById, addPersonalQuestion, profile } = useMockStore();
   const paper = getPaperById(paperId);
-  const insertContext = getSectionInsertContext();
 
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
-
-  const initialState: QuestionFormState = {
-    questionText: '',
-    marks: 2,
-    questionType: 'short-answer',
-  };
-
-  const { state, setState, undo, redo, canUndo, canRedo, reset } = useUndoRedo<QuestionFormState>(initialState, {
-    maxHistorySize: 30,
-  });
+  const [questionText, setQuestionText] = useState('');
+  const [marks, setMarks] = useState(2);
+  const [questionType, setQuestionType] = useState<QuestionType>('short-answer');
+  const [type, setType] = useState('Conceptual');
 
   // Load draft on mount
   useEffect(() => {
     const draft = loadQuestionDraft(paperId);
     if (draft) {
-      reset({
-        questionText: draft.questionText,
-        marks: draft.marks,
-        questionType: draft.questionType as QuestionType,
+      setQuestionText(draft.questionText || '');
+      setMarks(draft.marks || 2);
+      setQuestionType((draft.questionType as QuestionType) || 'short-answer');
+    }
+  }, [paperId]);
+
+  // Save draft on changes
+  useEffect(() => {
+    if (questionText || marks !== 2) {
+      saveQuestionDraft(paperId, {
+        questionText,
+        marks,
+        questionType,
       });
     }
-  }, [paperId, reset]);
+  }, [paperId, questionText, marks, questionType]);
 
-  // Autosave draft
-  useDebouncedEffect(
-    () => {
-      if (state.questionText.trim() === '') {
-        return;
-      }
+  const handleBack = () => {
+    navigate({ to: `/editor/${paperId}` });
+  };
 
-      setAutoSaveStatus('saving');
-      saveQuestionDraft(paperId, {
-        questionText: state.questionText,
-        marks: state.marks,
-        questionType: state.questionType,
-      });
-
-      setTimeout(() => {
-        setAutoSaveStatus('saved');
-        setTimeout(() => setAutoSaveStatus('idle'), 2000);
-      }, 300);
-    },
-    500,
-    [state, paperId]
-  );
-
-  const handleSaveToBank = () => {
-    if (state.questionText.trim() === '') {
-      alert('Please enter a question');
+  const handleSave = () => {
+    if (!questionText.trim()) {
+      alert('Please enter question text');
       return;
     }
 
     const newQuestion: Question = {
       id: `q-${Date.now()}`,
-      text: state.questionText,
-      marks: state.marks,
-      type: 'General',
-      questionType: state.questionType,
+      text: questionText,
+      marks,
+      type,
+      questionType,
       headingId: null,
       imageAttachment: null,
-      ...(state.questionType === 'mcq' && {
-        mcqOptions: { options: ['', '', '', ''] },
-      }),
-      ...(state.questionType === 'fill-in-blank' && {
-        fillInBlankData: { blanks: [''] },
-      }),
-      ...(state.questionType === 'true-false' && {
-        trueFalseData: {},
-      }),
-      ...(state.questionType === 'match-pairs' && {
-        matchPairsData: { pairs: [{ left: '', right: '' }] },
-      }),
-      ...(state.questionType === 'table' && {
-        tableData: { rows: 2, cols: 2, cells: [['', ''], ['', '']] },
-      }),
+      board: paper?.board || profile.preferredBoard,
+      standard: paper?.standard || profile.defaultStandard,
     };
 
     addPersonalQuestion(newQuestion);
     clearQuestionDraft(paperId);
-    reset(initialState);
     alert('Question added to your personal bank!');
+    navigate({ to: `/editor/${paperId}` });
   };
-
-  const handleSaveToPaper = () => {
-    if (!paper) {
-      alert('Paper not found');
-      return;
-    }
-
-    if (state.questionText.trim() === '') {
-      alert('Please enter a question');
-      return;
-    }
-
-    const targetSectionId = insertContext?.sectionId || paper.sections[0]?.id;
-    if (!targetSectionId) {
-      alert('No section available in this paper');
-      return;
-    }
-
-    const targetSection = paper.sections.find((s) => s.id === targetSectionId);
-    if (!targetSection) {
-      alert('Section not found');
-      return;
-    }
-
-    const headingId = targetSection.headings?.[0]?.id || null;
-
-    const newQuestion: Question = {
-      id: `q-${Date.now()}`,
-      text: state.questionText,
-      marks: state.marks,
-      type: 'General',
-      questionType: state.questionType,
-      headingId: headingId,
-      imageAttachment: null,
-      ...(state.questionType === 'mcq' && {
-        mcqOptions: { options: ['', '', '', ''] },
-      }),
-      ...(state.questionType === 'fill-in-blank' && {
-        fillInBlankData: { blanks: [''] },
-      }),
-      ...(state.questionType === 'true-false' && {
-        trueFalseData: {},
-      }),
-      ...(state.questionType === 'match-pairs' && {
-        matchPairsData: { pairs: [{ left: '', right: '' }] },
-      }),
-      ...(state.questionType === 'table' && {
-        tableData: { rows: 2, cols: 2, cells: [['', ''], ['', '']] },
-      }),
-    };
-
-    // Add question to paper
-    const updatedSections = paper.sections.map((s) => {
-      if (s.id === targetSectionId) {
-        return { ...s, questions: [...s.questions, newQuestion] };
-      }
-      return s;
-    });
-
-    updatePaper(paperId, { sections: updatedSections });
-    clearQuestionDraft(paperId);
-    reset(initialState);
-    alert('Question added to paper!');
-  };
-
-  if (!isInitialized) {
-    return (
-      <div className="container mx-auto max-w-4xl p-4 py-8">
-        <p className="text-center text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
 
   if (!paper) {
     return (
       <div className="container mx-auto max-w-4xl p-4 py-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Paper not found or has been deleted.</AlertDescription>
-        </Alert>
+        <p>Paper not found</p>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Add Question</h1>
-          <p className="mt-2 text-muted-foreground">Create a new question for {paper.title}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {autoSaveStatus === 'saving' && <span className="text-sm text-muted-foreground">Saving...</span>}
-          {autoSaveStatus === 'saved' && <span className="text-sm text-success">Saved</span>}
-          <Button variant="outline" size="icon" onClick={undo} disabled={!canUndo} title="Undo">
-            <Undo className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={redo} disabled={!canRedo} title="Redo">
-            <Redo className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <Button variant="ghost" onClick={handleBack} className="mb-4">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Paper
+      </Button>
 
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
-          <CardTitle>Question Details</CardTitle>
-          <CardDescription>Enter the question text and configure its properties</CardDescription>
+          <CardTitle>Add New Question</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="questionText">Question Text</Label>
             <Textarea
               id="questionText"
-              value={state.questionText}
-              onChange={(e) =>
-                setState((prev) => ({
-                  ...prev,
-                  questionText: e.target.value,
-                }))
-              }
+              value={questionText}
+              onChange={(e) => setQuestionText(e.target.value)}
               placeholder="Enter your question here..."
               rows={4}
             />
@@ -243,55 +108,51 @@ export function QuestionEntryWireframe() {
               <Input
                 id="marks"
                 type="number"
-                value={state.marks}
-                onChange={(e) =>
-                  setState((prev) => ({
-                    ...prev,
-                    marks: parseInt(e.target.value) || 0,
-                  }))
-                }
+                value={marks}
+                onChange={(e) => setMarks(parseInt(e.target.value) || 0)}
+                min={1}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="questionType">Question Type</Label>
-              <Select
-                value={state.questionType}
-                onValueChange={(value) =>
-                  setState((prev) => ({
-                    ...prev,
-                    questionType: value as QuestionType,
-                  }))
-                }
-              >
-                <SelectTrigger id="questionType">
+              <Label htmlFor="type">Type</Label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger id="type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="short-answer">Short Answer</SelectItem>
-                  <SelectItem value="mcq">Multiple Choice</SelectItem>
-                  <SelectItem value="fill-in-blank">Fill in the Blank</SelectItem>
-                  <SelectItem value="true-false">True/False</SelectItem>
-                  <SelectItem value="match-pairs">Match Pairs</SelectItem>
-                  <SelectItem value="table">Table</SelectItem>
+                  <SelectItem value="Conceptual">Conceptual</SelectItem>
+                  <SelectItem value="Numerical">Numerical</SelectItem>
+                  <SelectItem value="Application">Application</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="questionType">Question Type</Label>
+            <Select value={questionType} onValueChange={(value: QuestionType) => setQuestionType(value)}>
+              <SelectTrigger id="questionType">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="short-answer">Short Answer</SelectItem>
+                <SelectItem value="mcq">Multiple Choice</SelectItem>
+                <SelectItem value="numerical">Numerical</SelectItem>
+                <SelectItem value="fill-in-blank">Fill in the Blank</SelectItem>
+                <SelectItem value="true-false">True/False</SelectItem>
+                <SelectItem value="match-pairs">Match Pairs</SelectItem>
+                <SelectItem value="table">Table</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button onClick={handleSave} className="w-full">
+            <Save className="mr-2 h-4 w-4" />
+            Save to Personal Bank
+          </Button>
         </CardContent>
       </Card>
-
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Button onClick={handleSaveToBank} variant="outline" className="flex-1">
-          <Plus className="mr-2 h-4 w-4" />
-          Add to Personal Bank
-        </Button>
-        <Button onClick={handleSaveToPaper} className="flex-1">
-          <Save className="mr-2 h-4 w-4" />
-          Add to Paper
-        </Button>
-      </div>
     </div>
   );
 }
-

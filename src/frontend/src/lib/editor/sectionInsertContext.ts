@@ -1,6 +1,7 @@
 interface SectionInsertContext {
   paperId: string;
   sectionId: string;
+  headingId?: string;
   source: 'question-bank' | 'ai';
 }
 

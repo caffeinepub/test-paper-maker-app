@@ -12,7 +12,8 @@ import { Sparkles, Plus, Check, Edit2, Trash2, Info, AlertCircle } from 'lucide-
 import { Question, QuestionType } from '../../state/mockData';
 import { generateMockQuestions } from '../../lib/ai/mockQuestionGenerator';
 import { getSectionInsertContext, clearSectionInsertContext } from '../../lib/editor/sectionInsertContext';
-import { insertQuestionsIntoSection } from '../../lib/editor/insertQuestionsIntoPaper';
+import { insertQuestionsIntoSection, insertQuestionsIntoHeading } from '../../lib/editor/insertQuestionsIntoPaper';
+import { QuestionCategorizationDialog } from '../../components/questionBank/QuestionCategorizationDialog';
 
 interface GeneratedQuestion {
   id: string;
@@ -26,7 +27,7 @@ interface GeneratedQuestion {
 
 export function AIPreferencesWireframe() {
   const navigate = useNavigate();
-  const { addPersonalQuestion, getPaperById, updatePaper } = useMockStore();
+  const { addPersonalQuestion, getPaperById, updatePaper, profile } = useMockStore();
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [count, setCount] = useState(5);
@@ -34,6 +35,7 @@ export function AIPreferencesWireframe() {
   const [questionStyle, setQuestionStyle] = useState<'conceptual' | 'numerical' | 'mixed'>('mixed');
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showCategorizationDialog, setShowCategorizationDialog] = useState(false);
 
   const insertContext = getSectionInsertContext();
 
@@ -95,15 +97,23 @@ export function AIPreferencesWireframe() {
       return;
     }
 
+    setShowCategorizationDialog(true);
+  };
+
+  const handleCategorizationConfirm = (metadata: { board: string; standard: string; questionType: string }) => {
+    const selectedQuestions = generatedQuestions.filter((q) => q.selected);
+
     selectedQuestions.forEach((q) => {
       const newQuestion: Question = {
         id: `q-${Date.now()}-${Math.random()}`,
         text: q.text,
         marks: q.marks,
         type: q.type,
-        questionType: q.questionType,
+        questionType: metadata.questionType as QuestionType,
         headingId: null,
         imageAttachment: null,
+        board: metadata.board,
+        standard: metadata.standard,
       };
       addPersonalQuestion(newQuestion);
     });
@@ -137,16 +147,23 @@ export function AIPreferencesWireframe() {
 
     // Convert generated questions to full Question objects
     const fullQuestions: Question[] = selectedQuestions.map((q) => ({
-      id: `temp-${Date.now()}-${Math.random()}`, // Will be replaced by insertQuestionsIntoSection
+      id: `temp-${Date.now()}-${Math.random()}`, // Will be replaced by insertion function
       text: q.text,
       marks: q.marks,
       type: q.type,
       questionType: q.questionType,
-      headingId: null, // Will be set by insertQuestionsIntoSection
+      headingId: null, // Will be set by insertion function
       imageAttachment: null,
+      board: paper.board,
+      standard: paper.standard,
     }));
 
-    const updatedSections = insertQuestionsIntoSection(paper, insertContext.sectionId, fullQuestions);
+    let updatedSections;
+    if (insertContext.headingId) {
+      updatedSections = insertQuestionsIntoHeading(paper, insertContext.sectionId, insertContext.headingId, fullQuestions);
+    } else {
+      updatedSections = insertQuestionsIntoSection(paper, insertContext.sectionId, fullQuestions);
+    }
 
     updatePaper(insertContext.paperId, { sections: updatedSections });
     clearSectionInsertContext();
@@ -160,18 +177,29 @@ export function AIPreferencesWireframe() {
     if (!paper) return null;
     const sectionIndex = paper.sections.findIndex((s) => s.id === insertContext.sectionId);
     if (sectionIndex === -1) return null;
-    return `Section ${String.fromCharCode(65 + sectionIndex)}`;
+    
+    let label = `Section ${String.fromCharCode(65 + sectionIndex)}`;
+    
+    if (insertContext.headingId) {
+      const section = paper.sections[sectionIndex];
+      const heading = section.headings?.find((h) => h.id === insertContext.headingId);
+      if (heading) {
+        label += ` - ${heading.title}`;
+      }
+    }
+    
+    return label;
   };
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 py-8">
+    <div className="container mx-auto max-w-6xl p-4 py-8 page-with-floating-ui">
       <div className="mb-6">
         <h1 className="flex items-center gap-2 text-3xl font-bold text-foreground">
           <Sparkles className="h-8 w-8 text-primary" />
           AI Assistant
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Generate question suggestions using AI based on your preferences
+          Create questions based on selected topics, standards, and preferences.
         </p>
       </div>
 
@@ -258,25 +286,16 @@ export function AIPreferencesWireframe() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="conceptual">Conceptual (Theory-based)</SelectItem>
-                  <SelectItem value="numerical">Numerical (Problem-solving)</SelectItem>
-                  <SelectItem value="mixed">Mixed (Both types)</SelectItem>
+                  <SelectItem value="conceptual">Conceptual</SelectItem>
+                  <SelectItem value="numerical">Numerical</SelectItem>
+                  <SelectItem value="mixed">Mixed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <Button onClick={handleGenerate} className="w-full" disabled={isGenerating}>
-              {isGenerating ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Generate Questions
-                </>
-              )}
+            <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
+              <Sparkles className="mr-2 h-4 w-4" />
+              {isGenerating ? 'Generating...' : 'Generate Questions'}
             </Button>
           </CardContent>
         </Card>
@@ -305,65 +324,69 @@ export function AIPreferencesWireframe() {
                   {generatedQuestions.map((question) => (
                     <Card
                       key={question.id}
-                      className={`cursor-pointer transition-colors ${
+                      className={`cursor-pointer transition-all ${
                         question.selected ? 'border-primary bg-primary/5' : ''
                       }`}
-                      onClick={() => handleToggleSelect(question.id)}
                     >
                       <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-primary">
-                            {question.selected && <Check className="h-4 w-4 text-primary" />}
+                        {question.editing ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={question.text}
+                              onChange={(e) => handleUpdateQuestion(question.id, e.target.value)}
+                              className="min-h-[80px]"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(question.id)}
+                            >
+                              Done
+                            </Button>
                           </div>
-                          <div className="flex-1">
-                            {question.editing ? (
-                              <Textarea
-                                value={question.text}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  handleUpdateQuestion(question.id, e.target.value);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="mb-2"
-                                rows={3}
-                              />
-                            ) : (
-                              <p className="text-sm text-foreground">{question.text}</p>
-                            )}
-                            <div className="mt-2 flex gap-2">
-                              <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
-                                {question.marks} Mark{question.marks > 1 ? 's' : ''}
-                              </span>
-                              <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
-                                {question.type}
-                              </span>
+                        ) : (
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={question.selected}
+                              onChange={() => handleToggleSelect(question.id)}
+                              className="mt-1 h-4 w-4 cursor-pointer"
+                            />
+                            <div className="flex-1">
+                              <p className="text-foreground">{question.text}</p>
+                              <div className="mt-2 flex gap-2">
+                                <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
+                                  {question.marks} Mark{question.marks > 1 ? 's' : ''}
+                                </span>
+                                <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                  {question.type}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(question.id)}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(question.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(question.id)}
-                              className="h-8 w-8"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(question.id)}
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
                     onClick={handleAddToBank}
                     variant="outline"
@@ -371,24 +394,32 @@ export function AIPreferencesWireframe() {
                     disabled={generatedQuestions.filter((q) => q.selected).length === 0}
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Add to Bank
+                    Add to Personal Bank
                   </Button>
-                  {insertContext && (
-                    <Button
-                      onClick={handleAddToPaper}
-                      className="flex-1"
-                      disabled={generatedQuestions.filter((q) => q.selected).length === 0}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add to Paper
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleAddToPaper}
+                    className="flex-1"
+                    disabled={
+                      !insertContext || generatedQuestions.filter((q) => q.selected).length === 0
+                    }
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Add to Paper
+                  </Button>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      <QuestionCategorizationDialog
+        open={showCategorizationDialog}
+        onOpenChange={setShowCategorizationDialog}
+        onConfirm={handleCategorizationConfirm}
+        defaultBoard={profile.preferredBoard}
+        defaultStandard={profile.defaultStandard}
+      />
     </div>
   );
 }

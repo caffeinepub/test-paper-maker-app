@@ -13,7 +13,7 @@ export function FloatingAIButton() {
     <Button
       onClick={handleClick}
       size="lg"
-      className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
+      className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
       aria-label="Open AI Assistant"
       data-coachmark="ai-button"
     >

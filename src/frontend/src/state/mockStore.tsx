@@ -77,6 +77,18 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     };
   };
 
+  // Migrate legacy questions to include board/standard metadata
+  const migrateQuestion = (question: Question, profile: Profile): Question => {
+    if (!question.board || !question.standard) {
+      return {
+        ...question,
+        board: question.board || profile.preferredBoard || 'CBSE',
+        standard: question.standard || profile.defaultStandard || 'Standard 10',
+      };
+    }
+    return question;
+  };
+
   const initialize = () => {
     try {
       setInitializationError(null);
@@ -98,9 +110,11 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
       setIsLoggedIn(storedIsLoggedIn);
       setOnboardingCompleted(storedOnboardingCompleted);
 
+      let loadedProfile = defaultProfile;
       if (storedProfile) {
         try {
-          setProfile(JSON.parse(storedProfile));
+          loadedProfile = JSON.parse(storedProfile);
+          setProfile(loadedProfile);
         } catch {
           setProfile(defaultProfile);
         }
@@ -118,7 +132,9 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
 
       if (storedPersonalQuestions) {
         try {
-          setPersonalQuestions(JSON.parse(storedPersonalQuestions));
+          const parsedQuestions = JSON.parse(storedPersonalQuestions);
+          // Migrate legacy questions
+          setPersonalQuestions(parsedQuestions.map((q: Question) => migrateQuestion(q, loadedProfile)));
         } catch {
           setPersonalQuestions([]);
         }
@@ -139,81 +155,88 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const retryInitialization = () => {
-    setIsInitialized(false);
-    setInitializationError(null);
-    setTimeout(initialize, 100);
+    initialize();
   };
 
-  const login = () => {
-    setIsLoggedIn(true);
-    safeSetItem('isLoggedIn', 'true');
-  };
+  useEffect(() => {
+    if (isInitialized && !initializationError) {
+      safeSetItem('isLoggedIn', isLoggedIn.toString());
+    }
+  }, [isLoggedIn, isInitialized, initializationError]);
 
+  useEffect(() => {
+    if (isInitialized && !initializationError) {
+      safeSetItem('onboardingCompleted', onboardingCompleted.toString());
+    }
+  }, [onboardingCompleted, isInitialized, initializationError]);
+
+  useEffect(() => {
+    if (isInitialized && !initializationError) {
+      safeSetItem('profile', JSON.stringify(profile));
+    }
+  }, [profile, isInitialized, initializationError]);
+
+  useEffect(() => {
+    if (isInitialized && !initializationError) {
+      safeSetItem('papers', JSON.stringify(papers));
+    }
+  }, [papers, isInitialized, initializationError]);
+
+  useEffect(() => {
+    if (isInitialized && !initializationError) {
+      safeSetItem('personalQuestions', JSON.stringify(personalQuestions));
+    }
+  }, [personalQuestions, isInitialized, initializationError]);
+
+  const login = () => setIsLoggedIn(true);
   const logout = () => {
     setIsLoggedIn(false);
     setOnboardingCompleted(false);
-    safeRemoveItem('isLoggedIn');
-    safeRemoveItem('onboardingCompleted');
   };
-
-  const completeOnboarding = () => {
-    setOnboardingCompleted(true);
-    safeSetItem('onboardingCompleted', 'true');
-  };
+  const completeOnboarding = () => setOnboardingCompleted(true);
 
   const updateProfile = (updates: Partial<Profile>) => {
-    const newProfile = { ...profile, ...updates };
-    setProfile(newProfile);
-    safeSetItem('profile', JSON.stringify(newProfile));
+    setProfile((prev) => ({ ...prev, ...updates }));
   };
 
   const addPaper = (paper: Paper) => {
-    const normalizedPaper = normalizePaper(paper);
-    const newPapers = [...papers, normalizedPaper];
-    setPapers(newPapers);
-    safeSetItem('papers', JSON.stringify(newPapers));
+    setPapers((prev) => [...prev, paper]);
   };
 
   const updatePaper = (paperId: string, updates: Partial<Paper>) => {
-    const newPapers = papers.map((p) => {
-      if (p.id === paperId) {
-        const updatedPaper = { ...p, ...updates };
-        return normalizePaper(updatedPaper);
-      }
-      return p;
-    });
-    setPapers(newPapers);
-    safeSetItem('papers', JSON.stringify(newPapers));
+    setPapers((prev) =>
+      prev.map((paper) => {
+        if (paper.id === paperId) {
+          const updated = { ...paper, ...updates };
+          return normalizePaper(updated);
+        }
+        return paper;
+      })
+    );
   };
 
   const deletePaper = (paperId: string) => {
-    const newPapers = papers.filter((p) => p.id !== paperId);
-    setPapers(newPapers);
-    safeSetItem('papers', JSON.stringify(newPapers));
+    setPapers((prev) => prev.filter((paper) => paper.id !== paperId));
   };
 
   const getPaperById = (paperId: string) => {
-    return papers.find((p) => p.id === paperId);
+    return papers.find((paper) => paper.id === paperId);
   };
 
   const addPersonalQuestion = (question: Question) => {
-    const newQuestions = [...personalQuestions, question];
-    setPersonalQuestions(newQuestions);
-    safeSetItem('personalQuestions', JSON.stringify(newQuestions));
+    // Ensure board/standard metadata is present
+    const enrichedQuestion = migrateQuestion(question, profile);
+    setPersonalQuestions((prev) => [...prev, enrichedQuestion]);
   };
 
   const updatePersonalQuestion = (questionId: string, updates: Partial<Question>) => {
-    const newQuestions = personalQuestions.map((q) =>
-      q.id === questionId ? { ...q, ...updates } : q
+    setPersonalQuestions((prev) =>
+      prev.map((q) => (q.id === questionId ? { ...q, ...updates } : q))
     );
-    setPersonalQuestions(newQuestions);
-    safeSetItem('personalQuestions', JSON.stringify(newQuestions));
   };
 
   const deletePersonalQuestion = (questionId: string) => {
-    const newQuestions = personalQuestions.filter((q) => q.id !== questionId);
-    setPersonalQuestions(newQuestions);
-    safeSetItem('personalQuestions', JSON.stringify(newQuestions));
+    setPersonalQuestions((prev) => prev.filter((q) => q.id !== questionId));
   };
 
   const getStarterQuestions = () => {
@@ -221,65 +244,50 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   };
 
   const resetTutorial = () => {
-    setOnboardingCompleted(false);
-    safeRemoveItem('onboardingCompleted');
-    safeRemoveItem('start-tutorial');
+    safeRemoveItem('coachmarks-completed');
+    safeRemoveItem('coachmarks-active');
+    safeRemoveItem('real-paper-toolbox-spotlight-completed');
   };
 
   const clearAllData = () => {
-    // Clear all stored data
-    safeRemoveItem('isLoggedIn');
-    safeRemoveItem('onboardingCompleted');
-    safeRemoveItem('profile');
+    setPapers([]);
+    setPersonalQuestions([]);
     safeRemoveItem('papers');
     safeRemoveItem('personalQuestions');
-    safeRemoveItem('start-tutorial');
-    
-    // Reset state
-    setIsLoggedIn(false);
-    setOnboardingCompleted(false);
-    setProfile(defaultProfile);
-    setPapers(samplePapers);
-    setPersonalQuestions([]);
   };
 
-  return (
-    <MockStoreContext.Provider
-      value={{
-        isInitialized,
-        initializationError,
-        retryInitialization,
-        isLoggedIn,
-        onboardingCompleted,
-        profile,
-        papers,
-        personalQuestions,
-        login,
-        logout,
-        completeOnboarding,
-        updateProfile,
-        addPaper,
-        updatePaper,
-        deletePaper,
-        getPaperById,
-        addPersonalQuestion,
-        updatePersonalQuestion,
-        deletePersonalQuestion,
-        getStarterQuestions,
-        resetTutorial,
-        clearAllData,
-      }}
-    >
-      {children}
-    </MockStoreContext.Provider>
-  );
+  const value: MockStoreContextType = {
+    isInitialized,
+    initializationError,
+    retryInitialization,
+    isLoggedIn,
+    onboardingCompleted,
+    profile,
+    papers,
+    personalQuestions,
+    login,
+    logout,
+    completeOnboarding,
+    updateProfile,
+    addPaper,
+    updatePaper,
+    deletePaper,
+    getPaperById,
+    addPersonalQuestion,
+    updatePersonalQuestion,
+    deletePersonalQuestion,
+    getStarterQuestions,
+    resetTutorial,
+    clearAllData,
+  };
+
+  return <MockStoreContext.Provider value={value}>{children}</MockStoreContext.Provider>;
 }
 
 export function useMockStore() {
   const context = useContext(MockStoreContext);
-  if (!context) {
-    throw new Error('useMockStore must be used within MockStoreProvider');
+  if (context === undefined) {
+    throw new Error('useMockStore must be used within a MockStoreProvider');
   }
   return context;
 }
-

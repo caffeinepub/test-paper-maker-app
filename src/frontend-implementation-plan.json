@@ -1,149 +1,264 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Paper Editor fixes: correct question insertion, inline bank editing, and side-by-side match/table layouts",
+  "title": "Add Questions flow with auto-detect, layout/CTA fixes, UI copy updates, logo + export rendering fixes",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Insert a full deep-copied Question object from Question Bank into the target paper section with a new id and correct headingId.",
+      "summary": "Prevent bottom action buttons from overflowing/colliding with fixed UI across key screens and viewports.",
       "acceptanceCriteria": [
-        "From the Paper Editor flow (using the insert context), clicking “Use” on a Question Bank item adds a new question to the chosen paper section and the user is navigated back to the Real Paper editor.",
-        "The inserted question is a deep copy of the source question’s structure/content (including options and images), except for a new unique id.",
-        "The inserted question appears in the editor with the same question type and renders correctly (MCQ, match-pairs, table, etc.).",
-        "If the destination section has headings, the inserted question is assigned to the section’s active/first heading (do not leave headingId null if headings exist), so it is visible under that heading in the PaperSurface list."
+        "On common mobile viewport sizes (small/medium) and desktop, no page shows action buttons cut off below the fold due to fixed positioning or overflow issues.",
+        "Floating buttons (e.g., AI FAB) do not cover critical bottom CTAs; spacing/padding accounts for them when needed.",
+        "No horizontal scrolling is introduced as a side-effect of the fix."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
-          "operation": "create",
-          "description": "Add reusable helpers to (1) deep-clone a Question, (2) generate a new unique question id, (3) compute destination headingId based on the destination section’s headings (use first heading when headings exist), and (4) return updated sections with inserted questions for the insert context."
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Introduce a reusable, safe-area-aware bottom spacing pattern for pages that have fixed/floating UI (e.g., use a CSS utility/class for consistent bottom padding and print-safe behavior) and ensure no new horizontal overflow is introduced."
+        },
+        {
+          "path": "frontend/src/components/ai/FloatingAIButton.tsx",
+          "operation": "modify",
+          "description": "Adjust FAB positioning and/or expose a predictable bottom inset so it does not cover critical bottom CTAs; ensure it respects safe-area insets and cooperates with page bottom padding. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/pages/questionBank/QuestionBankWireframe.tsx",
           "operation": "modify",
-          "description": "Fix the Question Bank “Use” action to insert a full Question object (not just text/marks). Use the new insertion helper to deep-copy the selected question (including mcqOptions/fillInBlankData/trueFalseData/matchPairsData/tableData/imageAttachment and any rich cell content/images), assign a new id, set headingId appropriately for the destination section, update the paper in the mock store, clear the insert context, and navigate back to the Real Paper editor. Verify the component's usage instructions before implementing."
+          "description": "Apply the shared page layout/bottom-padding treatment so the screen content and any bottom actions remain reachable and are not obscured by floating UI. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+          "operation": "modify",
+          "description": "Apply the shared page layout/bottom-padding treatment so bottom actions and inputs remain visible on mobile with the FAB present. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/editor/PaperEditorWireframe.tsx",
+          "operation": "modify",
+          "description": "Apply the shared page layout/bottom-padding treatment to prevent bottom CTAs (e.g., Continue button area) from being cut off on mobile/desktop. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/editor/RealPaperEditorWireframe.tsx",
+          "operation": "modify",
+          "description": "Apply the shared page layout/bottom-padding treatment so any editor bottom actions/tooling remain reachable and are not hidden behind mobile browser chrome/floating elements. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/export/ExportPrintPreviewWireframe.tsx",
+          "operation": "modify",
+          "description": "Apply the shared page layout/bottom-padding treatment so export/print actions remain reachable and do not overflow on mobile/desktop. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx",
+          "operation": "modify",
+          "description": "Apply the shared page layout/bottom-padding treatment so filters and any bottom actions are not obscured by floating UI on mobile. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Make AI “Add to Paper” reliably insert full Question objects into the section indicated by insert context, with headingId assignment and a clear error when context is missing.",
+      "summary": "Add top-of-screen \"Add Questions\" buttons on Home and Question Bank that open a full-screen Add Questions page.",
       "acceptanceCriteria": [
-        "When navigating from a paper editor to the AI Assistant with an insert context set, selecting generated questions and clicking “Add to Paper” adds them to the correct paper section and returns to the Real Paper editor.",
-        "Inserted AI questions appear under the correct section heading (headingId set when headings exist).",
-        "No insertion occurs when there is no insert context; the UI shows a clear error message and does not crash."
+        "Home screen shows a clearly visible, small \"Add Questions\" button near the top area (not only a floating button).",
+        "Question Bank screen shows a clearly visible, small \"Add Questions\" button near the top area.",
+        "Tapping either button navigates to the Add Questions page, which renders as a full-screen page (not a small dialog)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+          "path": "frontend/src/pages/home/HomeDashboardWireframe.tsx",
           "operation": "modify",
-          "description": "Refactor “Add to Paper” to use the shared insertion helper so inserted items are valid full Question objects (with correct questionType, new unique ids, and headingId set to the destination section’s first heading when headings exist). Replace bare alert-only handling for missing insert context with a clear inline error message in the page UI and prevent any insertion attempts. Verify the component's usage instructions before implementing."
+          "description": "Add a small \"Add Questions\" button near the top area, styled consistently with existing home quick-action UI, and navigate to the full-screen Add Questions route. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
+          "path": "frontend/src/pages/questionBank/QuestionBankWireframe.tsx",
           "operation": "modify",
-          "description": "Extend helper to support inserting multiple questions at once (AI selection) while ensuring each inserted Question receives a unique id and consistent headingId assignment for the destination section."
+          "description": "Add a small \"Add Questions\" button near the top area and wire it to navigate to the full-screen Add Questions route. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register a new route for the full-screen Add Questions page and ensure it is reachable via navigation from Home and Question Bank."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Enable inline editing for personal questions in Question Bank and persist edits to the personal question store.",
+      "summary": "Create a full-screen Add Questions flow for manual entry/paste into the personal Question Bank, categorized by Board and Standard.",
       "acceptanceCriteria": [
-        "In the Question Bank “My Questions” tab, clicking “Edit” toggles the question card into an editable state (e.g., textarea/input) without navigating away.",
-        "Edits can be saved (e.g., via a Save/Done control or by toggling Edit off) and are persisted using the existing store update method so they remain after refresh.",
-        "Cancelling/discarding edits (if provided) does not mutate stored data.",
-        "Editing does not break the “Use” button behavior."
+        "The Add Questions flow allows entering or pasting one or multiple questions without first choosing the question type.",
+        "Before saving to the personal bank, the flow captures Board and Standard (either user-selected or confirmed) and stores them on the created questions.",
+        "Newly added questions appear under the correct Question Bank board/standard listing in \"My Questions\" after saving.",
+        "The flow does not incorrectly route questions into a paper section/heading when the intent is Question Bank storage."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/questionBank/QuestionBankWireframe.tsx",
+          "path": "frontend/src/pages/questionBank/AddQuestionsWireframe.tsx",
+          "operation": "create",
+          "description": "Implement the full-screen Add Questions page UI: manual entry/paste of one or multiple questions, Board + Standard capture, and saving into the personal Question Bank (not into paper sections/headings). Use shadcn-ui components (e.g., Button, Card, Select, Textarea, Alert) for consistent UI. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/state/mockStore.tsx",
           "operation": "modify",
-          "description": "Implement inline edit mode for “My Questions” cards: add local UI state per item (editing/draft text), render an inline input/textarea when editing, add Save/Cancel (or Done/Discard) controls, and persist via useMockStore.updatePersonalQuestion. Ensure “Use” continues to insert via the same full-object insertion flow and is unaffected by editing state. Verify the component's usage instructions before implementing."
+          "description": "Add/extend store capabilities needed by the Add Questions flow to create multiple personal questions with board/standard metadata and keep Question Bank listings in sync (using the existing persistence mechanism already used by the app)."
+        },
+        {
+          "path": "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx",
+          "operation": "modify",
+          "description": "Ensure the personal Question Bank board/standard listing reflects newly added questions immediately after saving (and remains correct after refresh via the existing persisted store). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire the new Add Questions page route into the router so it renders as a full-screen page."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Ensure match-pairs Column A and Column B are always strictly side-by-side in both editor and renderer, using horizontal scrolling on small screens instead of stacking.",
+      "summary": "Auto-detect question type immediately on paste/add, require per-question confirmation or per-question selection if rejected, and save confirmed types.",
       "acceptanceCriteria": [
-        "For match-pairs questions, Column A and Column B remain in a two-column layout at all viewport widths (no stacking).",
-        "On small screens, the pair area remains usable (e.g., allows horizontal scroll within the question block) without breaking the rest of the page layout.",
-        "Both editor mode and read/print renderer mode reflect the side-by-side requirement consistently."
+        "As soon as a question is added/pasted, detection runs automatically without an extra button click.",
+        "For each question, the UI shows the detected question type and asks the user to confirm or change it.",
+        "If the user indicates the detection is wrong, the UI forces selecting a type for that question before saving.",
+        "Saved questions reflect the confirmed type in the Question Bank filter (e.g., visible under the selected type)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/paper/PaperRenderer.tsx",
-          "operation": "modify",
-          "description": "Update match-pairs rendering layout to never collapse to a single column (remove responsive stacking). Wrap the two-column area in an internal horizontal scroll container and enforce a minimum width for the two columns so they stay side-by-side on narrow screens while not breaking the overall page layout. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/lib/questionBank/detectQuestionType.ts",
+          "operation": "create",
+          "description": "Add a lightweight, deterministic question-type detection helper (heuristics-based) that can run instantly on newly added/pasted question text and returns a best-guess QuestionType for UI confirmation."
         },
         {
-          "path": "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "path": "frontend/src/pages/questionBank/AddQuestionsWireframe.tsx",
           "operation": "modify",
-          "description": "Update match-pairs editor layout to remain two columns at all viewport widths by applying an internal horizontal scroll container/min-width constraints around the two-column grid, ensuring the editor remains usable on mobile without stacking. Verify the component's usage instructions before implementing."
+          "description": "Run type detection immediately when a question is added/pasted; show per-question confirmation UI and enforce explicit selection when detection is rejected; block saving until each question has a confirmed type. Use shadcn-ui components (e.g., Select, Dialog/Alert, Button) for confirmation/changing types. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx",
           "operation": "modify",
-          "description": "Add/adjust print-safe CSS utilities/classes used by match-pairs to support fixed side-by-side layout and internal horizontal scrolling without affecting the rest of the paper layout."
+          "description": "Ensure the question type filter correctly reflects newly saved question types (and that labels use the taxonomy mapping). Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-5",
-      "summary": "Improve table question UI with editable Column A/Column B headers and darker, print-safe borders in editor and renderer.",
+      "summary": "Update specific per-screen help/empty-state texts exactly as provided, without affecting other screens.",
       "acceptanceCriteria": [
-        "Table questions render visible headers labeled “Column A” and “Column B” by default.",
-        "Users can edit the header text inline; changes persist in the question’s table data model and are reflected in both editor and renderer views.",
-        "Table borders are visually darker than before, with the outside border and header separators also rendered in dark border styling.",
-        "The styling works in both normal view and print view (no missing borders when printing)."
+        "Question Bank screen shows exactly: \"Select a board and standard to browse available questions. Add questions to sections to build your question paper.\" in its designated information/help area.",
+        "AI Assistant screen shows exactly: \"Create questions based on selected topics, standards, and preferences.\" in its designated description/help area.",
+        "Board+Standard screen shows exactly: \"Find questions using question type\" in its designated help/description area.",
+        "When there are zero questions in the Board+Standard screen list, the empty state text is exactly:\n\"No questions added yet.\nStart by selecting add questions .\"",
+        "No unrelated labels or descriptions on other screens are overwritten with these strings."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/state/mockData.ts",
+          "path": "frontend/src/pages/questionBank/QuestionBankWireframe.tsx",
           "operation": "modify",
-          "description": "Extend the table question data model to store editable column header text (defaulting to “Column A”/“Column B” when not present) in a backward-compatible way for existing saved papers/questions."
+          "description": "Replace only the Question Bank screen's designated info/help text with exactly: \"Select a board and standard to browse available questions. Add questions to sections to build your question paper.\" Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/paper/QuestionBlockEditor.tsx",
+          "path": "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
           "operation": "modify",
-          "description": "Update table editor to render a header row above the table cells showing editable Column A/Column B header inputs, persisting edits into the question’s tableData header fields via onUpdate. Apply darker border styling classes for inner gridlines and an obvious outer border. Verify the component's usage instructions before implementing."
+          "description": "Replace only the AI Assistant screen's designated description text with exactly: \"Create questions based on selected topics, standards, and preferences.\" Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/paper/PaperRenderer.tsx",
+          "path": "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx",
           "operation": "modify",
-          "description": "Update table renderer to show a header row (default “Column A”/“Column B” if unset) and apply darker border styling (inner + outer) that remains visible in print. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Add/adjust print-safe table CSS (darker borders, strong outer border, header separators) used by both renderer and editor table markup, ensuring consistent appearance in print view."
+          "description": "Update only this screen's designated help/description text to exactly: \"Find questions using question type\" and replace the empty-state label \"empty add questions\" with exactly the two-line message:\n\"No questions added yet.\nStart by selecting add questions .\" Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-6",
-      "summary": "Reduce excessive whitespace in table cells containing images so cell height better fits image/content while keeping image controls functional.",
+      "summary": "Fix Teacher Profile logo upload: enable selection, persist in profile storage, and render in editor header and export/print preview.",
       "acceptanceCriteria": [
-        "After inserting/pasting an image into a table cell, the cell does not expand to an unnecessarily tall area; whitespace above/below the image is minimized.",
-        "The image remains visible and controllable (resize/alignment controls still work).",
-        "The change does not regress text editing within the same cell and does not break print rendering of table cell images."
+        "Profile screen’s \"School Logo\" file input is enabled and accepts image files.",
+        "After selecting a logo and saving, the logo persists across refresh (stored with the profile state mechanism already used by the app).",
+        "The logo is visible in the paper editor header area (where institute name/branding is displayed) and in export/print preview output.",
+        "If no logo is set, UI remains clean (no broken image icon)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/editor/RichCellEditor.tsx",
+          "path": "frontend/src/pages/profile/ProfileWireframe.tsx",
           "operation": "modify",
-          "description": "Adjust RichCellEditor layout behavior inside table cells to avoid unnecessary vertical growth when images exist (e.g., reduce default textarea vertical footprint, tighten wrapper spacing, and ensure image wrappers don’t impose large minimum heights) while preserving existing image resize/alignment controls. Verify the component's usage instructions before implementing."
+          "description": "Enable the \"School Logo\" file input, accept image files, preview the chosen logo, and store it into the existing profile state on Save (using the app's current profile persistence mechanism). Use shadcn-ui Input/Button patterns already used on the page. Verify the component's usage instructions before implementing."
         },
+        {
+          "path": "frontend/src/state/mockStore.tsx",
+          "operation": "modify",
+          "description": "Extend the stored profile shape/persistence to include a saved school logo value (e.g., a safe serializable representation) and ensure it persists across refresh using the existing local persistence approach."
+        },
+        {
+          "path": "frontend/src/components/paper/PaperSurface.tsx",
+          "operation": "modify",
+          "description": "Render the persisted logo in the paper header/branding area used by both editor surfaces and the export/print preview; ensure no broken image is shown when absent. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/export/ExportPrintPreviewWireframe.tsx",
+          "operation": "modify",
+          "description": "Ensure export/print preview reflects the stored logo in the rendered paper output and that print-hidden UI does not affect the printable header. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Make institute name editable in the paper editor and ensure clean logo+name layout in editor and exported/printed output.",
+      "acceptanceCriteria": [
+        "Paper editor includes a clear way to edit institute name for the current paper (overriding profile defaults where applicable).",
+        "Logo and institute name render without overlap/cropping on small and large screens.",
+        "Export/print preview uses the edited institute name and renders it aligned with the logo."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/editor/RealPaperEditorWireframe.tsx",
+          "operation": "modify",
+          "description": "Add an editor control to modify the institute name for the current paper (overriding profile defaults where applicable) and save it into the paper state; ensure the control does not break mobile layout. Use shadcn-ui Input/Button where appropriate. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/state/mockStore.tsx",
+          "operation": "modify",
+          "description": "Persist a per-paper institute name override (separate from profile defaults) and ensure it is saved/restored via the existing paper persistence mechanism."
+        },
+        {
+          "path": "frontend/src/components/paper/PaperSurface.tsx",
+          "operation": "modify",
+          "description": "Update the header/branding rendering to use the paper's institute name override when present; ensure the logo and institute name are aligned cleanly with responsive behavior and print compatibility. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/export/ExportPrintPreviewWireframe.tsx",
+          "operation": "modify",
+          "description": "Ensure exported/printed output uses the edited institute name (paper override) and that header layout remains aligned with the logo in the printable view. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Fix export/print rendering for images and tables so they fit page margins, preserve aspect ratios, and avoid clipping.",
+      "acceptanceCriteria": [
+        "In export/print preview, rich content images and attachment images never overflow outside the printable area; they scale down to fit width and/or height constraints.",
+        "Printed/PDF output shows the same images/tables (no missing elements) and they are not clipped by page bounds.",
+        "Tables render with visible borders and do not break layout on narrow screens; print output remains readable.",
+        "Aspect ratio of images is preserved (no distortion)."
+      ],
+      "file_operations": [
         {
           "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Tune CSS for rich cell containers/images within table cells to minimize extra whitespace (tight margins/padding, avoid excessive min-heights) and keep print rendering stable."
+          "description": "Strengthen print and preview CSS rules for the paper content area: constrain images to printable width while preserving aspect ratio, prevent clipping, and ensure tables render with readable borders and non-clipped layout in preview and print."
         },
         {
           "path": "frontend/src/components/paper/PaperRenderer.tsx",
           "operation": "modify",
-          "description": "Ensure table cell rich content rendering aligns to top and uses the updated rich-cell/table styles so images don’t create excessive blank space in read/print modes. Verify the component's usage instructions before implementing."
+          "description": "Ensure rendered question content applies print-safe classes/styling for images (attachments and rich-cell images) and tables so they resize within margins without distortion and avoid clipping. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/editor/RichCellEditor.tsx",
+          "operation": "modify",
+          "description": "Adjust rich-cell rendering output (as used by preview/print) to apply consistent constraints for embedded images/tables to prevent overflow/clipping in the final print/PDF output. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/export/ExportPrintPreviewWireframe.tsx",
+          "operation": "modify",
+          "description": "Ensure the preview container does not clip wide content (especially tables) and matches print constraints so preview and print/PDF are consistent. Verify the component's usage instructions before implementing."
         }
       ]
     }

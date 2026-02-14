@@ -103,38 +103,34 @@ export function PaperRenderer({ question }: PaperRendererProps) {
             <p className="break-words whitespace-pre-wrap">{question.text || '[Question text]'}</p>
             {question.matchPairsData && question.matchPairsData.pairs.length > 0 && (
               <div className="ml-4">
-                <div className="overflow-x-auto">
-                  <div className="grid grid-cols-2 gap-4 min-w-[500px]">
-                    <div className="space-y-2">
-                      <p className="font-semibold text-sm">Column A</p>
-                      {question.matchPairsData.pairs.map((pair, idx) => (
-                        <div
-                          key={idx}
-                          className="match-pair-item flex items-start gap-2 border border-border rounded p-2 min-h-[3rem]"
-                          style={{ width: '100%' }}
-                        >
-                          <span className="font-medium shrink-0">{idx + 1}.</span>
-                          <div className="flex-1 overflow-hidden">
-                            {renderRichContent(pair.left)}
-                          </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2 min-w-0">
+                    <p className="font-semibold text-sm">Column A</p>
+                    {question.matchPairsData.pairs.map((pair, idx) => (
+                      <div
+                        key={idx}
+                        className="match-pair-item flex items-start gap-2 border border-border rounded p-2 min-h-[3rem] min-w-0"
+                      >
+                        <span className="font-medium shrink-0">{idx + 1}.</span>
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          {renderRichContent(pair.left)}
                         </div>
-                      ))}
-                    </div>
-                    <div className="space-y-2">
-                      <p className="font-semibold text-sm">Column B</p>
-                      {question.matchPairsData.pairs.map((pair, idx) => (
-                        <div
-                          key={idx}
-                          className="match-pair-item flex items-start gap-2 border border-border rounded p-2 min-h-[3rem]"
-                          style={{ width: '100%' }}
-                        >
-                          <span className="font-medium shrink-0">{String.fromCharCode(97 + idx)})</span>
-                          <div className="flex-1 overflow-hidden">
-                            {renderRichContent(pair.right)}
-                          </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2 min-w-0">
+                    <p className="font-semibold text-sm">Column B</p>
+                    {question.matchPairsData.pairs.map((pair, idx) => (
+                      <div
+                        key={idx}
+                        className="match-pair-item flex items-start gap-2 border border-border rounded p-2 min-h-[3rem] min-w-0"
+                      >
+                        <span className="font-medium shrink-0">{String.fromCharCode(97 + idx)})</span>
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          {renderRichContent(pair.right)}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

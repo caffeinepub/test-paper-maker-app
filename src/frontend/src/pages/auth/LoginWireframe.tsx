@@ -1,88 +1,82 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { useMockStore } from '../../state/mockStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { LogIn, UserCircle } from 'lucide-react';
 
 export function LoginWireframe() {
   const navigate = useNavigate();
-  const { login: mockLogin, isLoggedIn, onboardingCompleted } = useMockStore();
   const { login: iiLogin, loginStatus } = useInternetIdentity();
+  const { login } = useMockStore();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  useEffect(() => {
-    // Redirect if already logged in
-    if (isLoggedIn) {
-      if (onboardingCompleted) {
-        navigate({ to: '/home' });
-      } else {
-        navigate({ to: '/onboarding' });
-      }
-    }
-  }, [isLoggedIn, onboardingCompleted, navigate]);
-
-  const handleInternetIdentityLogin = () => {
-    iiLogin();
-    mockLogin();
-    if (onboardingCompleted) {
+  const handleInternetIdentityLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      await iiLogin();
+      login();
       navigate({ to: '/home' });
-    } else {
-      navigate({ to: '/onboarding' });
+    } catch (error) {
+      console.error('Login failed:', error);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const handleGuestLogin = () => {
-    mockLogin();
-    if (onboardingCompleted) {
-      navigate({ to: '/home' });
-    } else {
-      navigate({ to: '/onboarding' });
-    }
+    login();
+    navigate({ to: '/home' });
   };
 
+  const isLoading = isLoggingIn || loginStatus === 'logging-in';
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Test Paper Maker</CardTitle>
-          <CardDescription>Create professional exam papers with ease</CardDescription>
+          <CardTitle className="text-3xl font-bold">Test Paper Maker</CardTitle>
+          <CardDescription className="mt-2">
+            Create professional test papers with ease
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button
             onClick={handleInternetIdentityLogin}
+            disabled={isLoading}
             className="w-full"
             size="lg"
-            disabled={loginStatus === 'logging-in'}
           >
-            {loginStatus === 'logging-in' ? 'Connecting...' : 'Login with Internet Identity'}
+            <LogIn className="mr-2 h-5 w-5" />
+            {isLoading ? 'Logging in...' : 'Login with Internet Identity'}
           </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
+              <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">Or</span>
             </div>
           </div>
 
-          <Button onClick={handleGuestLogin} variant="outline" className="w-full" size="lg">
+          <Button
+            onClick={handleGuestLogin}
+            variant="outline"
+            className="w-full"
+            size="lg"
+            disabled={isLoading}
+          >
+            <UserCircle className="mr-2 h-5 w-5" />
             Continue as Guest
           </Button>
 
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              <strong>Guest mode:</strong> Your work is saved locally in your browser. Data may be
-              lost if you clear browser storage. Login with Internet Identity for secure cloud
-              storage.
-            </AlertDescription>
-          </Alert>
+          <p className="text-center text-xs text-muted-foreground">
+            Guest mode stores data locally on your device
+          </p>
         </CardContent>
       </Card>
     </div>
   );
 }
-

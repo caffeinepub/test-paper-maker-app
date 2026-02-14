@@ -1,68 +1,126 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-14T06:43:28.727Z",
-  "summary": "Diff implements shared helpers to deep-clone and insert full Question objects into paper sections (with new IDs and computed headingId), wires Question Bank “Use” to use that helper, and adds inline editing state/actions for personal questions. Evidence for AI “Add to Paper” insertion handling, match-pairs editor+renderer side-by-side enforcement, and table UI/border/whitespace improvements is incomplete or not present in the shown changes. Also includes unrelated global theme/token changes in index.css.",
+  "generatedAt": "2026-02-14T18:29:03.347Z",
+  "summary": "The diff implements the new Add Questions route/flow with heuristic question-type auto-detection and adds top-of-screen \"Add Questions\" buttons on Home and Question Bank. It also updates the specified help text on Question Bank and AI Assistant. Several requested items—logo upload/persistence and institute name editing/rendering, export/print image-table rendering fixes, and the Board+Standard screen text/empty-state copy—are not evidenced in the provided diff summary. The diff also includes multiple unrelated changes (URL/session param utilities, admin token access control init, theme/token updates, onboarding and OCR/UI changes) that were not requested.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "Fix the AI “Add to Paper” insertion so that it reliably inserts questions into the paper editor section indicated by the insert context, returns to the Real Paper editor, and shows a clear error message (and no insertion) when there is no insert context.",
-      "reason": "The AI page shows insert-context retrieval and imports the insertion helper, but the critical logic is truncated right at `handleAddToPaper` and shows `if (!insertContext) { return; // Er...` with no visible user-facing error message, insertion, context clearing, or navigation back to the editor.",
+      "id": "REQ-1",
+      "requirement": "Fix mobile/desktop layouts so bottom action buttons never overflow outside the visible viewport on all affected screens (including Question Bank, AI Assistant, editor/preview/export screens) and ensure floating buttons do not cover critical bottom CTAs.",
+      "reason": "Some screens add a \"page-with-floating-ui\" class and the floating AI button uses z-40, but the diff summary does not show concrete layout/padding/positioning fixes across all listed affected screens (notably editor/preview/export) nor specific safeguards that bottom CTAs are never covered/cut off. Evidence is incomplete for the full scope.",
       "evidence": [
-        "frontend/src/pages/ai/AIPreferencesWireframe.tsx"
+        "frontend/src/pages/home/HomeDashboardWireframe.tsx",
+        "frontend/src/pages/questionBank/QuestionBankWireframe.tsx",
+        "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+        "frontend/src/components/ai/FloatingAIButton.tsx"
       ]
     },
     {
-      "id": "REQ-4",
-      "requirement": "Update the match-pairs (Column A / Column B) editor and renderer so Column A and Column B are always strictly side-by-side at all viewport widths (no stacking), including editor and renderer/print modes.",
-      "reason": "Renderer changes for match-pairs are truncated; while an `overflow-x-auto` wrapper appears, there is no visible confirmation of a fixed two-column layout (e.g., min-width/grid/flex with no wrap) and no evidence of corresponding editor-side changes.",
+      "id": "REQ-3",
+      "requirement": "Add Questions flow supports manual entry/paste of one or multiple questions into the personal Question Bank, capturing Board and Standard for storage (not routing into paper sections/headings).",
+      "reason": "An Add Questions page exists and saves questions with board/standard to personal bank, but the diff excerpt is truncated and does not clearly evidence support for pasting/entering multiple questions in a single operation (beyond adding drafts one-by-one) or the full end-to-end acceptance criteria (e.g., post-save navigation to the correct board/standard listing in \"My Questions\").",
       "evidence": [
-        "frontend/src/components/paper/PaperRenderer.tsx",
-        "frontend/src/components/paper/QuestionBlockEditor.tsx"
+        "frontend/src/pages/questionBank/AddQuestionsWireframe.tsx (truncated)",
+        "frontend/src/App.tsx"
       ]
     },
     {
       "id": "REQ-5",
-      "requirement": "Improve the table question UI: show “Column A” and “Column B” headers, make those headers editable, and render darker borders (inner and outer) in both normal and print views.",
-      "reason": "Only the data model is extended with optional `columnHeaders`; there is no visible table editor/renderer UI implementation for displaying/editing headers or darker border styling in the provided diffs.",
+      "requirement": "Update Board+Standard screen help text to exactly \"Find questions using question type\" and replace the empty-state label with exactly \"No questions added yet.\\nStart by selecting add questions .\"",
+      "reason": "Question Bank and AI Assistant texts are shown updated, but the diff summary for the Board+Standard screen does not show the updated help/description string nor the empty-state copy. The provided excerpt focuses on filtering and selection logic and is truncated before any empty-state rendering.",
       "evidence": [
-        "frontend/src/state/mockData.ts",
-        "frontend/src/components/paper/PaperRenderer.tsx",
-        "frontend/src/components/paper/QuestionBlockEditor.tsx",
-        "frontend/src/index.css"
+        "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx (truncated)"
       ]
     },
     {
       "id": "REQ-6",
-      "requirement": "Reduce excessive blank/unused space when an image is inserted into a table cell so cell height fits image/content better while keeping resize controls functional and not breaking print rendering.",
-      "reason": "Rich cell editor/renderer code is shown, but there’s no clear evidence of CSS/layout changes specifically targeting table-cell image whitespace/min-height/line-height/padding issues (and relevant CSS is truncated).",
+      "requirement": "Fix Teacher Profile logo upload: enable file input, accept image files, persist in stored profile data, and display in profile + paper editor header + export/print preview.",
+      "reason": "The file summary explicitly describes the Profile screen as having a \"logo upload placeholder\" and the diff does not provide evidence of an enabled image input, persistence wiring, or logo rendering in editor/export/preview.",
       "evidence": [
-        "frontend/src/components/editor/RichCellEditor.tsx",
-        "frontend/src/components/paper/PaperRenderer.tsx",
-        "frontend/src/index.css"
+        "frontend-file-summaries.txt (ProfileWireframe described as logo upload placeholder)"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "requirement": "Make institute name editable in the paper editor and ensure clean logo+institute layout in editor and exported/printed output using the edited value.",
+      "reason": "No diff evidence shows UI/controls for editing institute name per paper, nor layout changes in the paper editor header or export/print preview that use the overridden name.",
+      "evidence": [
+        "frontend-file-summaries.txt (PaperEditorWireframe summary does not mention institute name editing or logo layout)"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "requirement": "Ensure images and tables render correctly in export/print preview and print/PDF output (auto-resize images to margins, preserve aspect ratio, tables not clipped).",
+      "reason": "No diff evidence shows print/export CSS or rendering logic changes to constrain images/tables within printable bounds. The export/preview file is mentioned but no specific image/table handling changes are shown in the provided summary.",
+      "evidence": [
+        "frontend-file-summaries.txt (ExportPrintPreviewWireframe summary does not mention image/table print fixes)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Global theme/token adjustments (multiple CSS color variables for light/dark mode, sidebar colors, charts, etc.).",
-      "reason": "Not requested by any REQ; build request focuses on insertion/editing and match-pairs/table layouts, not overall theming.",
+      "description": "Admin-token URL/session parameter utilities and secret-based access-control initialization for the backend actor.",
+      "reason": "BuildRequest does not mention admin tokens, URL param persistence, or initializing access control with a secret; it focuses on Add Questions flow/UI fixes, logo/name editing, and print rendering.",
       "evidence": [
-        "frontend/src/index.css"
+        "frontend/src/utils/urlParams.ts",
+        "frontend/src/hooks/useActor.ts"
+      ]
+    },
+    {
+      "description": "Broad theme/color-token changes (light/dark palette updates, sidebar theming).",
+      "reason": "The request did not ask for global theme redesign; it constrained changes to those required by the listed requirements.",
+      "evidence": [
+        "frontend/src/index.css",
+        "frontend-file-summaries.txt (NavigationDrawer described as updated white background / lighter purple accents)"
+      ]
+    },
+    {
+      "description": "New storage error full-screen recovery UI in AppShell.",
+      "reason": "Not requested; unrelated to the specified requirements and could violate the \"don't change anything else\" constraint.",
+      "evidence": [
+        "frontend/src/components/layout/AppShell.tsx"
+      ]
+    },
+    {
+      "description": "Onboarding flow changes to add/skip an interactive tutorial via localStorage flags.",
+      "reason": "Not requested in any REQ; unrelated to Add Questions, question type detection, logo/name, or print rendering.",
+      "evidence": [
+        "frontend-file-summaries.txt (OnboardingWireframe described as adding tutorial buttons)"
+      ]
+    },
+    {
+      "description": "OCR flow expansion (mobile camera capture, drag-and-drop, 'real OCR extraction flow', review UI changes).",
+      "reason": "Not part of the requested requirements; could be considered unrelated behavior changes.",
+      "evidence": [
+        "frontend-file-summaries.txt (OCRUploadWireframe and OCRReviewApproveWireframe summaries)"
+      ]
+    },
+    {
+      "description": "Replace window.confirm with AlertDialog-based delete confirmation on Papers list.",
+      "reason": "Not requested; unrelated UI behavior change.",
+      "evidence": [
+        "frontend-file-summaries.txt (GeneratedPapersWireframe summary)"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.66,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/editor/RichCellEditor.tsx",
-    "frontend/src/components/paper/PaperRenderer.tsx",
-    "frontend/src/components/paper/QuestionBlockEditor.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/components/ai/FloatingAIButton.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/hooks/useActor.ts",
     "frontend/src/index.css",
-    "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
+    "frontend/src/lib/questionBank/detectQuestionType.ts",
     "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+    "frontend/src/pages/auth/LoginWireframe.tsx",
+    "frontend/src/pages/editor/QuestionEntryWireframe.tsx",
+    "frontend/src/pages/home/HomeDashboardWireframe.tsx",
+    "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx",
+    "frontend/src/pages/questionBank/AddQuestionsWireframe.tsx",
+    "frontend/src/pages/questionBank/QuestionBankBoardStandardWireframe.tsx",
     "frontend/src/pages/questionBank/QuestionBankWireframe.tsx",
-    "frontend/src/state/mockData.ts",
+    "frontend/src/utils/urlParams.ts",
     "project_state.json"
   ]
 }

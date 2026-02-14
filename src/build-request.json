@@ -1,133 +1,183 @@
 {
   "kind": "build_request",
-  "title": "Fix question insertion, inline editing, and Column A/Column B layouts in Paper Editor",
-  "priority": "high",
+  "title": "Implement Add Questions flow, question type auto-detect, UI text fixes, logo + PDF rendering fixes",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the Question Bank “Use” action so that it inserts the full selected question object into the target paper section (not only plain text). The inserted question must preserve all supported fields (e.g., questionType, mcqOptions, fillInBlankData, trueFalseData, matchPairsData, tableData, imageAttachment, and any rich cell content/images), while generating a new unique question id and setting headingId appropriately for the destination section.",
+      "text": "Fix mobile/desktop layouts so bottom action buttons never overflow outside the visible viewport on all affected screens (including Question Bank, AI Assistant, editor/preview/export screens). Ensure primary actions remain reachable without being covered by fixed/floating UI elements.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-1"
         ],
         "quotes": [
-          "Insert question from question bank and ai button in paper editor is not inserting questions",
-          "1 full question object"
+          "Fix bottom buttons going outside the page on all screens",
+          "Build now but don't change anything else"
         ]
       },
       "acceptanceCriteria": [
-        "From the Paper Editor flow (using the insert context), clicking “Use” on a Question Bank item adds a new question to the chosen paper section and the user is navigated back to the Real Paper editor.",
-        "The inserted question is a deep copy of the source question’s structure/content (including options and images), except for a new unique id.",
-        "The inserted question appears in the editor with the same question type and renders correctly (MCQ, match-pairs, table, etc.).",
-        "If the destination section has headings, the inserted question is assigned to the section’s active/first heading (do not leave headingId null if headings exist), so it is visible under that heading in the PaperSurface list."
+        "On common mobile viewport sizes (small/medium) and desktop, no page shows action buttons cut off below the fold due to fixed positioning or overflow issues.",
+        "Floating buttons (e.g., AI FAB) do not cover critical bottom CTAs; spacing/padding accounts for them when needed.",
+        "No horizontal scrolling is introduced as a side-effect of the fix."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix the AI “Add to Paper” insertion so that it reliably inserts questions into the paper editor section indicated by the insert context, and ensure the inserted items are full Question objects consistent with the app’s Question model (including correct questionType and headingId assignment).",
+      "text": "Add a small \"Add Questions\" button at the top of the Question Bank screen and at the top of the Home screen, styled consistently with existing home quick-action buttons. The button must open the new Add Questions flow as a full-screen page.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-1"
         ],
         "quotes": [
-          "Insert question from question bank and ai button in paper editor is not inserting questions",
-          "1 full question object"
+          "Add small “Add Questions” button at top of Question Bank screen and also on home screen",
+          "1 full‑screen"
         ]
       },
       "acceptanceCriteria": [
-        "When navigating from a paper editor to the AI Assistant with an insert context set, selecting generated questions and clicking “Add to Paper” adds them to the correct paper section and returns to the Real Paper editor.",
-        "Inserted AI questions appear under the correct section heading (headingId set when headings exist).",
-        "No insertion occurs when there is no insert context; the UI shows a clear error message and does not crash."
+        "Home screen shows a clearly visible, small \"Add Questions\" button near the top area (not only a floating button).",
+        "Question Bank screen shows a clearly visible, small \"Add Questions\" button near the top area.",
+        "Tapping either button navigates to the Add Questions page, which renders as a full-screen page (not a small dialog)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Enable inline editing for personal questions in the Question Bank. The “Edit” action must allow editing the question text directly within the list item/card and persist changes to the personal question store.",
+      "text": "Create/enable a full-screen \"Add Questions\" flow that supports manual entry/paste of questions into the Question Bank without requiring the user to pre-select a question type before adding. The flow must save questions into the user’s personal Question Bank categorized by Board and Standard (Question Bank location), not into a paper section/heading.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-1"
         ],
         "quotes": [
-          "And edit option in both question bank is not allowing to edit taxt currently",
-          "2 inline"
+          "Place questions automatically not in correct section/heading in correct question bank board, standard",
+          "add manual question entry and an Add Questions flow (home + question bank)"
         ]
       },
       "acceptanceCriteria": [
-        "In the Question Bank “My Questions” tab, clicking “Edit” toggles the question card into an editable state (e.g., textarea/input) without navigating away.",
-        "Edits can be saved (e.g., via a Save/Done control or by toggling Edit off) and are persisted using the existing store update method so they remain after refresh.",
-        "Cancelling/discarding edits (if provided) does not mutate stored data.",
-        "Editing does not break the “Use” button behavior."
+        "The Add Questions flow allows entering or pasting one or multiple questions without first choosing the question type.",
+        "Before saving to the personal bank, the flow captures Board and Standard (either user-selected or confirmed) and stores them on the created questions.",
+        "Newly added questions appear under the correct Question Bank board/standard listing in \"My Questions\" after saving.",
+        "The flow does not incorrectly route questions into a paper section/heading when the intent is Question Bank storage."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Update the match-pairs (Column A / Column B) editor and renderer so that Column A and Column B are always displayed strictly side-by-side, including on narrow/mobile screens (use horizontal scrolling or constrained layout rather than stacking vertically).",
+      "text": "Implement immediate question-type auto-detection when a question is added/pasted in the Add Questions flow. After detection, prompt the user to confirm the detected type; if the user rejects it, require the user to choose the type for that question. Save each question with its confirmed question type.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-1"
         ],
         "quotes": [
-          "it is not showing  column a and column b side by side",
-          "3 strictly side‑by‑side"
+          "2 immediately",
+          "Make question type auto‑detect immediately when a question is added",
+          "If detection is correct: ask the user to confirm",
+          "If detection is wrong: ask type for each question"
         ]
       },
       "acceptanceCriteria": [
-        "For match-pairs questions, Column A and Column B remain in a two-column layout at all viewport widths (no stacking).",
-        "On small screens, the pair area remains usable (e.g., allows horizontal scroll within the question block) without breaking the rest of the page layout.",
-        "Both editor mode and read/print renderer mode reflect the side-by-side requirement consistently."
+        "As soon as a question is added/pasted, detection runs automatically without an extra button click.",
+        "For each question, the UI shows the detected question type and asks the user to confirm or change it.",
+        "If the user indicates the detection is wrong, the UI forces selecting a type for that question before saving.",
+        "Saved questions reflect the confirmed type in the Question Bank filter (e.g., visible under the selected type)."
       ]
     },
     {
       "id": "REQ-5",
-      "text": "Improve the table question UI: show “Column A” and “Column B” headers, make those headers editable, and render darker borders (inner grid lines darker than current; outermost border also dark and clearly visible).",
+      "text": "Update per-screen informational/help text exactly as specified by the user: (1) Question Bank screen info text, (2) AI Assistant screen description text, (3) the screen that opens after selecting a standard: change the help text to the provided copy and replace the empty-state label \"empty add questions\" with the provided two-line message. Do not globally replace unrelated text on other screens.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-1"
         ],
         "quotes": [
-          "table option is also working good but not showing column a and column b written on it add it and make it editable and it's border must be dark then other and outer most line also should be dark"
+          "For question bank \"Select a board and standard to browse available questions.\nAdd questions to sections to build your question paper.\"",
+          "For ai assistance \"Create questions based on selected topics, standards, and preferences.\"",
+          "For screan which open after selecting standard \"Find questions using question type\"",
+          "And text writen on that page \"empty add questions\" replace it with\n\"No questions added yet.\nStart by selecting add questions .\"",
+          "not change all text with this change taxt according to work of that screen, it's function and all not all same"
         ]
       },
       "acceptanceCriteria": [
-        "Table questions render visible headers labeled “Column A” and “Column B” by default.",
-        "Users can edit the header text inline; changes persist in the question’s table data model and are reflected in both editor and renderer views.",
-        "Table borders are visually darker than before, with the outside border and header separators also rendered in dark border styling.",
-        "The styling works in both normal view and print view (no missing borders when printing)."
+        "Question Bank screen shows exactly: \"Select a board and standard to browse available questions. Add questions to sections to build your question paper.\" in its designated information/help area.",
+        "AI Assistant screen shows exactly: \"Create questions based on selected topics, standards, and preferences.\" in its designated description/help area.",
+        "Board+Standard screen shows exactly: \"Find questions using question type\" in its designated help/description area.",
+        "When there are zero questions in the Board+Standard screen list, the empty state text is exactly:\n\"No questions added yet.\nStart by selecting add questions .\"",
+        "No unrelated labels or descriptions on other screens are overwritten with these strings."
       ]
     },
     {
       "id": "REQ-6",
-      "text": "Reduce excessive blank/unused space when an image is inserted into a table cell so that the cell height more closely fits the image and surrounding content (minimize extra whitespace while keeping resizing controls functional).",
+      "text": "Fix Teacher Profile logo upload: enable the disabled logo file input, allow selecting an image, persist it in the app’s stored profile data, and display the logo wherever the app shows institute/branding (profile view and paper editor header and export/print preview).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-1"
         ],
         "quotes": [
-          "image inserted in table box is working but using lots of blank space(you can see in second image)make it minimum"
+          "Fix logo upload in profile",
+          "Make institute name editable in paper editor and arrange logo + institute name layout properly"
         ]
       },
       "acceptanceCriteria": [
-        "After inserting/pasting an image into a table cell, the cell does not expand to an unnecessarily tall area; whitespace above/below the image is minimized.",
-        "The image remains visible and controllable (resize/alignment controls still work).",
-        "The change does not regress text editing within the same cell and does not break print rendering of table cell images."
+        "Profile screen’s \"School Logo\" file input is enabled and accepts image files.",
+        "After selecting a logo and saving, the logo persists across refresh (stored with the profile state mechanism already used by the app).",
+        "The logo is visible in the paper editor header area (where institute name/branding is displayed) and in export/print preview output.",
+        "If no logo is set, UI remains clean (no broken image icon)."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Make institute name editable in the paper editor and fix the layout so the logo and institute name are arranged cleanly (no overlap, proper alignment) in the editor and in exported/printed output.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Make institute name editable in paper editor and arrange logo + institute name layout properly"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Paper editor includes a clear way to edit institute name for the current paper (overriding profile defaults where applicable).",
+        "Logo and institute name render without overlap/cropping on small and large screens.",
+        "Export/print preview uses the edited institute name and renders it aligned with the logo."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Ensure images and tables in questions render correctly in export/print preview and print/PDF output. Images must auto-resize to fit within page margins while preserving aspect ratio, and tables must not be clipped. This applies to rich-cell images (e.g., match-pairs/table cells) and question attachments.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Ensure all images and tables show correctly in final PDF and print correctly",
+          "3 resize",
+          "Auto‑resize images to fit page"
+        ]
+      },
+      "acceptanceCriteria": [
+        "In export/print preview, rich content images and attachment images never overflow outside the printable area; they scale down to fit width and/or height constraints.",
+        "Printed/PDF output shows the same images/tables (no missing elements) and they are not clipped by page bounds.",
+        "Tables render with visible borders and do not break layout on narrow screens; print output remains readable.",
+        "Aspect ratio of images is preserved (no distortion)."
       ]
     }
   ],
   "constraints": [
-    "Use English for all user-facing text.",
-    "Do not modify files under frontend/immutablePaths (compose existing UI components instead of editing them).",
-    "Backend must remain single-actor; only add backend methods if strictly required by the requested fixes (prefer fixing the current frontend mock-store flow)."
+    "Frontend immutable paths must not be edited: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui (compose only).",
+    "Keep all backend logic (if any is added) within the single Motoko actor at backend/main.mo; only add backend state migration if existing stable state is changed.",
+    "Implement changes without altering unrelated screens/text/behavior beyond what is required by the listed requirements (\"don't change anything else\").",
+    "If implementation cannot be completed in a single delivery, split into two parts (milestones) while keeping the same acceptance criteria per requirement."
   ],
   "nonGoals": [
-    "Implementing real backend persistence for papers/questions (beyond current localStorage/mock store).",
-    "Adding new authentication providers beyond Internet Identity.",
-    "Introducing new question types or redesigning the overall navigation/route structure."
+    "Adding third-party authentication providers (only Internet Identity is allowed).",
+    "Introducing external databases or non-IC backend services.",
+    "Adding real-time features (websockets/chat/push notifications).",
+    "Integrating external AI/LLM APIs; AI generation remains mock/local unless already present."
   ],
   "imageRequirements": {
     "required": [],

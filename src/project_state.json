@@ -1,62 +1,61 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Paper editor and question bank fixes: insert full question objects via Question Bank/AI buttons, enable inline editing, enforce Column A/Column B side-by-side layout, improve table headers/borders/editability, and reduce whitespace for images inserted in table cells.",
-  "architectural_notes": [],
+  "summary": "Build/update a question-paper creation app with a Question Bank and AI assistance: add manual question entry and an Add Questions flow (home + question bank), auto-detect question types on entry with user confirmation, fix UI text per-screen, fix button layout issues, enable logo upload and institute name editing, and ensure images/tables render and print correctly in the final PDF (with auto-resize).",
+  "architectural_notes": [
+    "Add Questions flow opens full-screen; question type detection runs immediately per question; if detection uncertain/incorrect, request user confirmation and/or per-question type selection.",
+    "PDF generation must support embedded images and tables with print fidelity; auto-resize images to fit page margins."
+  ],
   "known_issues": [
-    "Insert Question from Question Bank and AI insert buttons are not inserting questions in the paper editor.",
-    "Question bank edit option currently does not allow editing text.",
-    "Pair option UI does not show Column A and Column B side-by-side.",
-    "Table UI missing Column A/Column B headers; borders not styled as required; headers not editable.",
-    "Images inserted into table cells consume excessive blank space."
+    "Build/deployment attempts are failing ('AI was unable to fulfill your request'), leaving the app unchanged."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-fix-the-question-bank-use-action-so-that-it-inserts-the-full-selected-question-object-into-the-target-paper-section-not-only-plain-text-the-inserted-question-must-preserve-all-supported-fields-e-g-questiontype-mcqoptions-fillinblankdata-truefalsedata-matchpairsdata-tabledata-imageattachment-and-any-rich-cell-content-images-while-generating-a-new-unique-question-id-and-setting-headingid-appropriately-for-the-destination-section",
-      "title": "Fix the Question Bank “Use” action so that it inserts the full selected question object into the target paper section (not only plain text). The inserted question must preserve all supported fields (e.g., questionType, mcqOptions, fillInBlankData, trueFalseData, matchPairsData, tableData, imageAttachment, and any rich cell content/images), while generating a new unique question id and setting headingId appropriately for the destination section.",
+      "id": "feature-fix-mobile-desktop-layouts-so-bottom-action-buttons-never-overflow-outside-the-visible-viewport-on-all-affected-screens-including-question-bank-ai-assistant-editor-preview-export-screens-ensure-primary-actions-remain-reachable-without-being-covered-by-fixed-floating-ui-elements",
+      "title": "Fix mobile/desktop layouts so bottom action buttons never overflow outside the visible viewport on all affected screens (including Question Bank, AI Assistant, editor/preview/export screens). Ensure primary actions remain reachable without being covered by fixed/floating UI elements.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-the-ai-add-to-paper-insertion-so-that-it-reliably-inserts-questions-into-the-paper-editor-section-indicated-by-the-insert-context-and-ensure-the-inserted-items-are-full-question-objects-consistent-with-the-app-s-question-model-including-correct-questiontype-and-headingid-assignment",
-      "title": "Fix the AI “Add to Paper” insertion so that it reliably inserts questions into the paper editor section indicated by the insert context, and ensure the inserted items are full Question objects consistent with the app’s Question model (including correct questionType and headingId assignment).",
+      "id": "feature-add-a-small-add-questions-button-at-the-top-of-the-question-bank-screen-and-at-the-top-of-the-home-screen-styled-consistently-with-existing-home-quick-action-buttons-the-button-must-open-the-new-add-questions-flow-as-a-full-screen-page",
+      "title": "Add a small \"Add Questions\" button at the top of the Question Bank screen and at the top of the Home screen, styled consistently with existing home quick-action buttons. The button must open the new Add Questions flow as a full-screen page.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-enable-inline-editing-for-personal-questions-in-the-question-bank-the-edit-action-must-allow-editing-the-question-text-directly-within-the-list-item-card-and-persist-changes-to-the-personal-question-store",
-      "title": "Enable inline editing for personal questions in the Question Bank. The “Edit” action must allow editing the question text directly within the list item/card and persist changes to the personal question store.",
+      "id": "feature-create-enable-a-full-screen-add-questions-flow-that-supports-manual-entry-paste-of-questions-into-the-question-bank-without-requiring-the-user-to-pre-select-a-question-type-before-adding-the-flow-must-save-questions-into-the-user-s-personal-question-bank-categorized-by-board-and-standard-question-bank-location-not-into-a-paper-section-heading",
+      "title": "Create/enable a full-screen \"Add Questions\" flow that supports manual entry/paste of questions into the Question Bank without requiring the user to pre-select a question type before adding. The flow must save questions into the user’s personal Question Bank categorized by Board and Standard (Question Bank location), not into a paper section/heading.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-match-pairs-column-a-column-b-editor-and-renderer-so-that-column-a-and-column-b-are-always-displayed-strictly-side-by-side-including-on-narrow-mobile-screens-use-horizontal-scrolling-or-constrained-layout-rather-than-stacking-vertically",
-      "title": "Update the match-pairs (Column A / Column B) editor and renderer so that Column A and Column B are always displayed strictly side-by-side, including on narrow/mobile screens (use horizontal scrolling or constrained layout rather than stacking vertically).",
+      "id": "feature-implement-immediate-question-type-auto-detection-when-a-question-is-added-pasted-in-the-add-questions-flow-after-detection-prompt-the-user-to-confirm-the-detected-type-if-the-user-rejects-it-require-the-user-to-choose-the-type-for-that-question-save-each-question-with-its-confirmed-question-type",
+      "title": "Implement immediate question-type auto-detection when a question is added/pasted in the Add Questions flow. After detection, prompt the user to confirm the detected type; if the user rejects it, require the user to choose the type for that question. Save each question with its confirmed question type.",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-improve-the-table-question-ui-show-column-a-and-column-b-headers-make-those-headers-editable-and-render-darker-borders-inner-grid-lines-darker-than-current-outermost-border-also-dark-and-clearly-visible",
-      "title": "Improve the table question UI: show “Column A” and “Column B” headers, make those headers editable, and render darker borders (inner grid lines darker than current; outermost border also dark and clearly visible).",
+      "id": "feature-update-per-screen-informational-help-text-exactly-as-specified-by-the-user-1-question-bank-screen-info-text-2-ai-assistant-screen-description-text-3-the-screen-that-opens-after-selecting-a-standard-change-the-help-text-to-the-provided-copy-and-replace-the-empty-state-label-empty-add-questions-with-the-provided-two-line-message-do-not-globally-replace-unrelated-text-on-other-screens",
+      "title": "Update per-screen informational/help text exactly as specified by the user: (1) Question Bank screen info text, (2) AI Assistant screen description text, (3) the screen that opens after selecting a standard: change the help text to the provided copy and replace the empty-state label \"empty add questions\" with the provided two-line message. Do not globally replace unrelated text on other screens.",
       "reqIds": [
         "REQ-5"
       ],
       "version": 1
     },
     {
-      "id": "feature-reduce-excessive-blank-unused-space-when-an-image-is-inserted-into-a-table-cell-so-that-the-cell-height-more-closely-fits-the-image-and-surrounding-content-minimize-extra-whitespace-while-keeping-resizing-controls-functional",
-      "title": "Reduce excessive blank/unused space when an image is inserted into a table cell so that the cell height more closely fits the image and surrounding content (minimize extra whitespace while keeping resizing controls functional).",
+      "id": "feature-ensure-images-and-tables-in-questions-render-correctly-in-export-print-preview-and-print-pdf-output-images-must-auto-resize-to-fit-within-page-margins-while-preserving-aspect-ratio-and-tables-must-not-be-clipped-this-applies-to-rich-cell-images-e-g-match-pairs-table-cells-and-question-attachments",
+      "title": "Ensure images and tables in questions render correctly in export/print preview and print/PDF output. Images must auto-resize to fit within page margins while preserving aspect ratio, and tables must not be clipped. This applies to rich-cell images (e.g., match-pairs/table cells) and question attachments.",
       "reqIds": [
-        "REQ-6"
+        "REQ-8"
       ],
       "version": 1
     }
@@ -64,36 +63,76 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Fix paper editor: 'Insert Question from Question Bank' and 'AI' insert buttons should insert the full question object (text + options + images).",
+      "summary": "Fix bottom buttons going out of page / not clearly visible across screens",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Fix question bank: enable inline editing (currently edit option not allowing text edits).",
+      "summary": "Add small 'Add Questions' button at top of Question Bank screen and also add 'Add Questions' button on Home screen (full-screen flow)",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Fix pair/Column A-Column B UI: always render Column A and Column B strictly side-by-side.",
+      "summary": "Manual question entry: add questions into Question Bank in standard window without requiring pre-selecting question type",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-4",
-      "summary": "Improve table option: display 'Column A' and 'Column B' headers, make them editable, and make inner/outer borders darker.",
+      "summary": "Auto-detect question type immediately for each added/pasted question; ask user to confirm; if wrong, prompt user to choose type per question and insert accordingly",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-5",
-      "summary": "Fix table image layout: reduce excessive blank space when an image is inserted into a table cell (minimize whitespace).",
+      "summary": "Place added questions into the correct Question Bank location by Board and Standard (not by paper section/heading)",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Update information/help box text per screen: Question Bank, AI Assistance, Standard-selected screen, and replace 'empty add questions' with specified copy",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Fix logo upload in profile; show logo in profile, paper editor, and final generated PDF",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Make institute name editable in paper editor; arrange logo + institute name layout properly",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Ensure all images and tables added to paper are visible in final PDF and printable; auto-resize images to fit page margins",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Fix Teacher Profile logo upload: enable the disabled logo file input, allow selecting an image, persist it in the app’s stored profile data, and display the logo wherever the app shows institute/branding (profile view and paper editor header and export/print preview).",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Make institute name editable in the paper editor and fix the layout so the logo and institute name are arranged cleanly (no overlap, proper alignment) in the editor and in exported/printed output.",
+      "reqIds": [
+        "REQ-7"
+      ],
       "status": "pending"
     }
   ],
-  "projectName": "Fix question insertion, inline editing, and Column A/Column B layouts in Paper Editor",
+  "projectName": "Implement Add Questions flow, question type auto-detect, UI text fixes, logo + PDF rendering fixes",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

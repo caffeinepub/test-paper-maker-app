@@ -1,14 +1,20 @@
 # Specification
 
 ## Summary
-**Goal:** Fix question insertion from Question Bank and AI Assistant, enable inline editing in Question Bank, and correct match-pairs/table layouts in the Paper Editor.
+**Goal:** Improve the question-bank workflow and paper export reliability by adding a full-screen Add Questions flow with immediate type auto-detect, fixing key UI text, ensuring bottom actions stay reachable on all screens, and resolving institute logo + print/PDF rendering issues.
 
 **Planned changes:**
-- Fix Question Bank “Use” so it inserts a full deep-copied Question object (all supported fields, including images/rich content), generates a new unique question id, and assigns headingId appropriately for the destination section.
-- Fix AI Assistant “Add to Paper” so it inserts full Question objects into the correct paper section based on insert context, assigns headingId when headings exist, and shows a clear error when no insert context is present.
-- Add inline editing for personal questions in Question Bank (“My Questions”): edit directly within the card, save changes to the existing store update method, and avoid breaking “Use”.
-- Update match-pairs (Column A / Column B) editor + renderer so columns stay strictly side-by-side at all viewport widths (use horizontal scrolling/constrained layout instead of stacking).
-- Improve table question UI: show “Column A” and “Column B” headers by default, make headers editable with persistence in table data, and render darker inner/outer borders (including in print view).
-- Reduce extra whitespace/blank space when an image is inserted into a table cell while keeping image controls and text editing functional, including in print rendering.
+- Fix mobile/desktop layouts so bottom action buttons never overflow outside the visible viewport across affected screens (Question Bank, AI Assistant, editor/preview/export), including spacing so floating UI (e.g., FAB) does not cover critical CTAs.
+- Add a small “Add Questions” button near the top of both the Home screen and the Question Bank screen; open a full-screen Add Questions page.
+- Implement/enable the full-screen Add Questions flow for manual entry/paste of one or multiple questions without pre-selecting a question type; save to the personal Question Bank categorized by Board and Standard (not into a paper section/heading).
+- Add immediate per-question type auto-detection upon add/paste; prompt the user to confirm the detected type or require selecting a type if rejected; save each question with its confirmed type.
+- Update only the specified per-screen help/empty-state text:
+  - Question Bank info text: “Select a board and standard to browse available questions. Add questions to sections to build your question paper.”
+  - AI Assistant description: “Create questions based on selected topics, standards, and preferences.”
+  - Board+Standard screen help text: “Find questions using question type”
+  - Board+Standard empty state (when zero questions): “No questions added yet.\nStart by selecting add questions .”
+- Fix Teacher Profile logo upload to allow selecting and persisting a logo, and display it wherever institute/branding is shown (profile, paper editor header, export/print preview).
+- Make institute name editable in the paper editor and ensure logo + institute name layout is clean and aligned in both editor and exported/printed output.
+- Ensure images and tables inside questions render correctly in export/print preview and print/PDF output (images auto-resize within margins with preserved aspect ratio; tables not clipped and remain readable).
 
-**User-visible outcome:** Users can reliably insert full questions from the Question Bank or AI into the intended paper section (visible under the correct heading), edit personal Question Bank items inline, and see match-pairs and table questions render with correct side-by-side columns, editable headers, darker borders, and tighter table-cell image spacing.
+**User-visible outcome:** Users can add questions directly into their personal Question Bank via a new full-screen Add Questions flow (with immediate type detection + confirmation), see corrected help text on the relevant screens, reliably access bottom action buttons on all devices, upload and use an institute logo and editable institute name in the editor and exports, and get print/PDF outputs where images/tables fit cleanly without clipping.

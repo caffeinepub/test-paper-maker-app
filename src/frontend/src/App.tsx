@@ -1,25 +1,44 @@
-import { RouterProvider, createRouter, createRoute, createRootRoute } from '@tanstack/react-router';
+import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet } from '@tanstack/react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { InternetIdentityProvider } from './hooks/useInternetIdentity';
+import { MockStoreProvider } from './state/mockStore';
 import { AppShell } from './components/layout/AppShell';
+import { AppErrorBoundary } from './components/errors/AppErrorBoundary';
 import { LoginWireframe } from './pages/auth/LoginWireframe';
-import { ProfileWireframe } from './pages/profile/ProfileWireframe';
 import { OnboardingWireframe } from './pages/onboarding/OnboardingWireframe';
 import { HomeDashboardWireframe } from './pages/home/HomeDashboardWireframe';
+import { ProfileWireframe } from './pages/profile/ProfileWireframe';
 import { GeneratedPapersWireframe } from './pages/papers/GeneratedPapersWireframe';
 import { PaperEditorWireframe } from './pages/editor/PaperEditorWireframe';
-import { QuestionEntryWireframe } from './pages/editor/QuestionEntryWireframe';
 import { RealPaperEditorWireframe } from './pages/editor/RealPaperEditorWireframe';
+import { QuestionEntryWireframe } from './pages/editor/QuestionEntryWireframe';
 import { QuestionBankWireframe } from './pages/questionBank/QuestionBankWireframe';
+import { QuestionBankBoardStandardWireframe } from './pages/questionBank/QuestionBankBoardStandardWireframe';
 import { AIPreferencesWireframe } from './pages/ai/AIPreferencesWireframe';
 import { ExportPrintPreviewWireframe } from './pages/export/ExportPrintPreviewWireframe';
 import { OCRUploadWireframe } from './pages/ocr/OCRUploadWireframe';
 import { OCRReviewApproveWireframe } from './pages/ocr/OCRReviewApproveWireframe';
 import { SettingsWireframe } from './pages/settings/SettingsWireframe';
 import { DraftWireframe } from './pages/draft/DraftWireframe';
-import { MockStoreProvider } from './state/mockStore';
-import { AppErrorBoundary } from './components/errors/AppErrorBoundary';
+import { AddQuestionsWireframe } from './pages/questionBank/AddQuestionsWireframe';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const rootRoute = createRootRoute({
-  component: AppShell,
+  component: () => (
+    <AppErrorBoundary>
+      <MockStoreProvider>
+        <AppShell />
+      </MockStoreProvider>
+    </AppErrorBoundary>
+  ),
 });
 
 const loginRoute = createRoute({
@@ -66,7 +85,7 @@ const realPaperEditorRoute = createRoute({
 
 const questionEntryRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/editor/$paperId/question',
+  path: '/editor/$paperId/question-entry',
   component: QuestionEntryWireframe,
 });
 
@@ -74,6 +93,18 @@ const questionBankRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/question-bank',
   component: QuestionBankWireframe,
+});
+
+const questionBankBoardStandardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/question-bank/$board/$standard',
+  component: QuestionBankBoardStandardWireframe,
+});
+
+const addQuestionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/add-questions',
+  component: AddQuestionsWireframe,
 });
 
 const aiRoute = createRoute({
@@ -90,7 +121,7 @@ const exportRoute = createRoute({
 
 const ocrUploadRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/ocr/upload',
+  path: '/ocr',
   component: OCRUploadWireframe,
 });
 
@@ -122,6 +153,8 @@ const routeTree = rootRoute.addChildren([
   realPaperEditorRoute,
   questionEntryRoute,
   questionBankRoute,
+  questionBankBoardStandardRoute,
+  addQuestionsRoute,
   aiRoute,
   exportRoute,
   ocrUploadRoute,
@@ -138,12 +171,14 @@ declare module '@tanstack/react-router' {
   }
 }
 
-export default function App() {
+function App() {
   return (
-    <AppErrorBoundary>
-      <MockStoreProvider>
+    <QueryClientProvider client={queryClient}>
+      <InternetIdentityProvider>
         <RouterProvider router={router} />
-      </MockStoreProvider>
-    </AppErrorBoundary>
+      </InternetIdentityProvider>
+    </QueryClientProvider>
   );
 }
+
+export default App;
