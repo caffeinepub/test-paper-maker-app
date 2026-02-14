@@ -40,6 +40,7 @@ export interface Question {
     rows: number;
     cols: number;
     cells: CellContent[][];
+    columnHeaders?: string[];
   };
 }
 
@@ -118,4 +119,3 @@ export const starterQuestions: Question[] = [
 ];
 
 export const samplePapers: Paper[] = [];
-

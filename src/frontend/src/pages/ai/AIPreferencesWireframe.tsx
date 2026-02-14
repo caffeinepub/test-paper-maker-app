@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Sparkles, Plus, Check, Edit2, Trash2, Info } from 'lucide-react';
+import { Sparkles, Plus, Check, Edit2, Trash2, Info, AlertCircle } from 'lucide-react';
 import { Question, QuestionType } from '../../state/mockData';
 import { generateMockQuestions } from '../../lib/ai/mockQuestionGenerator';
 import { getSectionInsertContext, clearSectionInsertContext } from '../../lib/editor/sectionInsertContext';
+import { insertQuestionsIntoSection } from '../../lib/editor/insertQuestionsIntoPaper';
 
 interface GeneratedQuestion {
   id: string;
@@ -113,8 +114,7 @@ export function AIPreferencesWireframe() {
 
   const handleAddToPaper = () => {
     if (!insertContext) {
-      alert('No paper context found. Please navigate from a paper editor.');
-      return;
+      return; // Error is shown in UI
     }
 
     const selectedQuestions = generatedQuestions.filter((q) => q.selected);
@@ -135,24 +135,18 @@ export function AIPreferencesWireframe() {
       return;
     }
 
-    const headingId = targetSection.headings?.[0]?.id || null;
-
-    const newQuestions: Question[] = selectedQuestions.map((q) => ({
-      id: `q-${Date.now()}-${Math.random()}`,
+    // Convert generated questions to full Question objects
+    const fullQuestions: Question[] = selectedQuestions.map((q) => ({
+      id: `temp-${Date.now()}-${Math.random()}`, // Will be replaced by insertQuestionsIntoSection
       text: q.text,
       marks: q.marks,
       type: q.type,
       questionType: q.questionType,
-      headingId: headingId,
+      headingId: null, // Will be set by insertQuestionsIntoSection
       imageAttachment: null,
     }));
 
-    const updatedSections = paper.sections.map((s) => {
-      if (s.id === insertContext.sectionId) {
-        return { ...s, questions: [...s.questions, ...newQuestions] };
-      }
-      return s;
-    });
+    const updatedSections = insertQuestionsIntoSection(paper, insertContext.sectionId, fullQuestions);
 
     updatePaper(insertContext.paperId, { sections: updatedSections });
     clearSectionInsertContext();
@@ -187,6 +181,15 @@ export function AIPreferencesWireframe() {
           <AlertDescription>
             Generating questions for <strong>{getSectionLabel()}</strong> in paper{' '}
             <strong>{getPaperById(insertContext.paperId)?.title}</strong>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!insertContext && generatedQuestions.some((q) => q.selected) && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            No paper context found. You can only add questions to your personal bank. To add directly to a paper, navigate here from the Real Paper editor.
           </AlertDescription>
         </Alert>
       )}
@@ -297,68 +300,86 @@ export function AIPreferencesWireframe() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {generatedQuestions.map((question) => (
-                  <Card key={question.id} className={question.selected ? 'border-primary' : ''}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={question.selected}
-                          onChange={() => handleToggleSelect(question.id)}
-                          className="mt-1 h-4 w-4 rounded border-border"
-                        />
-                        <div className="flex-1">
-                          {question.editing ? (
-                            <Textarea
-                              value={question.text}
-                              onChange={(e) => handleUpdateQuestion(question.id, e.target.value)}
-                              className="mb-2"
-                              rows={3}
-                            />
-                          ) : (
-                            <p className="text-sm text-foreground">{question.text}</p>
-                          )}
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
-                              {question.marks} Mark{question.marks > 1 ? 's' : ''}
-                            </span>
-                            <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
-                              {question.type}
-                            </span>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  {generatedQuestions.map((question) => (
+                    <Card
+                      key={question.id}
+                      className={`cursor-pointer transition-colors ${
+                        question.selected ? 'border-primary bg-primary/5' : ''
+                      }`}
+                      onClick={() => handleToggleSelect(question.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-primary">
+                            {question.selected && <Check className="h-4 w-4 text-primary" />}
+                          </div>
+                          <div className="flex-1">
+                            {question.editing ? (
+                              <Textarea
+                                value={question.text}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateQuestion(question.id, e.target.value);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="mb-2"
+                                rows={3}
+                              />
+                            ) : (
+                              <p className="text-sm text-foreground">{question.text}</p>
+                            )}
+                            <div className="mt-2 flex gap-2">
+                              <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
+                                {question.marks} Mark{question.marks > 1 ? 's' : ''}
+                              </span>
+                              <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                {question.type}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(question.id)}
+                              className="h-8 w-8"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(question.id)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(question.id)}
-                            className="h-8 w-8"
-                          >
-                            {question.editing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(question.id)}
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
 
-                <div className="flex gap-2 pt-4">
-                  <Button onClick={handleAddToBank} variant="outline" className="flex-1">
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleAddToBank}
+                    variant="outline"
+                    className="flex-1"
+                    disabled={generatedQuestions.filter((q) => q.selected).length === 0}
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     Add to Bank
                   </Button>
                   {insertContext && (
-                    <Button onClick={handleAddToPaper} className="flex-1">
-                      <Check className="mr-2 h-4 w-4" />
+                    <Button
+                      onClick={handleAddToPaper}
+                      className="flex-1"
+                      disabled={generatedQuestions.filter((q) => q.selected).length === 0}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
                       Add to Paper
                     </Button>
                   )}
@@ -371,4 +392,3 @@ export function AIPreferencesWireframe() {
     </div>
   );
 }
-

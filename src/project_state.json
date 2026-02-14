@@ -1,66 +1,62 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Build a question editor with a home-screen menu/theme update, and fix table/pair components to support per-cell editing, inline images, and consistent cell sizing with print-safe PDF output.",
+  "summary": "Paper editor and question bank fixes: insert full question objects via Question Bank/AI buttons, enable inline editing, enforce Column A/Column B side-by-side layout, improve table headers/borders/editability, and reduce whitespace for images inserted in table cells.",
   "architectural_notes": [],
   "known_issues": [
-    "Currently cannot type inside table/pair cells; input goes to the top question field instead"
+    "Insert Question from Question Bank and AI insert buttons are not inserting questions in the paper editor.",
+    "Question bank edit option currently does not allow editing text.",
+    "Pair option UI does not show Column A and Column B side-by-side.",
+    "Table UI missing Column A/Column B headers; borders not styled as required; headers not editable.",
+    "Images inserted into table cells consume excessive blank space."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-the-app-theme-to-match-the-uploaded-screenshots-make-the-home-screen-navigation-drawer-menu-background-white-not-purple-and-lighten-the-purple-used-across-the-ui-to-match-the-screenshots-exactly-apply-globally-to-buttons-borders-highlights-accents-and-selected-nav-item",
-      "title": "Update the app theme to match the uploaded screenshots: make the home-screen navigation drawer/menu background white (not purple) and lighten the purple used across the UI to match the screenshots exactly (apply globally to buttons, borders, highlights, accents, and selected nav item).",
+      "id": "feature-fix-the-question-bank-use-action-so-that-it-inserts-the-full-selected-question-object-into-the-target-paper-section-not-only-plain-text-the-inserted-question-must-preserve-all-supported-fields-e-g-questiontype-mcqoptions-fillinblankdata-truefalsedata-matchpairsdata-tabledata-imageattachment-and-any-rich-cell-content-images-while-generating-a-new-unique-question-id-and-setting-headingid-appropriately-for-the-destination-section",
+      "title": "Fix the Question Bank “Use” action so that it inserts the full selected question object into the target paper section (not only plain text). The inserted question must preserve all supported fields (e.g., questionType, mcqOptions, fillInBlankData, trueFalseData, matchPairsData, tableData, imageAttachment, and any rich cell content/images), while generating a new unique question id and setting headingId appropriately for the destination section.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-table-and-match-pairs-editing-so-users-can-click-inside-each-cell-box-and-type-independently-without-text-being-redirected-to-the-main-top-question-text-field",
-      "title": "Fix table and match-pairs editing so users can click inside each cell/box and type independently without text being redirected to the main/top question text field.",
+      "id": "feature-fix-the-ai-add-to-paper-insertion-so-that-it-reliably-inserts-questions-into-the-paper-editor-section-indicated-by-the-insert-context-and-ensure-the-inserted-items-are-full-question-objects-consistent-with-the-app-s-question-model-including-correct-questiontype-and-headingid-assignment",
+      "title": "Fix the AI “Add to Paper” insertion so that it reliably inserts questions into the paper editor section indicated by the insert context, and ensure the inserted items are full Question objects consistent with the app’s Question model (including correct questionType and headingId assignment).",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-inline-image-insertion-inside-table-cells-and-match-pairs-boxes-supporting-both-upload-from-device-and-paste-from-clipboard-while-allowing-text-and-images-within-the-same-cell-box-and-ensuring-nothing-overflows-outside-the-cell-box-boundaries",
-      "title": "Add inline image insertion inside table cells and match-pairs boxes supporting both upload-from-device and paste-from-clipboard, while allowing text and images within the same cell/box and ensuring nothing overflows outside the cell/box boundaries.",
+      "id": "feature-enable-inline-editing-for-personal-questions-in-the-question-bank-the-edit-action-must-allow-editing-the-question-text-directly-within-the-list-item-card-and-persist-changes-to-the-personal-question-store",
+      "title": "Enable inline editing for personal questions in the Question Bank. The “Edit” action must allow editing the question text directly within the list item/card and persist changes to the personal question store.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-for-inserted-images-inside-table-match-pairs-cells-implement-formatting-controls-default-size-5-5-cm-user-adjustable-aspect-ratio-locked-by-default-alignment-controls-and-optional-caption-per-image",
-      "title": "For inserted images inside table/match-pairs cells, implement formatting controls: default size 5 × 5 cm (user adjustable), aspect ratio locked by default, alignment controls, and optional caption per image.",
+      "id": "feature-update-the-match-pairs-column-a-column-b-editor-and-renderer-so-that-column-a-and-column-b-are-always-displayed-strictly-side-by-side-including-on-narrow-mobile-screens-use-horizontal-scrolling-or-constrained-layout-rather-than-stacking-vertically",
+      "title": "Update the match-pairs (Column A / Column B) editor and renderer so that Column A and Column B are always displayed strictly side-by-side, including on narrow/mobile screens (use horizontal scrolling or constrained layout rather than stacking vertically).",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-enforce-table-sizing-rules-all-columns-must-have-equal-width-across-the-table-within-each-row-all-cells-must-share-the-same-height-row-based-equal-heights-while-different-rows-may-have-different-heights",
-      "title": "Enforce table sizing rules: all columns must have equal width across the table; within each row, all cells must share the same height (row-based equal heights), while different rows may have different heights.",
+      "id": "feature-improve-the-table-question-ui-show-column-a-and-column-b-headers-make-those-headers-editable-and-render-darker-borders-inner-grid-lines-darker-than-current-outermost-border-also-dark-and-clearly-visible",
+      "title": "Improve the table question UI: show “Column A” and “Column B” headers, make those headers editable, and render darker borders (inner grid lines darker than current; outermost border also dark and clearly visible).",
       "reqIds": [
         "REQ-5"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-print-safe-pdf-rendering-for-tables-match-pairs-containing-inline-images-and-captions-including-proper-wrapping-clipping-behavior-and-predictable-sizing-for-a4-print-output",
-      "title": "Ensure print-safe PDF rendering for tables/match-pairs containing inline images and captions, including proper wrapping/clipping behavior and predictable sizing for A4 print output.",
+      "id": "feature-reduce-excessive-blank-unused-space-when-an-image-is-inserted-into-a-table-cell-so-that-the-cell-height-more-closely-fits-the-image-and-surrounding-content-minimize-extra-whitespace-while-keeping-resizing-controls-functional",
+      "title": "Reduce excessive blank/unused space when an image is inserted into a table cell so that the cell height more closely fits the image and surrounding content (minimize extra whitespace while keeping resizing controls functional).",
       "reqIds": [
         "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-stored-paper-question-data-handling-to-persist-the-new-richer-table-match-pairs-cell-content-text-zero-or-more-images-with-formatting-metadata-including-backward-compatibility-for-existing-saved-papers-in-localstorage",
-      "title": "Update stored paper/question data handling to persist the new richer table/match-pairs cell content (text + zero or more images with formatting metadata), including backward compatibility for existing saved papers in localStorage.",
-      "reqIds": [
-        "REQ-7"
       ],
       "version": 1
     }
@@ -68,36 +64,36 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Update UI theme: home-screen menu background white and lighten purple theme to match provided image across all components",
+      "summary": "Fix paper editor: 'Insert Question from Question Bank' and 'AI' insert buttons should insert the full question object (text + options + images).",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Fix table/pair editing so each cell/box is independently editable (typing should not redirect to the top question field)",
+      "summary": "Fix question bank: enable inline editing (currently edit option not allowing text edits).",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Add inline image insertion inside table/pair cells via upload and paste, with text+image in same cell and content constrained within cell boundaries",
+      "summary": "Fix pair/Column A-Column B UI: always render Column A and Column B strictly side-by-side.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-4",
-      "summary": "Table/pair layout rules: equal column widths across all cells; row-based equal heights (cells in same row share height; different rows may differ)",
+      "summary": "Improve table option: display 'Column A' and 'Column B' headers, make them editable, and make inner/outer borders darker.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-5",
-      "summary": "Image formatting options for inserted images: default 5×5 cm (adjustable), aspect ratio locked by default, alignment and caption support, print-safe PDF rendering",
+      "summary": "Fix table image layout: reduce excessive blank space when an image is inserted into a table cell (minimize whitespace).",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Fix table/pair editing with inline images, consistent sizing, print-safe export, and updated theme colors from screenshots",
+  "projectName": "Fix question insertion, inline editing, and Column A/Column B layouts in Paper Editor",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

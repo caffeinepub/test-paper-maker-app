@@ -168,7 +168,7 @@
 .rich-cell-content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
   overflow: hidden;
 }
 
@@ -176,6 +176,7 @@
   position: relative;
   display: inline-block;
   max-width: 100%;
+  margin: 0.125rem 0;
 }
 
 .rich-cell-image {
@@ -204,8 +205,13 @@
   font-size: 0.75rem;
   color: oklch(50% 0.02 280);
   font-style: italic;
-  margin-top: 0.25rem;
+  margin-top: 0.125rem;
   word-wrap: break-word;
+}
+
+.rich-cell-editor-container {
+  min-height: 2rem;
+  padding: 0.125rem;
 }
 
 /* Table equal-width columns and row-based heights */
@@ -220,6 +226,25 @@
   word-wrap: break-word;
   word-break: break-word;
   vertical-align: top;
+}
+
+/* Dark borders for tables */
+.table-dark-borders {
+  border: 2px solid oklch(20% 0.02 280);
+}
+
+.table-dark-borders th,
+.table-dark-borders td {
+  border: 2px solid oklch(20% 0.02 280);
+}
+
+.dark .table-dark-borders {
+  border: 2px solid oklch(70% 0.02 280);
+}
+
+.dark .table-dark-borders th,
+.dark .table-dark-borders td {
+  border: 2px solid oklch(70% 0.02 280);
 }
 
 /* Print styles */
@@ -278,6 +303,13 @@
     word-break: break-word !important;
   }
 
+  /* Dark borders in print */
+  .table-dark-borders,
+  .table-dark-borders th,
+  .table-dark-borders td {
+    border: 2px solid #000 !important;
+  }
+
   /* Hide non-printable elements */
   nav,
   header,
@@ -292,4 +324,3 @@
     page-break-inside: auto;
   }
 }
-

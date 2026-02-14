@@ -103,36 +103,38 @@ export function PaperRenderer({ question }: PaperRendererProps) {
             <p className="break-words whitespace-pre-wrap">{question.text || '[Question text]'}</p>
             {question.matchPairsData && question.matchPairsData.pairs.length > 0 && (
               <div className="ml-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <p className="font-semibold text-sm">Column A</p>
-                    {question.matchPairsData.pairs.map((pair, idx) => (
-                      <div
-                        key={idx}
-                        className="match-pair-item flex items-start gap-2 border border-border rounded p-2 min-h-[3rem]"
-                        style={{ width: '100%' }}
-                      >
-                        <span className="font-medium shrink-0">{idx + 1}.</span>
-                        <div className="flex-1 overflow-hidden">
-                          {renderRichContent(pair.left)}
+                <div className="overflow-x-auto">
+                  <div className="grid grid-cols-2 gap-4 min-w-[500px]">
+                    <div className="space-y-2">
+                      <p className="font-semibold text-sm">Column A</p>
+                      {question.matchPairsData.pairs.map((pair, idx) => (
+                        <div
+                          key={idx}
+                          className="match-pair-item flex items-start gap-2 border border-border rounded p-2 min-h-[3rem]"
+                          style={{ width: '100%' }}
+                        >
+                          <span className="font-medium shrink-0">{idx + 1}.</span>
+                          <div className="flex-1 overflow-hidden">
+                            {renderRichContent(pair.left)}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-sm">Column B</p>
-                    {question.matchPairsData.pairs.map((pair, idx) => (
-                      <div
-                        key={idx}
-                        className="match-pair-item flex items-start gap-2 border border-border rounded p-2 min-h-[3rem]"
-                        style={{ width: '100%' }}
-                      >
-                        <span className="font-medium shrink-0">{String.fromCharCode(97 + idx)})</span>
-                        <div className="flex-1 overflow-hidden">
-                          {renderRichContent(pair.right)}
+                      ))}
+                    </div>
+                    <div className="space-y-2">
+                      <p className="font-semibold text-sm">Column B</p>
+                      {question.matchPairsData.pairs.map((pair, idx) => (
+                        <div
+                          key={idx}
+                          className="match-pair-item flex items-start gap-2 border border-border rounded p-2 min-h-[3rem]"
+                          style={{ width: '100%' }}
+                        >
+                          <span className="font-medium shrink-0">{String.fromCharCode(97 + idx)})</span>
+                          <div className="flex-1 overflow-hidden">
+                            {renderRichContent(pair.right)}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -141,55 +143,71 @@ export function PaperRenderer({ question }: PaperRendererProps) {
         );
 
       case 'table':
+        const rows = question.tableData?.rows || 2;
+        const cols = question.tableData?.cols || 2;
+        const cells = question.tableData?.cells || Array(rows).fill(null).map(() => Array(cols).fill(''));
+        const columnHeaders = question.tableData?.columnHeaders || Array(cols).fill(null).map((_, i) => `Column ${String.fromCharCode(65 + i)}`);
+
         return (
           <div className="space-y-2">
             <p className="break-words whitespace-pre-wrap">{question.text || '[Question text]'}</p>
-            {question.tableData && (
-              <div className="ml-4 overflow-x-auto">
-                <table className="equal-width-table border border-foreground/30">
-                  <tbody>
-                    {question.tableData.cells.map((row, rowIdx) => (
-                      <tr key={rowIdx}>
-                        {row.map((cell, cellIdx) => (
-                          <td
-                            key={cellIdx}
-                            className="border border-foreground/30 px-3 py-2 align-top"
-                            style={{ width: `${100 / row.length}%` }}
-                          >
-                            {renderRichContent(cell)}
-                          </td>
-                        ))}
-                      </tr>
+            <div className="ml-4 overflow-x-auto">
+              <table className="equal-width-table table-dark-borders">
+                <thead>
+                  <tr>
+                    {columnHeaders.map((header, colIdx) => (
+                      <th
+                        key={colIdx}
+                        className="border-2 border-foreground/60 bg-muted/30 p-2 text-center font-semibold"
+                        style={{ width: `${100 / cols}%` }}
+                      >
+                        {header}
+                      </th>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {cells.map((row, rowIdx) => (
+                    <tr key={rowIdx}>
+                      {row.map((cell, colIdx) => (
+                        <td
+                          key={colIdx}
+                          className="border-2 border-foreground/60 p-2 align-top"
+                          style={{ width: `${100 / cols}%` }}
+                        >
+                          {renderRichContent(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         );
 
       case 'short-answer':
       default:
-        return <p className="break-words whitespace-pre-wrap">{question.text || '[Question text]'}</p>;
+        return (
+          <div className="space-y-1">
+            <p className="break-words whitespace-pre-wrap">{question.text || '[Question text]'}</p>
+          </div>
+        );
     }
   };
 
   return (
-    <div className="text-foreground space-y-3">
+    <div className="question-block">
       {renderQuestionContent()}
-      
-      {/* Render attached image as a separate block */}
       {question.imageAttachment && (
-        <div className="mt-3 ml-4">
+        <div className="mt-2">
           <img
             src={question.imageAttachment}
             alt="Question attachment"
-            className="max-w-full h-auto rounded border border-border"
-            style={{ maxHeight: '400px', objectFit: 'contain' }}
+            className="max-h-64 rounded border border-border object-contain"
           />
         </div>
       )}
     </div>
   );
 }
-

@@ -2,12 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-app-theme-to-match-the-uploaded-screenshots-make-the-home-screen-navigation-drawer-menu-background-white-not-purple-and-lighten-the-purple-used-across-the-ui-to-match-the-screenshots-exactly-apply-globally-to-buttons-borders-highlights-accents-and-selected-nav-item",
-      "featureTitle": "Update the app theme to match the uploaded screenshots: make the home-screen navigation drawer/menu background white (not purple) and lighten the purple used across the UI to match the screenshots exactly (apply globally to buttons, borders, highlights, accents, and selected nav item).",
+      "featureId": "feature-fix-the-question-bank-use-action-so-that-it-inserts-the-full-selected-question-object-into-the-target-paper-section-not-only-plain-text-the-inserted-question-must-preserve-all-supported-fields-e-g-questiontype-mcqoptions-fillinblankdata-truefalsedata-matchpairsdata-tabledata-imageattachment-and-any-rich-cell-content-images-while-generating-a-new-unique-question-id-and-setting-headingid-appropriately-for-the-destination-section",
+      "featureTitle": "Fix the Question Bank “Use” action so that it inserts the full selected question object into the target paper section (not only plain text). The inserted question must preserve all supported fields (e.g., questionType, mcqOptions, fillInBlankData, trueFalseData, matchPairsData, tableData, imageAttachment, and any rich cell content/images), while generating a new unique question id and setting headingId appropriately for the destination section.",
       "files": [
-        "frontend/src/components/layout/AppShell.tsx",
-        "frontend/src/components/navigation/NavigationDrawer.tsx",
-        "frontend/src/index.css"
+        "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
+        "frontend/src/pages/questionBank/QuestionBankWireframe.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -22,11 +21,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-table-and-match-pairs-editing-so-users-can-click-inside-each-cell-box-and-type-independently-without-text-being-redirected-to-the-main-top-question-text-field",
-      "featureTitle": "Fix table and match-pairs editing so users can click inside each cell/box and type independently without text being redirected to the main/top question text field.",
+      "featureId": "feature-fix-the-ai-add-to-paper-insertion-so-that-it-reliably-inserts-questions-into-the-paper-editor-section-indicated-by-the-insert-context-and-ensure-the-inserted-items-are-full-question-objects-consistent-with-the-app-s-question-model-including-correct-questiontype-and-headingid-assignment",
+      "featureTitle": "Fix the AI “Add to Paper” insertion so that it reliably inserts questions into the paper editor section indicated by the insert context, and ensure the inserted items are full Question objects consistent with the app’s Question model (including correct questionType and headingId assignment).",
       "files": [
-        "frontend/src/components/paper/PaperSurface.tsx",
-        "frontend/src/components/paper/QuestionBlockEditor.tsx"
+        "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
+        "frontend/src/pages/ai/AIPreferencesWireframe.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -41,13 +40,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-inline-image-insertion-inside-table-cells-and-match-pairs-boxes-supporting-both-upload-from-device-and-paste-from-clipboard-while-allowing-text-and-images-within-the-same-cell-box-and-ensuring-nothing-overflows-outside-the-cell-box-boundaries",
-      "featureTitle": "Add inline image insertion inside table cells and match-pairs boxes supporting both upload-from-device and paste-from-clipboard, while allowing text and images within the same cell/box and ensuring nothing overflows outside the cell/box boundaries.",
+      "featureId": "feature-enable-inline-editing-for-personal-questions-in-the-question-bank-the-edit-action-must-allow-editing-the-question-text-directly-within-the-list-item-card-and-persist-changes-to-the-personal-question-store",
+      "featureTitle": "Enable inline editing for personal questions in the Question Bank. The “Edit” action must allow editing the question text directly within the list item/card and persist changes to the personal question store.",
       "files": [
-        "frontend/src/components/editor/RichCellEditor.tsx",
-        "frontend/src/components/paper/QuestionBlockEditor.tsx",
-        "frontend/src/index.css",
-        "frontend/src/lib/editor/richCellContent.ts"
+        "frontend/src/pages/questionBank/QuestionBankWireframe.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -62,13 +58,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-for-inserted-images-inside-table-match-pairs-cells-implement-formatting-controls-default-size-5-5-cm-user-adjustable-aspect-ratio-locked-by-default-alignment-controls-and-optional-caption-per-image",
-      "featureTitle": "For inserted images inside table/match-pairs cells, implement formatting controls: default size 5 × 5 cm (user adjustable), aspect ratio locked by default, alignment controls, and optional caption per image.",
+      "featureId": "feature-update-the-match-pairs-column-a-column-b-editor-and-renderer-so-that-column-a-and-column-b-are-always-displayed-strictly-side-by-side-including-on-narrow-mobile-screens-use-horizontal-scrolling-or-constrained-layout-rather-than-stacking-vertically",
+      "featureTitle": "Update the match-pairs (Column A / Column B) editor and renderer so that Column A and Column B are always displayed strictly side-by-side, including on narrow/mobile screens (use horizontal scrolling or constrained layout rather than stacking vertically).",
       "files": [
-        "frontend/src/components/editor/RichCellEditor.tsx",
         "frontend/src/components/paper/PaperRenderer.tsx",
-        "frontend/src/index.css",
-        "frontend/src/lib/editor/richCellContent.ts"
+        "frontend/src/components/paper/QuestionBlockEditor.tsx",
+        "frontend/src/index.css"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -83,12 +78,13 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-enforce-table-sizing-rules-all-columns-must-have-equal-width-across-the-table-within-each-row-all-cells-must-share-the-same-height-row-based-equal-heights-while-different-rows-may-have-different-heights",
-      "featureTitle": "Enforce table sizing rules: all columns must have equal width across the table; within each row, all cells must share the same height (row-based equal heights), while different rows may have different heights.",
+      "featureId": "feature-improve-the-table-question-ui-show-column-a-and-column-b-headers-make-those-headers-editable-and-render-darker-borders-inner-grid-lines-darker-than-current-outermost-border-also-dark-and-clearly-visible",
+      "featureTitle": "Improve the table question UI: show “Column A” and “Column B” headers, make those headers editable, and render darker borders (inner grid lines darker than current; outermost border also dark and clearly visible).",
       "files": [
         "frontend/src/components/paper/PaperRenderer.tsx",
         "frontend/src/components/paper/QuestionBlockEditor.tsx",
-        "frontend/src/index.css"
+        "frontend/src/index.css",
+        "frontend/src/state/mockData.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -103,10 +99,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-print-safe-pdf-rendering-for-tables-match-pairs-containing-inline-images-and-captions-including-proper-wrapping-clipping-behavior-and-predictable-sizing-for-a4-print-output",
-      "featureTitle": "Ensure print-safe PDF rendering for tables/match-pairs containing inline images and captions, including proper wrapping/clipping behavior and predictable sizing for A4 print output.",
+      "featureId": "feature-reduce-excessive-blank-unused-space-when-an-image-is-inserted-into-a-table-cell-so-that-the-cell-height-more-closely-fits-the-image-and-surrounding-content-minimize-extra-whitespace-while-keeping-resizing-controls-functional",
+      "featureTitle": "Reduce excessive blank/unused space when an image is inserted into a table cell so that the cell height more closely fits the image and surrounding content (minimize extra whitespace while keeping resizing controls functional).",
       "files": [
-        "frontend/src/components/paper/PaperSurface.tsx",
+        "frontend/src/components/editor/RichCellEditor.tsx",
+        "frontend/src/components/paper/PaperRenderer.tsx",
         "frontend/src/index.css"
       ],
       "components": [
@@ -118,27 +115,6 @@
       ],
       "testIds": [
         "REQ-6"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-stored-paper-question-data-handling-to-persist-the-new-richer-table-match-pairs-cell-content-text-zero-or-more-images-with-formatting-metadata-including-backward-compatibility-for-existing-saved-papers-in-localstorage",
-      "featureTitle": "Update stored paper/question data handling to persist the new richer table/match-pairs cell content (text + zero or more images with formatting metadata), including backward compatibility for existing saved papers in localStorage.",
-      "files": [
-        "frontend/src/components/paper/PaperRenderer.tsx",
-        "frontend/src/lib/editor/richCellContent.ts",
-        "frontend/src/state/mockData.ts",
-        "frontend/src/state/mockStore.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
       ],
       "confidence": "high"
     }

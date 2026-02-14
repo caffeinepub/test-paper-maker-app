@@ -1,87 +1,79 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T15:31:11.834Z",
+  "generatedAt": "2026-02-14T06:43:28.730Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 7,
-    "implemented": 7,
+    "total": 6,
+    "implemented": 6,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the app theme to match the uploaded screenshots: make the home-screen navigation drawer/menu background white (not purple) and lighten the purple used across the UI to match the screenshots exactly (apply globally to buttons, borders, highlights, accents, and selected nav item).",
+        "summary": "Fix the Question Bank “Use” action so that it inserts the full selected question object into the target paper section (not only plain text). The inserted question must preserve all supported fields (e.g., questionType, mcqOptions, fillInBlankData, trueFalseData, matchPairsData, tableData, imageAttachment, and any rich cell content/images), while generating a new unique question id and setting headingId appropriately for the destination section.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/components/navigation/NavigationDrawer.tsx",
-          "frontend/src/components/layout/AppShell.tsx"
+          "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
+          "frontend/src/pages/questionBank/QuestionBankWireframe.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/components/navigation/NavigationDrawer.tsx",
-          "frontend/src/components/layout/AppShell.tsx"
+          "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
+          "frontend/src/pages/questionBank/QuestionBankWireframe.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Fix table and match-pairs editing so users can click inside each cell/box and type independently without text being redirected to the main/top question text field.",
+        "summary": "Fix the AI “Add to Paper” insertion so that it reliably inserts questions into the paper editor section indicated by the insert context, and ensure the inserted items are full Question objects consistent with the app’s Question model (including correct questionType and headingId assignment).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/paper/QuestionBlockEditor.tsx",
-          "frontend/src/components/paper/PaperSurface.tsx"
+          "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+          "frontend/src/lib/editor/insertQuestionsIntoPaper.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/paper/QuestionBlockEditor.tsx",
-          "frontend/src/components/paper/PaperSurface.tsx"
+          "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
+          "frontend/src/lib/editor/insertQuestionsIntoPaper.ts"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Add inline image insertion inside table cells and match-pairs boxes supporting both upload-from-device and paste-from-clipboard, while allowing text and images within the same cell/box and ensuring nothing overflows outside the cell/box boundaries.",
+        "summary": "Enable inline editing for personal questions in the Question Bank. The “Edit” action must allow editing the question text directly within the list item/card and persist changes to the personal question store.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/editor/richCellContent.ts",
-          "frontend/src/components/editor/RichCellEditor.tsx",
-          "frontend/src/components/paper/QuestionBlockEditor.tsx",
-          "frontend/src/index.css"
+          "frontend/src/pages/questionBank/QuestionBankWireframe.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/lib/editor/richCellContent.ts",
-          "frontend/src/components/editor/RichCellEditor.tsx",
-          "frontend/src/components/paper/QuestionBlockEditor.tsx",
-          "frontend/src/index.css"
+          "frontend/src/pages/questionBank/QuestionBankWireframe.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "For inserted images inside table/match-pairs cells, implement formatting controls: default size 5 × 5 cm (user adjustable), aspect ratio locked by default, alignment controls, and optional caption per image.",
+        "summary": "Update the match-pairs (Column A / Column B) editor and renderer so that Column A and Column B are always displayed strictly side-by-side, including on narrow/mobile screens (use horizontal scrolling or constrained layout rather than stacking vertically).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/editor/richCellContent.ts",
-          "frontend/src/components/editor/RichCellEditor.tsx",
           "frontend/src/components/paper/PaperRenderer.tsx",
+          "frontend/src/components/paper/QuestionBlockEditor.tsx",
           "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/lib/editor/richCellContent.ts",
-          "frontend/src/components/editor/RichCellEditor.tsx",
           "frontend/src/components/paper/PaperRenderer.tsx",
+          "frontend/src/components/paper/QuestionBlockEditor.tsx",
           "frontend/src/index.css"
         ]
       },
       {
         "id": "REQ-5",
-        "summary": "Enforce table sizing rules: all columns must have equal width across the table; within each row, all cells must share the same height (row-based equal heights), while different rows may have different heights.",
+        "summary": "Improve the table question UI: show “Column A” and “Column B” headers, make those headers editable, and render darker borders (inner grid lines darker than current; outermost border also dark and clearly visible).",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/state/mockData.ts",
           "frontend/src/components/paper/QuestionBlockEditor.tsx",
           "frontend/src/components/paper/PaperRenderer.tsx",
           "frontend/src/index.css"
         ],
         "matchedFiles": [
+          "frontend/src/state/mockData.ts",
           "frontend/src/components/paper/QuestionBlockEditor.tsx",
           "frontend/src/components/paper/PaperRenderer.tsx",
           "frontend/src/index.css"
@@ -89,32 +81,16 @@
       },
       {
         "id": "REQ-6",
-        "summary": "Ensure print-safe PDF rendering for tables/match-pairs containing inline images and captions, including proper wrapping/clipping behavior and predictable sizing for A4 print output.",
+        "summary": "Reduce excessive blank/unused space when an image is inserted into a table cell so that the cell height more closely fits the image and surrounding content (minimize extra whitespace while keeping resizing controls functional).",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/components/editor/RichCellEditor.tsx",
           "frontend/src/index.css",
-          "frontend/src/components/paper/PaperSurface.tsx",
-          "frontend/src/pages/export/ExportPrintPreviewWireframe.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/components/paper/PaperSurface.tsx"
-        ]
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Update stored paper/question data handling to persist the new richer table/match-pairs cell content (text + zero or more images with formatting metadata), including backward compatibility for existing saved papers in localStorage.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/state/mockData.ts",
-          "frontend/src/state/mockStore.tsx",
-          "frontend/src/lib/editor/richCellContent.ts",
           "frontend/src/components/paper/PaperRenderer.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/state/mockData.ts",
-          "frontend/src/state/mockStore.tsx",
-          "frontend/src/lib/editor/richCellContent.ts",
+          "frontend/src/components/editor/RichCellEditor.tsx",
+          "frontend/src/index.css",
           "frontend/src/components/paper/PaperRenderer.tsx"
         ]
       }
@@ -126,21 +102,13 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/components/editor/RichCellEditor.tsx",
-    "frontend/src/components/layout/AppShell.tsx",
-    "frontend/src/components/navigation/NavigationDrawer.tsx",
     "frontend/src/components/paper/PaperRenderer.tsx",
-    "frontend/src/components/paper/PaperSurface.tsx",
     "frontend/src/components/paper/QuestionBlockEditor.tsx",
     "frontend/src/index.css",
-    "frontend/src/lib/editor/richCellContent.ts",
+    "frontend/src/lib/editor/insertQuestionsIntoPaper.ts",
     "frontend/src/pages/ai/AIPreferencesWireframe.tsx",
-    "frontend/src/pages/auth/LoginWireframe.tsx",
-    "frontend/src/pages/editor/QuestionEntryWireframe.tsx",
-    "frontend/src/pages/ocr/OCRReviewApproveWireframe.tsx",
     "frontend/src/pages/questionBank/QuestionBankWireframe.tsx",
-    "frontend/src/pages/settings/SettingsWireframe.tsx",
     "frontend/src/state/mockData.ts",
-    "frontend/src/state/mockStore.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

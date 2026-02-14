@@ -7,15 +7,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FloatingAIButton } from '../../components/ai/FloatingAIButton';
 import { getSectionInsertContext, clearSectionInsertContext } from '../../lib/editor/sectionInsertContext';
-import { BookOpen, Info } from 'lucide-react';
+import { insertQuestionIntoSection } from '../../lib/editor/insertQuestionsIntoPaper';
+import { BookOpen, Info, Check, X } from 'lucide-react';
 import { Question } from '../../state/mockData';
+import { Textarea } from '@/components/ui/textarea';
 
 export function QuestionBankWireframe() {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { tab?: string };
-  const { getStarterQuestions, personalQuestions, getPaperById, updatePaper } = useMockStore();
+  const { getStarterQuestions, personalQuestions, getPaperById, updatePaper, updatePersonalQuestion } = useMockStore();
   const [selectedTab, setSelectedTab] = useState('starter');
   const [insertContext, setInsertContext] = useState(getSectionInsertContext());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
 
   const starterQuestions = getStarterQuestions();
 
@@ -30,32 +34,35 @@ export function QuestionBankWireframe() {
     setInsertContext(getSectionInsertContext());
   }, []);
 
-  const handleUseQuestion = (questionText: string, marks: number) => {
+  const handleUseQuestion = (question: Question) => {
     if (!insertContext) return;
 
     const paper = getPaperById(insertContext.paperId);
     if (!paper) return;
 
-    const newQuestion: Question = {
-      id: `q-${Date.now()}`,
-      text: questionText,
-      marks,
-      type: 'General',
-      questionType: 'short-answer',
-      headingId: null,
-      imageAttachment: null,
-    };
-
-    const updatedSections = paper.sections.map((s) => {
-      if (s.id === insertContext.sectionId) {
-        return { ...s, questions: [...s.questions, newQuestion] };
-      }
-      return s;
-    });
+    const updatedSections = insertQuestionIntoSection(paper, insertContext.sectionId, question);
 
     updatePaper(insertContext.paperId, { sections: updatedSections });
     clearSectionInsertContext();
     navigate({ to: `/editor/${insertContext.paperId}/real-paper` });
+  };
+
+  const handleStartEdit = (question: Question) => {
+    setEditingId(question.id);
+    setEditDraft(question.text);
+  };
+
+  const handleSaveEdit = (questionId: string) => {
+    if (editDraft.trim()) {
+      updatePersonalQuestion(questionId, { text: editDraft.trim() });
+    }
+    setEditingId(null);
+    setEditDraft('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditDraft('');
   };
 
   const getSectionLabel = () => {
@@ -122,7 +129,7 @@ export function QuestionBankWireframe() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleUseQuestion(question.text, question.marks)}
+                          onClick={() => handleUseQuestion(question)}
                           disabled={!insertContext}
                         >
                           Use
@@ -163,31 +170,68 @@ export function QuestionBankWireframe() {
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            <p className="text-foreground">{question.text}</p>
-                            <div className="mt-2 flex gap-2">
-                              <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
-                                {question.marks} Mark{question.marks > 1 ? 's' : ''}
-                              </span>
-                              {question.type && (
-                                <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
-                                  {question.type}
-                                </span>
-                              )}
+                            {editingId === question.id ? (
+                              <div className="space-y-2">
+                                <Textarea
+                                  value={editDraft}
+                                  onChange={(e) => setEditDraft(e.target.value)}
+                                  className="min-h-[80px]"
+                                  autoFocus
+                                />
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => handleSaveEdit(question.id)}
+                                  >
+                                    <Check className="mr-1 h-4 w-4" />
+                                    Save
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCancelEdit}
+                                  >
+                                    <X className="mr-1 h-4 w-4" />
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-foreground">{question.text}</p>
+                                <div className="mt-2 flex gap-2">
+                                  <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
+                                    {question.marks} Mark{question.marks > 1 ? 's' : ''}
+                                  </span>
+                                  {question.type && (
+                                    <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                      {question.type}
+                                    </span>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          {editingId !== question.id && (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUseQuestion(question)}
+                                disabled={!insertContext}
+                              >
+                                Use
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleStartEdit(question)}
+                              >
+                                Edit
+                              </Button>
                             </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleUseQuestion(question.text, question.marks)}
-                              disabled={!insertContext}
-                            >
-                              Use
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              Edit
-                            </Button>
-                          </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -203,4 +247,3 @@ export function QuestionBankWireframe() {
     </div>
   );
 }
-

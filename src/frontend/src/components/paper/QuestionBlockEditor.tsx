@@ -117,39 +117,41 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
         return (
           <div className="space-y-2" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
             <Label className="text-xs text-muted-foreground">Match Pairs</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold">Column A</Label>
-                {pairs.map((pair, idx) => (
-                  <div key={`left-${idx}`} className="border border-border rounded p-2">
-                    <RichCellEditor
-                      value={pair.left as CellContent}
-                      onChange={(content: RichCellContent) => {
-                        const newPairs = [...pairs];
-                        newPairs[idx] = { ...newPairs[idx], left: content as CellContent };
-                        onUpdate({ matchPairsData: { pairs: newPairs } });
-                      }}
-                      placeholder={`Item ${idx + 1}`}
-                      autoFocus={idx === 0 && !question.text && autoFocus}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold">Column B</Label>
-                {pairs.map((pair, idx) => (
-                  <div key={`right-${idx}`} className="border border-border rounded p-2">
-                    <RichCellEditor
-                      value={pair.right as CellContent}
-                      onChange={(content: RichCellContent) => {
-                        const newPairs = [...pairs];
-                        newPairs[idx] = { ...newPairs[idx], right: content as CellContent };
-                        onUpdate({ matchPairsData: { pairs: newPairs } });
-                      }}
-                      placeholder={`Match ${idx + 1}`}
-                    />
-                  </div>
-                ))}
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-2 gap-4 min-w-[500px]">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Column A</Label>
+                  {pairs.map((pair, idx) => (
+                    <div key={`left-${idx}`} className="border border-border rounded p-2">
+                      <RichCellEditor
+                        value={pair.left as CellContent}
+                        onChange={(content: RichCellContent) => {
+                          const newPairs = [...pairs];
+                          newPairs[idx] = { ...newPairs[idx], left: content as CellContent };
+                          onUpdate({ matchPairsData: { pairs: newPairs } });
+                        }}
+                        placeholder={`Item ${idx + 1}`}
+                        autoFocus={idx === 0 && !question.text && autoFocus}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Column B</Label>
+                  {pairs.map((pair, idx) => (
+                    <div key={`right-${idx}`} className="border border-border rounded p-2">
+                      <RichCellEditor
+                        value={pair.right as CellContent}
+                        onChange={(content: RichCellContent) => {
+                          const newPairs = [...pairs];
+                          newPairs[idx] = { ...newPairs[idx], right: content as CellContent };
+                          onUpdate({ matchPairsData: { pairs: newPairs } });
+                        }}
+                        placeholder={`Match ${idx + 1}`}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="flex gap-2">
@@ -185,19 +187,51 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
         const rows = question.tableData?.rows || 2;
         const cols = question.tableData?.cols || 2;
         const cells = question.tableData?.cells || Array(rows).fill(null).map(() => Array(cols).fill(''));
+        const columnHeaders = question.tableData?.columnHeaders || Array(cols).fill(null).map((_, i) => `Column ${String.fromCharCode(65 + i)}`);
 
         return (
           <div className="space-y-2" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
             <Label className="text-xs text-muted-foreground">Table</Label>
             <div className="overflow-x-auto">
-              <table className="equal-width-table border border-border">
+              <table className="equal-width-table table-dark-borders">
+                <thead>
+                  <tr>
+                    {columnHeaders.map((header, colIdx) => (
+                      <th
+                        key={colIdx}
+                        className="border-2 border-foreground/60 bg-muted/30 p-2"
+                        style={{ width: `${100 / cols}%` }}
+                      >
+                        <Input
+                          value={header}
+                          onChange={(e) => {
+                            const newHeaders = [...columnHeaders];
+                            newHeaders[colIdx] = e.target.value;
+                            onUpdate({
+                              tableData: {
+                                rows,
+                                cols,
+                                cells,
+                                columnHeaders: newHeaders,
+                              },
+                            });
+                          }}
+                          placeholder={`Column ${String.fromCharCode(65 + colIdx)}`}
+                          className="h-8 border-0 bg-transparent text-center font-semibold"
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
                 <tbody>
                   {cells.map((row, rowIdx) => (
                     <tr key={rowIdx}>
                       {row.map((cell, colIdx) => (
                         <td
                           key={colIdx}
-                          className="border border-border p-1"
+                          className="border-2 border-foreground/60 p-1"
                           style={{ width: `${100 / cols}%` }}
                         >
                           <RichCellEditor
@@ -210,6 +244,7 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
                                   rows,
                                   cols,
                                   cells: newCells,
+                                  columnHeaders,
                                 },
                               });
                             }}
@@ -235,6 +270,7 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
                       rows: rows + 1,
                       cols,
                       cells: newCells,
+                      columnHeaders,
                     },
                   });
                 }}
@@ -247,11 +283,13 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
                 onClick={(e) => {
                   e.stopPropagation();
                   const newCells = cells.map((row) => [...row, '']);
+                  const newHeaders = [...columnHeaders, `Column ${String.fromCharCode(65 + cols)}`];
                   onUpdate({
                     tableData: {
                       rows,
                       cols: cols + 1,
                       cells: newCells,
+                      columnHeaders: newHeaders,
                     },
                   });
                 }}
@@ -325,4 +363,3 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
     </div>
   );
 }
-

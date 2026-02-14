@@ -1,156 +1,133 @@
 {
   "kind": "build_request",
-  "title": "Fix table/pair editing with inline images, consistent sizing, print-safe export, and updated theme colors from screenshots",
-  "priority": "normal",
+  "title": "Fix question insertion, inline editing, and Column A/Column B layouts in Paper Editor",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the app theme to match the uploaded screenshots: make the home-screen navigation drawer/menu background white (not purple) and lighten the purple used across the UI to match the screenshots exactly (apply globally to buttons, borders, highlights, accents, and selected nav item).",
+      "text": "Fix the Question Bank “Use” action so that it inserts the full selected question object into the target paper section (not only plain text). The inserted question must preserve all supported fields (e.g., questionType, mcqOptions, fillInBlankData, trueFalseData, matchPairsData, tableData, imageAttachment, and any rich cell content/images), while generating a new unique question id and setting headingId appropriately for the destination section.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-last"
+          "recent-messages"
         ],
         "quotes": [
-          "Menu on home screen must be white and can you make purple less dark or like in my image",
-          "2 from my image",
-          "3 all"
+          "Insert question from question bank and ai button in paper editor is not inserting questions",
+          "1 full question object"
         ]
       },
       "acceptanceCriteria": [
-        "On mobile and desktop, the NavigationDrawer background is white and visually matches the uploaded screenshots.",
-        "Purple accents throughout the app (e.g., primary buttons, selected nav item, outlines) use the lighter purple matching the uploaded screenshots, not the current darker purple.",
-        "No regressions in dark-mode toggling (dark mode can remain purple-themed, but light mode must match the screenshots)."
+        "From the Paper Editor flow (using the insert context), clicking “Use” on a Question Bank item adds a new question to the chosen paper section and the user is navigated back to the Real Paper editor.",
+        "The inserted question is a deep copy of the source question’s structure/content (including options and images), except for a new unique id.",
+        "The inserted question appears in the editor with the same question type and renders correctly (MCQ, match-pairs, table, etc.).",
+        "If the destination section has headings, the inserted question is assigned to the section’s active/first heading (do not leave headingId null if headings exist), so it is visible under that heading in the PaperSurface list."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix table and match-pairs editing so users can click inside each cell/box and type independently without text being redirected to the main/top question text field.",
+      "text": "Fix the AI “Add to Paper” insertion so that it reliably inserts questions into the paper editor section indicated by the insert context, and ensure the inserted items are full Question objects consistent with the app’s Question model (including correct questionType and headingId assignment).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-last"
+          "recent-messages"
         ],
         "quotes": [
-          "not able to write anything in that box when I am selecting box of tablet or pair then it redirected to question before that table",
-          "2 yes",
-          "3 yes"
+          "Insert question from question bank and ai button in paper editor is not inserting questions",
+          "1 full question object"
         ]
       },
       "acceptanceCriteria": [
-        "When a table cell is clicked and the user types, only that cell content changes; the question text at the top does not change.",
-        "When a match-pairs box (Column A or Column B) is clicked and the user types, only that box content changes; the question text at the top does not change.",
-        "Typing into table/match-pairs cells works consistently on mobile and desktop."
+        "When navigating from a paper editor to the AI Assistant with an insert context set, selecting generated questions and clicking “Add to Paper” adds them to the correct paper section and returns to the Real Paper editor.",
+        "Inserted AI questions appear under the correct section heading (headingId set when headings exist).",
+        "No insertion occurs when there is no insert context; the UI shows a clear error message and does not crash."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add inline image insertion inside table cells and match-pairs boxes supporting both upload-from-device and paste-from-clipboard, while allowing text and images within the same cell/box and ensuring nothing overflows outside the cell/box boundaries.",
+      "text": "Enable inline editing for personal questions in the Question Bank. The “Edit” action must allow editing the question text directly within the list item/card and persist changes to the personal question store.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-last"
+          "recent-messages"
         ],
         "quotes": [
-          "1 both",
-          "2  inline inside the cell",
-          "3 yes",
-          "And nothing should go out of the box",
-          "And i also want option to insert image in that table or pair box"
+          "And edit option in both question bank is not allowing to edit taxt currently",
+          "2 inline"
         ]
       },
       "acceptanceCriteria": [
-        "Each table cell and each match-pairs box provides a UI affordance to insert an image via file upload.",
-        "Pasting an image from the clipboard into a focused table cell/match-pairs box inserts the image into that cell/box.",
-        "Text can be entered in the same cell/box that contains an inserted image (both are persisted and rendered together).",
-        "Cell/box content is constrained: images and text do not visually overflow outside the cell/box boundary (overflow is clipped/wrapped appropriately)."
+        "In the Question Bank “My Questions” tab, clicking “Edit” toggles the question card into an editable state (e.g., textarea/input) without navigating away.",
+        "Edits can be saved (e.g., via a Save/Done control or by toggling Edit off) and are persisted using the existing store update method so they remain after refresh.",
+        "Cancelling/discarding edits (if provided) does not mutate stored data.",
+        "Editing does not break the “Use” button behavior."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "For inserted images inside table/match-pairs cells, implement formatting controls: default size 5 × 5 cm (user adjustable), aspect ratio locked by default, alignment controls, and optional caption per image.",
+      "text": "Update the match-pairs (Column A / Column B) editor and renderer so that Column A and Column B are always displayed strictly side-by-side, including on narrow/mobile screens (use horizontal scrolling or constrained layout rather than stacking vertically).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-last"
+          "recent-messages"
         ],
         "quotes": [
-          "Default size: 5 × 5 cm (adjustable)",
-          "Aspect ratio locked by default",
-          "Alignment and caption support"
+          "it is not showing  column a and column b side by side",
+          "3 strictly side‑by‑side"
         ]
       },
       "acceptanceCriteria": [
-        "Newly inserted images default to 5cm × 5cm sizing in a print-relevant unit (cm) and render consistently in the editor and print preview.",
-        "Users can adjust the image size; by default, resizing preserves aspect ratio until the user explicitly unlocks it.",
-        "Users can set image alignment within the cell/box (e.g., left/center/right).",
-        "Users can add/edit/remove an image caption that stays associated with the image and renders under/near the image inside the same cell/box."
+        "For match-pairs questions, Column A and Column B remain in a two-column layout at all viewport widths (no stacking).",
+        "On small screens, the pair area remains usable (e.g., allows horizontal scroll within the question block) without breaking the rest of the page layout.",
+        "Both editor mode and read/print renderer mode reflect the side-by-side requirement consistently."
       ]
     },
     {
       "id": "REQ-5",
-      "text": "Enforce table sizing rules: all columns must have equal width across the table; within each row, all cells must share the same height (row-based equal heights), while different rows may have different heights.",
+      "text": "Improve the table question UI: show “Column A” and “Column B” headers, make those headers editable, and render darker borders (inner grid lines darker than current; outermost border also dark and clearly visible).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-last"
+          "recent-messages"
         ],
         "quotes": [
-          "Then width of 1,2,3,4,5,6 must be same and height of 1,2,3 must be same and height of 4,5,6 must be same  both height can be different"
+          "table option is also working good but not showing column a and column b written on it add it and make it editable and it's border must be dark then other and outer most line also should be dark"
         ]
       },
       "acceptanceCriteria": [
-        "In the editor, a table with N columns renders with equal column widths regardless of per-cell content.",
-        "In the editor, all cells in a given row share the same height; rows can differ in height from other rows based on their content.",
-        "In print preview/printed output, the same equal-width and row-based height behavior is preserved as closely as the medium allows."
+        "Table questions render visible headers labeled “Column A” and “Column B” by default.",
+        "Users can edit the header text inline; changes persist in the question’s table data model and are reflected in both editor and renderer views.",
+        "Table borders are visually darker than before, with the outside border and header separators also rendered in dark border styling.",
+        "The styling works in both normal view and print view (no missing borders when printing)."
       ]
     },
     {
       "id": "REQ-6",
-      "text": "Ensure print-safe PDF rendering for tables/match-pairs containing inline images and captions, including proper wrapping/clipping behavior and predictable sizing for A4 print output.",
+      "text": "Reduce excessive blank/unused space when an image is inserted into a table cell so that the cell height more closely fits the image and surrounding content (minimize extra whitespace while keeping resizing controls functional).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-last"
+          "recent-messages"
         ],
         "quotes": [
-          "Print-safe PDF rendering"
+          "image inserted in table box is working but using lots of blank space(you can see in second image)make it minimum"
         ]
       },
       "acceptanceCriteria": [
-        "Printing/export preview for papers containing table/match-pairs images does not cause images to overflow outside their cell/box in the printed output.",
-        "Tables and match-pairs content remain readable in print: text wraps and images scale within cell boundaries.",
-        "No print-only UI controls (buttons, toolbars) appear in the printed output."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Update stored paper/question data handling to persist the new richer table/match-pairs cell content (text + zero or more images with formatting metadata), including backward compatibility for existing saved papers in localStorage.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-user-last"
-        ],
-        "quotes": [
-          "Table/pair editing fixes • Inline image insertion (upload + paste) • Text + image inside same cell"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Existing saved papers that contain tableData.cells as string[][] continue to load without crashing, and are normalized into the new structure automatically.",
-        "After editing and reloading the app, table/match-pairs cell content (text, images, captions, size, alignment) is retained.",
-        "No runtime errors occur when rendering older or newer saved papers."
+        "After inserting/pasting an image into a table cell, the cell does not expand to an unnecessarily tall area; whitespace above/below the image is minimized.",
+        "The image remains visible and controllable (resize/alignment controls still work).",
+        "The change does not regress text editing within the same cell and does not break print rendering of table cell images."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (compose them instead).",
-    "Do not edit immutable hook files: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx.",
-    "Backend must remain single-actor; only add Motoko logic if truly required (this feature set should be frontend-only unless proven otherwise)."
+    "Use English for all user-facing text.",
+    "Do not modify files under frontend/immutablePaths (compose existing UI components instead of editing them).",
+    "Backend must remain single-actor; only add backend methods if strictly required by the requested fixes (prefer fixing the current frontend mock-store flow)."
   ],
   "nonGoals": [
-    "Implementing third-party image hosting/CDNs or external storage services for images.",
-    "Adding real-time collaboration or syncing across devices.",
-    "Introducing new authentication providers beyond Internet Identity."
+    "Implementing real backend persistence for papers/questions (beyond current localStorage/mock store).",
+    "Adding new authentication providers beyond Internet Identity.",
+    "Introducing new question types or redesigning the overall navigation/route structure."
   ],
   "imageRequirements": {
     "required": [],
