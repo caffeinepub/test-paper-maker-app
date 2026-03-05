@@ -1,24 +1,29 @@
-import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Paper, Question } from '../../state/mockData';
-import { QuestionBlockEditor } from './QuestionBlockEditor';
-import { PaperRenderer } from './PaperRenderer';
-import { useMockStore } from '../../state/mockStore';
-import { setSectionInsertContext } from '../../lib/editor/sectionInsertContext';
-import { BookOpen, Sparkles } from 'lucide-react';
-import { InsertFromQuestionBankDialog } from '../editor/InsertFromQuestionBankDialog';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { BookOpen, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { setSectionInsertContext } from "../../lib/editor/sectionInsertContext";
+import type { Paper, Question } from "../../state/mockData";
+import { useMockStore } from "../../state/mockStore";
+import { InsertFromQuestionBankDialog } from "../editor/InsertFromQuestionBankDialog";
+import { PaperRenderer } from "./PaperRenderer";
+import { QuestionBlockEditor } from "./QuestionBlockEditor";
 
 interface PaperSurfaceProps {
   paper: Paper;
   isEditable?: boolean;
   selectedQuestionId?: string | null;
   onSelectQuestion?: (questionId: string | null) => void;
-  onUpdateQuestion?: (sectionId: string, questionId: string, updates: Partial<Question>) => void;
+  onUpdateQuestion?: (
+    sectionId: string,
+    questionId: string,
+    updates: Partial<Question>,
+  ) => void;
   onDeleteQuestion?: (sectionId: string, questionId: string) => void;
   autoFocusQuestionId?: string | null;
   onAutoFocusComplete?: () => void;
+  onUpdatePaperMeta?: (updates: Partial<Paper>) => void;
 }
 
 export function PaperSurface({
@@ -30,30 +35,42 @@ export function PaperSurface({
   onDeleteQuestion,
   autoFocusQuestionId,
   onAutoFocusComplete,
+  onUpdatePaperMeta,
 }: PaperSurfaceProps) {
   const navigate = useNavigate();
   const { profile } = useMockStore();
   const autoFocusRef = useRef<HTMLDivElement>(null);
   const [showQuestionBankDialog, setShowQuestionBankDialog] = useState(false);
-  const [pendingInsertContext, setPendingInsertContext] = useState<{ sectionId: string; headingId: string } | null>(null);
+  const [pendingInsertContext, setPendingInsertContext] = useState<{
+    sectionId: string;
+    headingId: string;
+  } | null>(null);
 
   useEffect(() => {
     if (autoFocusQuestionId && autoFocusRef.current) {
       // Scroll into view
-      autoFocusRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      
+      autoFocusRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
       // Find the first editable input/textarea and focus it
-      const firstInput = autoFocusRef.current.querySelector('textarea, input[type="text"]') as HTMLTextAreaElement | HTMLInputElement;
+      const firstInput = autoFocusRef.current.querySelector(
+        'textarea, input[type="text"]',
+      ) as HTMLTextAreaElement | HTMLInputElement;
       if (firstInput) {
         setTimeout(() => {
           firstInput.focus();
           // Place cursor at the end if it's a textarea
-          if (firstInput instanceof HTMLTextAreaElement && firstInput.value === '') {
+          if (
+            firstInput instanceof HTMLTextAreaElement &&
+            firstInput.value === ""
+          ) {
             firstInput.setSelectionRange(0, 0);
           }
         }, 300);
       }
-      
+
       // Clear the auto-focus flag
       if (onAutoFocusComplete) {
         setTimeout(() => {
@@ -64,7 +81,7 @@ export function PaperSurface({
   }, [autoFocusQuestionId, onAutoFocusComplete]);
 
   const handleAddFromBank = (sectionId: string, headingId?: string) => {
-    setPendingInsertContext({ sectionId, headingId: headingId || '' });
+    setPendingInsertContext({ sectionId, headingId: headingId || "" });
     setShowQuestionBankDialog(true);
   };
 
@@ -74,7 +91,7 @@ export function PaperSurface({
     const context: any = {
       paperId: paper.id,
       sectionId: pendingInsertContext.sectionId,
-      source: 'question-bank',
+      source: "question-bank",
     };
 
     if (pendingInsertContext.headingId) {
@@ -82,14 +99,17 @@ export function PaperSurface({
     }
 
     setSectionInsertContext(context);
-    navigate({ to: `/question-bank/${board}/${standard}`, search: { tab: 'personal' } });
+    navigate({
+      to: `/question-bank/${board}/${standard}`,
+      search: { tab: "personal" },
+    });
   };
 
   const handleAddWithAI = (sectionId: string, headingId?: string) => {
     const context: any = {
       paperId: paper.id,
       sectionId,
-      source: 'ai',
+      source: "ai",
     };
 
     if (headingId) {
@@ -97,7 +117,7 @@ export function PaperSurface({
     }
 
     setSectionInsertContext(context);
-    navigate({ to: '/ai' });
+    navigate({ to: "/ai" });
   };
 
   const handleQuestionClick = (e: React.MouseEvent, questionId: string) => {
@@ -106,11 +126,11 @@ export function PaperSurface({
       const target = e.target as HTMLElement;
       // Don't select if clicking on an input, textarea, or button
       if (
-        target.tagName !== 'INPUT' &&
-        target.tagName !== 'TEXTAREA' &&
-        target.tagName !== 'BUTTON' &&
-        !target.closest('button') &&
-        !target.closest('.rich-cell-editor')
+        target.tagName !== "INPUT" &&
+        target.tagName !== "TEXTAREA" &&
+        target.tagName !== "BUTTON" &&
+        !target.closest("button") &&
+        !target.closest(".rich-cell-editor")
       ) {
         onSelectQuestion(questionId);
       }
@@ -118,34 +138,78 @@ export function PaperSurface({
   };
 
   // Calculate total questions across all sections
-  const totalQuestions = paper.sections.reduce((sum, section) => sum + section.questions.length, 0);
+  const totalQuestions = paper.sections.reduce(
+    (sum, section) => sum + section.questions.length,
+    0,
+  );
 
   return (
     <>
       <Card className="paper-container w-full max-w-[210mm] bg-white text-black shadow-2xl print:max-w-none print:border-0 print:shadow-none">
-        <div className="min-h-[297mm] p-8 print:min-h-0">
+        <div className="min-h-[297mm] p-8 print:min-h-0 print:p-0">
           {/* Modern Header Card */}
           <div className="paper-header-card mb-6 rounded-xl border-2 border-border bg-gradient-to-br from-background to-muted/30 p-6 shadow-md">
             <div className="space-y-3 text-center">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                {profile.instituteName || '[Institute Name]'}
-              </h2>
-              <h3 className="text-xl font-semibold text-foreground">{paper.title || '[Paper Title]'}</h3>
+              {profile.schoolLogo && (
+                <div className="flex justify-center mb-2">
+                  <img
+                    src={profile.schoolLogo}
+                    alt="School Logo"
+                    className="h-16 w-16 rounded-full object-cover border border-border"
+                  />
+                </div>
+              )}
+              {isEditable && onUpdatePaperMeta ? (
+                <input
+                  className="w-full text-center text-2xl font-bold tracking-tight text-foreground bg-transparent border-b border-dashed border-muted-foreground/40 outline-none focus:border-primary px-2 py-1"
+                  value={profile.instituteName || ""}
+                  readOnly
+                  placeholder="[Institute Name]"
+                  title="Edit institute name in Profile settings"
+                />
+              ) : (
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                  {profile.instituteName || "[Institute Name]"}
+                </h2>
+              )}
+              {isEditable && onUpdatePaperMeta ? (
+                <input
+                  className="w-full text-center text-xl font-semibold text-foreground bg-transparent border-b border-dashed border-muted-foreground/40 outline-none focus:border-primary px-2 py-1"
+                  value={paper.title || ""}
+                  onChange={(e) => onUpdatePaperMeta({ title: e.target.value })}
+                  placeholder="[Paper Title]"
+                />
+              ) : (
+                <h3 className="text-xl font-semibold text-foreground">
+                  {paper.title || "[Paper Title]"}
+                </h3>
+              )}
               <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-medium text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <span className="font-semibold text-foreground">Board:</span> {paper.board}
+                  <span className="font-semibold text-foreground">Board:</span>{" "}
+                  {paper.board}
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="font-semibold text-foreground">Standard:</span> {paper.standard || '-'}
+                  <span className="font-semibold text-foreground">
+                    Standard:
+                  </span>{" "}
+                  {paper.standard || "-"}
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="font-semibold text-foreground">Total Marks:</span> {paper.totalMarks}
+                  <span className="font-semibold text-foreground">
+                    Total Marks:
+                  </span>{" "}
+                  {paper.totalMarks}
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="font-semibold text-foreground">Time:</span> {paper.timeMinutes} min
+                  <span className="font-semibold text-foreground">Time:</span>{" "}
+                  {paper.timeMinutes} min
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="font-semibold text-foreground">Total Questions:</span> {totalQuestions}
+                  <span className="font-semibold text-foreground">
+                    Total Questions:
+                  </span>{" "}
+                  {totalQuestions}
                 </span>
               </div>
             </div>
@@ -153,16 +217,16 @@ export function PaperSurface({
 
           {/* Stylish Separator */}
           <div className="paper-separator mb-8 flex items-center justify-center">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></div>
-            <div className="mx-4 h-1.5 w-1.5 rounded-full bg-border"></div>
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></div>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="mx-4 h-1.5 w-1.5 rounded-full bg-border" />
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
           </div>
 
           {/* Paper Body */}
           <div className="space-y-8">
             {paper.sections.map((section, idx) => {
               const headings = section.headings || [];
-              
+
               return (
                 <div key={section.id} className="space-y-4">
                   {/* Section Header - Only Section Letter */}
@@ -176,62 +240,79 @@ export function PaperSurface({
                   {headings.length === 0 ? (
                     <div className="rounded-md border border-dashed border-muted-foreground/30 bg-muted/20 p-4 text-center">
                       <p className="text-sm text-muted-foreground italic">
-                        No question headings yet. {isEditable && 'Add a question heading to organize questions in this section.'}
+                        No question headings yet.{" "}
+                        {isEditable &&
+                          "Add a question heading to organize questions in this section."}
                       </p>
                     </div>
                   ) : (
                     headings.map((heading) => {
-                      const headingQuestions = section.questions.filter((q) => q.headingId === heading.id);
-                      const totalMarks = headingQuestions.length * section.marks;
-                      const displayCount = Math.max(headingQuestions.length, heading.plannedCount);
+                      const headingQuestions = section.questions.filter(
+                        (q) => q.headingId === heading.id,
+                      );
+                      const totalMarks =
+                        headingQuestions.length * section.marks;
+                      const displayCount = Math.max(
+                        headingQuestions.length,
+                        heading.plannedCount,
+                      );
 
                       return (
-                        <div key={heading.id} className="space-y-3">
+                        <div key={heading.id} className="space-y-2">
                           {/* Heading Title with Marks Info */}
                           <div className="flex items-baseline gap-2">
-                            <span className="text-foreground">•</span>
-                            <p className="text-sm font-medium text-foreground flex-1">
+                            <span className="text-foreground shrink-0">•</span>
+                            <p className="text-sm font-medium text-foreground break-words">
                               {heading.title}
-                              <span className="ml-2 text-muted-foreground">
-                                ({displayCount} × {section.marks} = {totalMarks} marks)
+                              <span className="ml-2 text-muted-foreground whitespace-nowrap">
+                                ({displayCount} × {section.marks} = {totalMarks}{" "}
+                                marks)
                               </span>
                             </p>
-                            {isEditable && (
-                              <div className="flex gap-1 print:hidden">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleAddFromBank(section.id, heading.id)}
-                                  className="h-7 px-2 text-xs"
-                                >
-                                  <BookOpen className="mr-1 h-3 w-3" />
-                                  Insert from Bank
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleAddWithAI(section.id, heading.id)}
-                                  className="h-7 px-2 text-xs"
-                                >
-                                  <Sparkles className="mr-1 h-3 w-3" />
-                                  Insert from AI
-                                </Button>
-                              </div>
-                            )}
                           </div>
+                          {isEditable && (
+                            <div className="flex flex-wrap gap-1 print:hidden ml-4">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleAddFromBank(section.id, heading.id)
+                                }
+                                className="h-7 px-2 text-xs"
+                              >
+                                <BookOpen className="mr-1 h-3 w-3" />
+                                Insert from Bank
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleAddWithAI(section.id, heading.id)
+                                }
+                                className="h-7 px-2 text-xs"
+                              >
+                                <Sparkles className="mr-1 h-3 w-3" />
+                                Insert from AI
+                              </Button>
+                            </div>
+                          )}
 
                           {/* Questions */}
                           {headingQuestions.length === 0 ? (
                             <div className="ml-6 rounded-md border border-dashed border-muted-foreground/30 bg-muted/10 p-3 text-center">
                               <p className="text-xs text-muted-foreground italic">
-                                No questions yet. {isEditable && 'Use the buttons above to add questions to this heading.'}
+                                No questions yet.{" "}
+                                {isEditable &&
+                                  "Use the buttons above to add questions to this heading."}
                               </p>
                             </div>
                           ) : (
                             <div className="ml-6 space-y-4">
                               {headingQuestions.map((question, qIdx) => {
-                                const isSelected = selectedQuestionId === question.id;
-                                const shouldAutoFocus = autoFocusQuestionId === question.id;
+                                const isSelected =
+                                  selectedQuestionId === question.id;
+                                const shouldAutoFocus =
+                                  autoFocusQuestionId === question.id;
 
                                 return (
                                   <div
@@ -240,24 +321,51 @@ export function PaperSurface({
                                     className={`rounded-md border transition-colors ${
                                       isEditable
                                         ? isSelected
-                                          ? 'border-primary bg-primary/5'
-                                          : 'border-border bg-background hover:border-primary/50 cursor-pointer'
-                                        : 'border-border bg-background'
+                                          ? "border-primary bg-primary/5"
+                                          : "border-border bg-background hover:border-primary/50 cursor-pointer"
+                                        : "border-border bg-background"
                                     } p-3`}
-                                    onClick={(e) => handleQuestionClick(e, question.id)}
+                                    onClick={(e) =>
+                                      handleQuestionClick(e, question.id)
+                                    }
+                                    onKeyDown={(e) =>
+                                      e.key === "Enter" &&
+                                      handleQuestionClick(
+                                        e as unknown as React.MouseEvent,
+                                        question.id,
+                                      )
+                                    }
+                                    role={isEditable ? "button" : undefined}
+                                    tabIndex={isEditable ? 0 : undefined}
                                   >
-                                    {isEditable && isSelected && onUpdateQuestion && onDeleteQuestion ? (
+                                    {isEditable &&
+                                    isSelected &&
+                                    onUpdateQuestion &&
+                                    onDeleteQuestion ? (
                                       <QuestionBlockEditor
                                         question={question}
                                         questionNumber={qIdx + 1}
-                                        onUpdate={(updates) => onUpdateQuestion(section.id, question.id, updates)}
-                                        onDelete={() => onDeleteQuestion(section.id, question.id)}
+                                        onUpdate={(updates) =>
+                                          onUpdateQuestion(
+                                            section.id,
+                                            question.id,
+                                            updates,
+                                          )
+                                        }
+                                        onDelete={() =>
+                                          onDeleteQuestion(
+                                            section.id,
+                                            question.id,
+                                          )
+                                        }
                                         autoFocus={shouldAutoFocus}
                                       />
                                     ) : (
                                       <div className="flex items-start gap-2">
-                                        <span className="text-sm font-semibold text-foreground shrink-0">{qIdx + 1}.</span>
-                                        <div className="flex-1">
+                                        <span className="text-sm font-semibold text-foreground shrink-0">
+                                          {qIdx + 1}.
+                                        </span>
+                                        <div className="flex-1 min-w-0">
                                           <PaperRenderer question={question} />
                                         </div>
                                       </div>
@@ -273,18 +381,28 @@ export function PaperSurface({
                   )}
 
                   {/* Empty state actions */}
-                  {isEditable && headings.length > 0 && section.questions.length === 0 && (
-                    <div className="flex justify-center gap-2 pt-2">
-                      <Button variant="outline" size="sm" onClick={() => handleAddFromBank(section.id)}>
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        Add from Bank
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleAddWithAI(section.id)}>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Generate with AI
-                      </Button>
-                    </div>
-                  )}
+                  {isEditable &&
+                    headings.length > 0 &&
+                    section.questions.length === 0 && (
+                      <div className="flex flex-wrap justify-center gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddFromBank(section.id)}
+                        >
+                          <BookOpen className="mr-2 h-4 w-4" />
+                          Add from Bank
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddWithAI(section.id)}
+                        >
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          Generate with AI
+                        </Button>
+                      </div>
+                    )}
                 </div>
               );
             })}

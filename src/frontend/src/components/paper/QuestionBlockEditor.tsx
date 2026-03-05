@@ -1,12 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Trash2 } from 'lucide-react';
-import { Question, CellContent } from '../../state/mockData';
-import { AutoGrowTextarea } from '../editor/AutoGrowTextarea';
-import { RichCellEditor } from '../editor/RichCellEditor';
-import { RichCellContent } from '../../lib/editor/richCellContent';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Trash2 } from "lucide-react";
+import { useEffect, useRef } from "react";
+import type { RichCellContent } from "../../lib/editor/richCellContent";
+import type { CellContent, Question } from "../../state/mockData";
+import { AutoGrowTextarea } from "../editor/AutoGrowTextarea";
+import { RichCellEditor } from "../editor/RichCellEditor";
 
 interface QuestionBlockEditorProps {
   question: Question;
@@ -16,7 +16,13 @@ interface QuestionBlockEditorProps {
   autoFocus?: boolean;
 }
 
-export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDelete, autoFocus }: QuestionBlockEditorProps) {
+export function QuestionBlockEditor({
+  question,
+  questionNumber,
+  onUpdate,
+  onDelete,
+  autoFocus,
+}: QuestionBlockEditorProps) {
   const firstInputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
 
   useEffect(() => {
@@ -29,72 +35,100 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
 
   const renderQuestionTypeEditor = () => {
     switch (question.questionType) {
-      case 'mcq':
+      case "mcq":
         return (
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Options</Label>
-            {question.mcqOptions?.options.map((option, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">{String.fromCharCode(65 + idx)}.</span>
-                <Input
-                  ref={idx === 0 && !question.text ? (firstInputRef as React.RefObject<HTMLInputElement>) : undefined}
-                  value={option}
-                  onChange={(e) => {
-                    const newOptions = [...(question.mcqOptions?.options || [])];
-                    newOptions[idx] = e.target.value;
-                    onUpdate({ mcqOptions: { options: newOptions } });
-                  }}
-                  placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                  className="flex-1"
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseDown={(e) => e.stopPropagation()}
-                />
-              </div>
-            ))}
+            {Array.from((question.mcqOptions?.options ?? []).entries()).map(
+              ([idx, option]) => (
+                <div key={`mcq-opt-${idx}`} className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {String.fromCharCode(65 + idx)}.
+                  </span>
+                  <Input
+                    ref={
+                      idx === 0 && !question.text
+                        ? (firstInputRef as React.RefObject<HTMLInputElement>)
+                        : undefined
+                    }
+                    value={option}
+                    onChange={(e) => {
+                      const newOptions = [
+                        ...(question.mcqOptions?.options || []),
+                      ];
+                      newOptions[idx] = e.target.value;
+                      onUpdate({ mcqOptions: { options: newOptions } });
+                    }}
+                    placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                    className="flex-1"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  />
+                </div>
+              ),
+            )}
           </div>
         );
 
-      case 'fill-in-blank':
+      case "fill-in-blank":
         return (
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Blanks (Answers)</Label>
-            {question.fillInBlankData?.blanks.map((blank, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">{idx + 1}.</span>
-                <Input
-                  ref={idx === 0 && !question.text ? (firstInputRef as React.RefObject<HTMLInputElement>) : undefined}
-                  value={blank}
-                  onChange={(e) => {
-                    const newBlanks = [...(question.fillInBlankData?.blanks || [])];
-                    newBlanks[idx] = e.target.value;
-                    onUpdate({ fillInBlankData: { blanks: newBlanks } });
-                  }}
-                  placeholder={`Answer ${idx + 1}`}
-                  className="flex-1"
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseDown={(e) => e.stopPropagation()}
-                />
-                {idx > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newBlanks = question.fillInBlankData?.blanks.filter((_, i) => i !== idx) || [];
+            <Label className="text-xs text-muted-foreground">
+              Blanks (Answers)
+            </Label>
+            {Array.from((question.fillInBlankData?.blanks ?? []).entries()).map(
+              ([idx, blank]) => (
+                <div key={`blank-${idx}`} className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {idx + 1}.
+                  </span>
+                  <Input
+                    ref={
+                      idx === 0 && !question.text
+                        ? (firstInputRef as React.RefObject<HTMLInputElement>)
+                        : undefined
+                    }
+                    value={blank}
+                    onChange={(e) => {
+                      const newBlanks = [
+                        ...(question.fillInBlankData?.blanks || []),
+                      ];
+                      newBlanks[idx] = e.target.value;
                       onUpdate({ fillInBlankData: { blanks: newBlanks } });
                     }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
+                    placeholder={`Answer ${idx + 1}`}
+                    className="flex-1"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  />
+                  {idx > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newBlanks =
+                          question.fillInBlankData?.blanks.filter(
+                            (_, i) => i !== idx,
+                          ) || [];
+                        onUpdate({ fillInBlankData: { blanks: newBlanks } });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ),
+            )}
             <Button
               variant="outline"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                const newBlanks = [...(question.fillInBlankData?.blanks || []), ''];
+                const newBlanks = [
+                  ...(question.fillInBlankData?.blanks || []),
+                  "",
+                ];
                 onUpdate({ fillInBlankData: { blanks: newBlanks } });
               }}
             >
@@ -103,31 +137,44 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
           </div>
         );
 
-      case 'true-false':
+      case "true-false":
         return (
           <div className="rounded-md border border-border bg-muted/20 p-3">
-            <p className="text-sm text-muted-foreground">Students will answer True or False</p>
+            <p className="text-sm text-muted-foreground">
+              Students will answer True or False
+            </p>
           </div>
         );
 
-      case 'match-pairs':
+      case "match-pairs": {
         // Normalize pairs to rich content
         const pairs = question.matchPairsData?.pairs || [];
-        
+
         return (
-          <div className="space-y-2" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+          <div
+            className="space-y-2"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <Label className="text-xs text-muted-foreground">Match Pairs</Label>
             <div className="overflow-x-auto">
               <div className="grid grid-cols-2 gap-4 min-w-[500px]">
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold">Column A</Label>
-                  {pairs.map((pair, idx) => (
-                    <div key={`left-${idx}`} className="border border-border rounded p-2">
+                  {Array.from(pairs.entries()).map(([idx, pair]) => (
+                    <div
+                      key={`left-${idx}`}
+                      className="border border-border rounded p-2"
+                    >
                       <RichCellEditor
                         value={pair.left as CellContent}
                         onChange={(content: RichCellContent) => {
                           const newPairs = [...pairs];
-                          newPairs[idx] = { ...newPairs[idx], left: content as CellContent };
+                          newPairs[idx] = {
+                            ...newPairs[idx],
+                            left: content as CellContent,
+                          };
                           onUpdate({ matchPairsData: { pairs: newPairs } });
                         }}
                         placeholder={`Item ${idx + 1}`}
@@ -138,13 +185,19 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold">Column B</Label>
-                  {pairs.map((pair, idx) => (
-                    <div key={`right-${idx}`} className="border border-border rounded p-2">
+                  {Array.from(pairs.entries()).map(([idx, pair]) => (
+                    <div
+                      key={`right-${idx}`}
+                      className="border border-border rounded p-2"
+                    >
                       <RichCellEditor
                         value={pair.right as CellContent}
                         onChange={(content: RichCellContent) => {
                           const newPairs = [...pairs];
-                          newPairs[idx] = { ...newPairs[idx], right: content as CellContent };
+                          newPairs[idx] = {
+                            ...newPairs[idx],
+                            right: content as CellContent,
+                          };
                           onUpdate({ matchPairsData: { pairs: newPairs } });
                         }}
                         placeholder={`Match ${idx + 1}`}
@@ -160,7 +213,7 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const newPairs = [...pairs, { left: '', right: '' }];
+                  const newPairs = [...pairs, { left: "", right: "" }];
                   onUpdate({ matchPairsData: { pairs: newPairs } });
                 }}
               >
@@ -182,55 +235,71 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
             </div>
           </div>
         );
+      }
 
-      case 'table':
+      case "table": {
         const rows = question.tableData?.rows || 2;
         const cols = question.tableData?.cols || 2;
-        const cells = question.tableData?.cells || Array(rows).fill(null).map(() => Array(cols).fill(''));
-        const columnHeaders = question.tableData?.columnHeaders || Array(cols).fill(null).map((_, i) => `Column ${String.fromCharCode(65 + i)}`);
+        const cells =
+          question.tableData?.cells ||
+          Array(rows)
+            .fill(null)
+            .map(() => Array(cols).fill(""));
+        const columnHeaders =
+          question.tableData?.columnHeaders ||
+          Array(cols)
+            .fill(null)
+            .map((_, i) => `Column ${String.fromCharCode(65 + i)}`);
 
         return (
-          <div className="space-y-2" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+          <div
+            className="space-y-2"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <Label className="text-xs text-muted-foreground">Table</Label>
             <div className="overflow-x-auto">
               <table className="equal-width-table table-dark-borders">
                 <thead>
                   <tr>
-                    {columnHeaders.map((header, colIdx) => (
-                      <th
-                        key={colIdx}
-                        className="border-2 border-foreground/60 bg-muted/30 p-2"
-                        style={{ width: `${100 / cols}%` }}
-                      >
-                        <Input
-                          value={header}
-                          onChange={(e) => {
-                            const newHeaders = [...columnHeaders];
-                            newHeaders[colIdx] = e.target.value;
-                            onUpdate({
-                              tableData: {
-                                rows,
-                                cols,
-                                cells,
-                                columnHeaders: newHeaders,
-                              },
-                            });
-                          }}
-                          placeholder={`Column ${String.fromCharCode(65 + colIdx)}`}
-                          className="h-8 border-0 bg-transparent text-center font-semibold"
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                        />
-                      </th>
-                    ))}
+                    {Array.from(columnHeaders.entries()).map(
+                      ([colIdx, header]) => (
+                        <th
+                          key={`col-header-${colIdx}`}
+                          className="border-2 border-foreground/60 bg-muted/30 p-2"
+                          style={{ width: `${100 / cols}%` }}
+                        >
+                          <Input
+                            value={header}
+                            onChange={(e) => {
+                              const newHeaders = [...columnHeaders];
+                              newHeaders[colIdx] = e.target.value;
+                              onUpdate({
+                                tableData: {
+                                  rows,
+                                  cols,
+                                  cells,
+                                  columnHeaders: newHeaders,
+                                },
+                              });
+                            }}
+                            placeholder={`Column ${String.fromCharCode(65 + colIdx)}`}
+                            className="h-8 border-0 bg-transparent text-center font-semibold"
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          />
+                        </th>
+                      ),
+                    )}
                   </tr>
                 </thead>
                 <tbody>
-                  {cells.map((row, rowIdx) => (
-                    <tr key={rowIdx}>
-                      {row.map((cell, colIdx) => (
+                  {Array.from(cells.entries()).map(([rowIdx, row]) => (
+                    <tr key={`row-${rowIdx}`}>
+                      {Array.from(row.entries()).map(([colIdx, cell]) => (
                         <td
-                          key={colIdx}
+                          key={`cell-${rowIdx}-${colIdx}`}
                           className="border-2 border-foreground/60 p-1"
                           style={{ width: `${100 / cols}%` }}
                         >
@@ -249,7 +318,12 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
                               });
                             }}
                             placeholder={`R${rowIdx + 1}C${colIdx + 1}`}
-                            autoFocus={rowIdx === 0 && colIdx === 0 && !question.text && autoFocus}
+                            autoFocus={
+                              rowIdx === 0 &&
+                              colIdx === 0 &&
+                              !question.text &&
+                              autoFocus
+                            }
                           />
                         </td>
                       ))}
@@ -264,7 +338,7 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const newCells = [...cells, Array(cols).fill('')];
+                  const newCells = [...cells, Array(cols).fill("")];
                   onUpdate({
                     tableData: {
                       rows: rows + 1,
@@ -282,8 +356,11 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const newCells = cells.map((row) => [...row, '']);
-                  const newHeaders = [...columnHeaders, `Column ${String.fromCharCode(65 + cols)}`];
+                  const newCells = cells.map((row) => [...row, ""]);
+                  const newHeaders = [
+                    ...columnHeaders,
+                    `Column ${String.fromCharCode(65 + cols)}`,
+                  ];
                   onUpdate({
                     tableData: {
                       rows,
@@ -299,23 +376,31 @@ export function QuestionBlockEditor({ question, questionNumber, onUpdate, onDele
             </div>
           </div>
         );
-
-      case 'short-answer':
+      }
       default:
         return (
           <div className="rounded-md border border-border bg-muted/20 p-3">
-            <p className="text-sm text-muted-foreground">Students will write a short answer</p>
+            <p className="text-sm text-muted-foreground">
+              Students will write a short answer
+            </p>
           </div>
         );
     }
   };
 
   return (
-    <div className="space-y-3" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+    <div
+      className="space-y-3"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 space-y-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-sm font-semibold text-foreground">{questionNumber}.</span>
+            <span className="text-sm font-semibold text-foreground">
+              {questionNumber}.
+            </span>
             <AutoGrowTextarea
               ref={firstInputRef as React.RefObject<HTMLTextAreaElement>}
               value={question.text}

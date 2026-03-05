@@ -1,13 +1,3 @@
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { useTheme } from '../../hooks/useTheme';
-import { TOOLBOX_SPOTLIGHT_STORAGE_KEY } from '../../hooks/useRealPaperToolboxSpotlight';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,8 +8,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Settings, Moon, Sun, Monitor, RotateCcw, Trash2 } from 'lucide-react';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { useNavigate } from "@tanstack/react-router";
+import { Monitor, Moon, RotateCcw, Settings, Sun, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { TOOLBOX_SPOTLIGHT_STORAGE_KEY } from "../../hooks/useRealPaperToolboxSpotlight";
+import { useTheme } from "../../hooks/useTheme";
+import { useMockStore } from "../../state/mockStore";
 
 export function SettingsWireframe() {
   const navigate = useNavigate();
@@ -32,21 +44,21 @@ export function SettingsWireframe() {
     try {
       localStorage.removeItem(TOOLBOX_SPOTLIGHT_STORAGE_KEY);
     } catch (error) {
-      console.error('Failed to reset toolbox spotlight:', error);
+      console.error("Failed to reset toolbox spotlight:", error);
     }
     // Set flag to start tutorial
-    localStorage.setItem('start-tutorial', 'true');
+    localStorage.setItem("start-tutorial", "true");
     // Navigate to home where tutorial will start
-    navigate({ to: '/home' });
+    navigate({ to: "/home" });
   };
 
   const handleClearData = () => {
     clearAllData();
-    navigate({ to: '/' });
+    navigate({ to: "/" });
   };
 
   const handleThemeChange = (value: string) => {
-    if (value === 'light' || value === 'dark' || value === 'system') {
+    if (value === "light" || value === "dark" || value === "system") {
       setTheme(value);
     }
   };
@@ -58,7 +70,9 @@ export function SettingsWireframe() {
           <Settings className="h-8 w-8 text-primary" />
           Settings
         </h1>
-        <p className="mt-2 text-muted-foreground">Manage your app preferences and data</p>
+        <p className="mt-2 text-muted-foreground">
+          Manage your app preferences and data
+        </p>
       </div>
 
       <div className="space-y-6">
@@ -118,13 +132,16 @@ export function SettingsWireframe() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Reset Tutorial?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will restart the interactive tutorial from the beginning. You'll be taken to the home screen
-                    where the tutorial will start automatically.
+                    This will restart the interactive tutorial from the
+                    beginning. You'll be taken to the home screen where the
+                    tutorial will start automatically.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleResetTutorial}>Reset</AlertDialogAction>
+                  <AlertDialogAction onClick={handleResetTutorial}>
+                    Reset
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -137,7 +154,9 @@ export function SettingsWireframe() {
         <Card className="border-destructive/50">
           <CardHeader>
             <CardTitle className="text-destructive">Danger Zone</CardTitle>
-            <CardDescription>Irreversible actions that affect your data</CardDescription>
+            <CardDescription>
+              Irreversible actions that affect your data
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <AlertDialog>
@@ -151,13 +170,17 @@ export function SettingsWireframe() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete all your papers, questions, and profile
-                    data from this device.
+                    This action cannot be undone. This will permanently delete
+                    all your papers, questions, and profile data from this
+                    device.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearData} className="bg-destructive text-destructive-foreground">
+                  <AlertDialogAction
+                    onClick={handleClearData}
+                    className="bg-destructive text-destructive-foreground"
+                  >
                     Yes, delete everything
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -169,4 +192,3 @@ export function SettingsWireframe() {
     </div>
   );
 }
-

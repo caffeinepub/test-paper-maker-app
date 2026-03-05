@@ -1,16 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { FloatingAIButton } from '../../components/ai/FloatingAIButton';
-import { Plus, X, Info, AlertCircle, FileEdit, Trash2, Undo, Redo } from 'lucide-react';
-import { useDebouncedEffect } from '../../hooks/useDebouncedEffect';
-import { useUndoRedo } from '../../hooks/useUndoRedo';
-import { QuestionHeading } from '../../state/mockData';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  FileEdit,
+  Info,
+  Plus,
+  Redo,
+  Trash2,
+  Undo,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { FloatingAIButton } from "../../components/ai/FloatingAIButton";
+import { useDebouncedEffect } from "../../hooks/useDebouncedEffect";
+import { useUndoRedo } from "../../hooks/useUndoRedo";
+import type { QuestionHeading } from "../../state/mockData";
+import { useMockStore } from "../../state/mockStore";
 
 interface PaperEditorState {
   paperData: {
@@ -33,32 +48,36 @@ interface PaperEditorState {
 
 export function PaperEditorWireframe() {
   const navigate = useNavigate();
-  const { paperId } = useParams({ from: '/editor/$paperId' });
+  const { paperId } = useParams({ from: "/editor/$paperId" });
   const { isInitialized, profile, getPaperById, updatePaper } = useMockStore();
 
   const paper = getPaperById(paperId);
 
   const isInitialLoadRef = useRef(true);
-  const lastSavedDataRef = useRef<string>('');
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
+  const lastSavedDataRef = useRef<string>("");
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    "saved" | "saving" | "idle"
+  >("idle");
   const [showSuggestion, setShowSuggestion] = useState(true);
 
   const initialState: PaperEditorState = {
     paperData: {
-      title: '',
+      title: "",
       totalMarks: 25,
       timeMinutes: 45,
       board: profile.preferredBoard,
-      standard: profile.defaultStandard || '',
+      standard: profile.defaultStandard || "",
       medium: profile.medium,
     },
     sections: [],
   };
 
-  const { state, setState, undo, redo, canUndo, canRedo, reset } = useUndoRedo<PaperEditorState>(initialState, {
-    maxHistorySize: 50,
-  });
+  const { state, setState, undo, redo, canUndo, canRedo, reset } =
+    useUndoRedo<PaperEditorState>(initialState, {
+      maxHistorySize: 50,
+    });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally tracks paperId to reload when paper changes
   useEffect(() => {
     if (paper && isInitialized) {
       isInitialLoadRef.current = true;
@@ -69,7 +88,7 @@ export function PaperEditorWireframe() {
           totalMarks: paper.totalMarks,
           timeMinutes: paper.timeMinutes,
           board: paper.board,
-          standard: paper.standard || '',
+          standard: paper.standard || "",
           medium: paper.medium,
         },
         sections: paper.sections.map((s) => ({
@@ -100,7 +119,7 @@ export function PaperEditorWireframe() {
       const currentStateStr = JSON.stringify(state);
 
       if (currentStateStr !== lastSavedDataRef.current) {
-        setAutoSaveStatus('saving');
+        setAutoSaveStatus("saving");
 
         const updatedPaper = {
           ...state.paperData,
@@ -117,13 +136,13 @@ export function PaperEditorWireframe() {
         lastSavedDataRef.current = currentStateStr;
 
         setTimeout(() => {
-          setAutoSaveStatus('saved');
-          setTimeout(() => setAutoSaveStatus('idle'), 2000);
+          setAutoSaveStatus("saved");
+          setTimeout(() => setAutoSaveStatus("idle"), 2000);
         }, 300);
       }
     },
     500,
-    [state, isInitialized, paper?.id]
+    [state, isInitialized, paper?.id],
   );
 
   const handleAddSection = (marks: number) => {
@@ -157,7 +176,7 @@ export function PaperEditorWireframe() {
         if (s.id === sectionId) {
           const newHeading: QuestionHeading = {
             id: `heading-${Date.now()}`,
-            title: '',
+            title: "",
             plannedCount: 0,
           };
           return { ...s, headings: [...s.headings, newHeading] };
@@ -167,14 +186,20 @@ export function PaperEditorWireframe() {
     }));
   };
 
-  const handleUpdateHeading = (sectionId: string, headingId: string, updates: Partial<QuestionHeading>) => {
+  const handleUpdateHeading = (
+    sectionId: string,
+    headingId: string,
+    updates: Partial<QuestionHeading>,
+  ) => {
     setState((prev) => ({
       ...prev,
       sections: prev.sections.map((s) => {
         if (s.id === sectionId) {
           return {
             ...s,
-            headings: s.headings.map((h) => (h.id === headingId ? { ...h, ...updates } : h)),
+            headings: s.headings.map((h) =>
+              h.id === headingId ? { ...h, ...updates } : h,
+            ),
           };
         }
         return s;
@@ -201,7 +226,8 @@ export function PaperEditorWireframe() {
     navigate({ to: `/editor/${paperId}/real-paper` });
   };
 
-  const canContinueToPaper = state.paperData.title.trim() !== '' && state.sections.length > 0;
+  const canContinueToPaper =
+    state.paperData.title.trim() !== "" && state.sections.length > 0;
 
   if (!isInitialized) {
     return (
@@ -217,7 +243,9 @@ export function PaperEditorWireframe() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Paper Not Found</AlertTitle>
-          <AlertDescription>The paper you're trying to edit doesn't exist or has been deleted.</AlertDescription>
+          <AlertDescription>
+            The paper you're trying to edit doesn't exist or has been deleted.
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -228,15 +256,33 @@ export function PaperEditorWireframe() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Paper Details</h1>
-          <p className="mt-2 text-muted-foreground">Configure your test paper structure and sections</p>
+          <p className="mt-2 text-muted-foreground">
+            Configure your test paper structure and sections
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          {autoSaveStatus === 'saving' && <span className="text-sm text-muted-foreground">Saving...</span>}
-          {autoSaveStatus === 'saved' && <span className="text-sm text-success">Saved</span>}
-          <Button variant="outline" size="icon" onClick={undo} disabled={!canUndo} title="Undo">
+          {autoSaveStatus === "saving" && (
+            <span className="text-sm text-muted-foreground">Saving...</span>
+          )}
+          {autoSaveStatus === "saved" && (
+            <span className="text-sm text-success">Saved</span>
+          )}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={undo}
+            disabled={!canUndo}
+            title="Undo"
+          >
             <Undo className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={redo} disabled={!canRedo} title="Redo">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={redo}
+            disabled={!canRedo}
+            title="Redo"
+          >
             <Redo className="h-4 w-4" />
           </Button>
         </div>
@@ -248,10 +294,14 @@ export function PaperEditorWireframe() {
           <AlertTitle>Tip: Use the Real Paper Editor</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
             <span>
-              For a better editing experience with WYSIWYG preview, try the Real Paper Editor after setting up your
-              sections.
+              For a better editing experience with WYSIWYG preview, try the Real
+              Paper Editor after setting up your sections.
             </span>
-            <Button variant="ghost" size="sm" onClick={() => setShowSuggestion(false)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSuggestion(false)}
+            >
               <X className="h-4 w-4" />
             </Button>
           </AlertDescription>
@@ -261,7 +311,9 @@ export function PaperEditorWireframe() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
-          <CardDescription>Set the title and general details for your paper</CardDescription>
+          <CardDescription>
+            Set the title and general details for your paper
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -289,7 +341,10 @@ export function PaperEditorWireframe() {
                 onChange={(e) =>
                   setState((prev) => ({
                     ...prev,
-                    paperData: { ...prev.paperData, totalMarks: parseInt(e.target.value) || 0 },
+                    paperData: {
+                      ...prev.paperData,
+                      totalMarks: Number.parseInt(e.target.value) || 0,
+                    },
                   }))
                 }
               />
@@ -304,7 +359,10 @@ export function PaperEditorWireframe() {
                 onChange={(e) =>
                   setState((prev) => ({
                     ...prev,
-                    paperData: { ...prev.paperData, timeMinutes: parseInt(e.target.value) || 0 },
+                    paperData: {
+                      ...prev.paperData,
+                      timeMinutes: Number.parseInt(e.target.value) || 0,
+                    },
                   }))
                 }
               />
@@ -361,7 +419,8 @@ export function PaperEditorWireframe() {
         <CardHeader>
           <CardTitle>Sections & Question Headings</CardTitle>
           <CardDescription>
-            Organize your paper into sections with different mark values and question headings
+            Organize your paper into sections with different mark values and
+            question headings
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -371,28 +430,41 @@ export function PaperEditorWireframe() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold text-foreground">
-                      Section {String.fromCharCode(65 + idx)} ({section.marks} mark{section.marks > 1 ? 's' : ''} each)
+                      Section {String.fromCharCode(65 + idx)} ({section.marks}{" "}
+                      mark{section.marks > 1 ? "s" : ""} each)
                     </h4>
-                    <Button variant="ghost" size="sm" onClick={() => handleRemoveSection(section.id)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveSection(section.id)}
+                    >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Question Headings</Label>
+                    <Label className="text-sm font-medium">
+                      Question Headings
+                    </Label>
                     {section.headings.length === 0 ? (
                       <p className="text-sm text-muted-foreground italic">
-                        No headings yet. Add headings to organize questions in this section.
+                        No headings yet. Add headings to organize questions in
+                        this section.
                       </p>
                     ) : (
                       <div className="space-y-2">
                         {section.headings.map((heading) => (
-                          <div key={heading.id} className="flex items-center gap-2">
+                          <div
+                            key={heading.id}
+                            className="flex items-center gap-2"
+                          >
                             <Input
                               placeholder="Heading title (e.g., Short Answer Questions)"
                               value={heading.title}
                               onChange={(e) =>
-                                handleUpdateHeading(section.id, heading.id, { title: e.target.value })
+                                handleUpdateHeading(section.id, heading.id, {
+                                  title: e.target.value,
+                                })
                               }
                               className="flex-1"
                             />
@@ -402,7 +474,8 @@ export function PaperEditorWireframe() {
                               value={heading.plannedCount}
                               onChange={(e) =>
                                 handleUpdateHeading(section.id, heading.id, {
-                                  plannedCount: parseInt(e.target.value) || 0,
+                                  plannedCount:
+                                    Number.parseInt(e.target.value) || 0,
                                 })
                               }
                               className="w-20"
@@ -410,7 +483,9 @@ export function PaperEditorWireframe() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleRemoveHeading(section.id, heading.id)}
+                              onClick={() =>
+                                handleRemoveHeading(section.id, heading.id)
+                              }
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -434,19 +509,35 @@ export function PaperEditorWireframe() {
           ))}
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
-            <Button variant="outline" onClick={() => handleAddSection(1)} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => handleAddSection(1)}
+              className="flex-1"
+            >
               <Plus className="mr-1 h-4 w-4" />
               <span className="text-sm sm:text-base">1 Mark</span>
             </Button>
-            <Button variant="outline" onClick={() => handleAddSection(2)} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => handleAddSection(2)}
+              className="flex-1"
+            >
               <Plus className="mr-1 h-4 w-4" />
               <span className="text-sm sm:text-base">2 Marks</span>
             </Button>
-            <Button variant="outline" onClick={() => handleAddSection(3)} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => handleAddSection(3)}
+              className="flex-1"
+            >
               <Plus className="mr-1 h-4 w-4" />
               <span className="text-sm sm:text-base">3 Marks</span>
             </Button>
-            <Button variant="outline" onClick={() => handleAddSection(4)} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => handleAddSection(4)}
+              className="flex-1"
+            >
               <Plus className="mr-1 h-4 w-4" />
               <span className="text-sm sm:text-base">4 Marks</span>
             </Button>
@@ -455,7 +546,7 @@ export function PaperEditorWireframe() {
       </Card>
 
       <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => navigate({ to: '/papers' })}>
+        <Button variant="outline" onClick={() => navigate({ to: "/papers" })}>
           Cancel
         </Button>
         <Button onClick={handleContinueToPaper} disabled={!canContinueToPaper}>

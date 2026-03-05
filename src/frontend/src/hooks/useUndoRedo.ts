@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseUndoRedoOptions<T> {
   maxHistorySize?: number;
@@ -17,7 +17,7 @@ interface UseUndoRedoReturn<T> {
 
 export function useUndoRedo<T>(
   initialState: T,
-  options: UseUndoRedoOptions<T> = {}
+  options: UseUndoRedoOptions<T> = {},
 ): UseUndoRedoReturn<T> {
   const { maxHistorySize = 50, onStateChange } = options;
 
@@ -29,7 +29,10 @@ export function useUndoRedo<T>(
   const setState = useCallback(
     (newState: T | ((prev: T) => T)) => {
       setStateInternal((prev) => {
-        const nextState = typeof newState === 'function' ? (newState as (prev: T) => T)(prev) : newState;
+        const nextState =
+          typeof newState === "function"
+            ? (newState as (prev: T) => T)(prev)
+            : newState;
 
         if (!isUndoRedoAction.current) {
           // Add to history
@@ -43,7 +46,9 @@ export function useUndoRedo<T>(
             }
             return newHistory;
           });
-          setCurrentIndex((i) => (history.length >= maxHistorySize ? i : i + 1));
+          setCurrentIndex((i) =>
+            history.length >= maxHistorySize ? i : i + 1,
+          );
         }
 
         if (onStateChange) {
@@ -53,7 +58,7 @@ export function useUndoRedo<T>(
         return nextState;
       });
     },
-    [currentIndex, history.length, maxHistorySize, onStateChange]
+    [currentIndex, history.length, maxHistorySize, onStateChange],
   );
 
   const undo = useCallback(() => {

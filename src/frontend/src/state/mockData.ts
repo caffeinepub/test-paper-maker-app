@@ -10,7 +10,14 @@ export interface Profile {
   schoolLogo?: string | null;
 }
 
-export type QuestionType = 'mcq' | 'numerical' | 'fill-in-blank' | 'true-false' | 'match-pairs' | 'table' | 'short-answer';
+export type QuestionType =
+  | "mcq"
+  | "numerical"
+  | "fill-in-blank"
+  | "true-false"
+  | "match-pairs"
+  | "table"
+  | "short-answer";
 
 // Support for rich content in cells (can be string or RichCellContent)
 export type CellContent = string | any; // any to allow RichCellContent without circular dependency
@@ -70,7 +77,7 @@ export interface Paper {
   totalMarks: number;
   sections: PaperSection[];
   questions: Question[];
-  layoutMode: 'original' | 'cleaned';
+  layoutMode: "original" | "cleaned";
   timeMinutes: number;
   board: string;
   standard: string;
@@ -79,50 +86,50 @@ export interface Paper {
 }
 
 export const defaultProfile: Profile = {
-  teacherName: 'Teacher',
-  instituteName: 'My Institute',
-  board: 'CBSE',
-  standard: 'Standard 10',
-  medium: 'English',
+  teacherName: "Teacher",
+  instituteName: "My Institute",
+  board: "CBSE",
+  standard: "Standard 10",
+  medium: "English",
   logoUrl: null,
-  preferredBoard: 'CBSE',
-  defaultStandard: 'Standard 10',
+  preferredBoard: "CBSE",
+  defaultStandard: "Standard 10",
   schoolLogo: null,
 };
 
 export const starterQuestions: Question[] = [
   {
-    id: 'q1',
-    text: 'What is the capital of France?',
-    questionType: 'short-answer',
+    id: "q1",
+    text: "What is the capital of France?",
+    questionType: "short-answer",
     marks: 2,
-    type: 'Conceptual',
+    type: "Conceptual",
     headingId: null,
     imageAttachment: null,
-    board: 'CBSE',
-    standard: 'Standard 10',
+    board: "CBSE",
+    standard: "Standard 10",
   },
   {
-    id: 'q2',
-    text: 'Solve: 2x + 5 = 15',
-    questionType: 'numerical',
+    id: "q2",
+    text: "Solve: 2x + 5 = 15",
+    questionType: "numerical",
     marks: 3,
-    type: 'Numerical',
+    type: "Numerical",
     headingId: null,
     imageAttachment: null,
-    board: 'CBSE',
-    standard: 'Standard 10',
+    board: "CBSE",
+    standard: "Standard 10",
   },
   {
-    id: 'q3',
-    text: 'Explain the process of photosynthesis.',
-    questionType: 'short-answer',
+    id: "q3",
+    text: "Explain the process of photosynthesis.",
+    questionType: "short-answer",
     marks: 5,
-    type: 'Conceptual',
+    type: "Conceptual",
     headingId: null,
     imageAttachment: null,
-    board: 'CBSE',
-    standard: 'Standard 9',
+    board: "CBSE",
+    standard: "Standard 9",
   },
 ];
 

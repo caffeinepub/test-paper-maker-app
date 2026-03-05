@@ -16,13 +16,14 @@ function checkStorageAvailability(): StorageAvailability {
   }
 
   try {
-    const testKey = '__storage_test__';
-    localStorage.setItem(testKey, 'test');
+    const testKey = "__storage_test__";
+    localStorage.setItem(testKey, "test");
     localStorage.removeItem(testKey);
     storageAvailability = { available: true };
     return storageAvailability;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Storage access denied';
+    const errorMessage =
+      error instanceof Error ? error.message : "Storage access denied";
     storageAvailability = { available: false, error: errorMessage };
     return storageAvailability;
   }

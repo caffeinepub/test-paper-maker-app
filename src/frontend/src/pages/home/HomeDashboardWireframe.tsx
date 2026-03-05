@@ -1,10 +1,16 @@
-import { useNavigate } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FloatingAIButton } from '../../components/ai/FloatingAIButton';
-import { Plus, FileText, Clock, Calendar, PlusCircle } from 'lucide-react';
-import { createNewPaper } from '../../lib/papers/createNewPaper';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { Calendar, Clock, FileText, Plus, PlusCircle } from "lucide-react";
+import { FloatingAIButton } from "../../components/ai/FloatingAIButton";
+import { createNewPaper } from "../../lib/papers/createNewPaper";
+import { useMockStore } from "../../state/mockStore";
 
 export function HomeDashboardWireframe() {
   const navigate = useNavigate();
@@ -20,7 +26,7 @@ export function HomeDashboardWireframe() {
   };
 
   const handleAddQuestions = () => {
-    navigate({ to: '/add-questions' });
+    navigate({ to: "/add-questions" });
   };
 
   const recentPapers = papers.slice(0, 3);
@@ -34,14 +40,25 @@ export function HomeDashboardWireframe() {
   return (
     <div className="container mx-auto max-w-6xl p-4 py-8 page-with-floating-ui">
       {/* Header with Add Questions button */}
-      <div className="mb-8 flex items-start justify-between gap-4" data-coachmark="home-welcome">
+      <div
+        className="mb-8 flex items-start justify-between gap-4"
+        data-coachmark="home-welcome"
+      >
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground">Welcome back, {profile.teacherName || 'Teacher'}!</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Welcome back, {profile.teacherName || "Teacher"}!
+          </h1>
           <p className="mt-2 text-muted-foreground">
-            {profile.instituteName} • {profile.preferredBoard} • Standard {profile.defaultStandard}
+            {profile.instituteName} • {profile.preferredBoard} • Standard{" "}
+            {profile.defaultStandard}
           </p>
         </div>
-        <Button onClick={handleAddQuestions} variant="outline" size="sm" className="shrink-0">
+        <Button
+          onClick={handleAddQuestions}
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+        >
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Questions
         </Button>
@@ -53,7 +70,9 @@ export function HomeDashboardWireframe() {
           id="create-paper-cta"
           data-coachmark="create-paper-cta"
           className={`border-2 border-primary transition-all ${
-            isInitialized ? 'cursor-pointer hover:shadow-lg' : 'cursor-not-allowed opacity-50'
+            isInitialized
+              ? "cursor-pointer hover:shadow-lg"
+              : "cursor-not-allowed opacity-50"
           }`}
           onClick={handleCreatePaper}
         >
@@ -66,13 +85,15 @@ export function HomeDashboardWireframe() {
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription>Start building a new test paper from scratch</CardDescription>
+            <CardDescription>
+              Start building a new test paper from scratch
+            </CardDescription>
           </CardContent>
         </Card>
 
         <Card
           className="cursor-pointer transition-all hover:shadow-lg"
-          onClick={() => navigate({ to: '/question-bank' })}
+          onClick={() => navigate({ to: "/question-bank" })}
         >
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -83,13 +104,15 @@ export function HomeDashboardWireframe() {
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription>Browse and manage your question library</CardDescription>
+            <CardDescription>
+              Browse and manage your question library
+            </CardDescription>
           </CardContent>
         </Card>
 
         <Card
           className="cursor-pointer transition-all hover:shadow-lg"
-          onClick={() => navigate({ to: '/ai' })}
+          onClick={() => navigate({ to: "/ai" })}
         >
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -108,8 +131,10 @@ export function HomeDashboardWireframe() {
       {/* Recent Papers */}
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-foreground">Recent Papers</h2>
-          <Button variant="ghost" onClick={() => navigate({ to: '/papers' })}>
+          <h2 className="text-2xl font-semibold text-foreground">
+            Recent Papers
+          </h2>
+          <Button variant="ghost" onClick={() => navigate({ to: "/papers" })}>
             View All
           </Button>
         </div>
@@ -118,7 +143,9 @@ export function HomeDashboardWireframe() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <FileText className="mb-4 h-16 w-16 text-muted-foreground" />
-              <p className="text-muted-foreground">No papers yet. Create your first paper to get started!</p>
+              <p className="text-muted-foreground">
+                No papers yet. Create your first paper to get started!
+              </p>
             </CardContent>
           </Card>
         ) : (

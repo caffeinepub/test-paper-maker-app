@@ -1,53 +1,77 @@
-import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
-import { NavigationDrawer } from '../navigation/NavigationDrawer';
-import { CoachmarkOverlay } from '../onboarding/CoachmarkOverlay';
-import { useMockStore } from '../../state/mockStore';
-import { useCoachmarks } from '../../hooks/useCoachmarks';
-import { useTheme } from '../../hooks/useTheme';
-import { useEffect, useState } from 'react';
-import { Menu, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { safeGetItem } from '../../lib/storage/safeStorage';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
+import { AlertCircle, Menu } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useCoachmarks } from "../../hooks/useCoachmarks";
+import { useTheme } from "../../hooks/useTheme";
+import { safeGetItem } from "../../lib/storage/safeStorage";
+import { useMockStore } from "../../state/mockStore";
+import { NavigationDrawer } from "../navigation/NavigationDrawer";
+import { CoachmarkOverlay } from "../onboarding/CoachmarkOverlay";
 
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isInitialized, initializationError, isLoggedIn, onboardingCompleted, retryInitialization, logout } = useMockStore();
+  const {
+    isInitialized,
+    initializationError,
+    isLoggedIn,
+    onboardingCompleted,
+    retryInitialization,
+  } = useMockStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const coachmarks = useCoachmarks();
-  
+
   // Initialize theme at the shell level to ensure it's applied globally
   useTheme();
 
-  const isLoginPage = location.pathname === '/';
-  const isOnboardingPage = location.pathname === '/onboarding';
+  const isLoginPage = location.pathname === "/";
+  const isOnboardingPage = location.pathname === "/onboarding";
 
   useEffect(() => {
     // Wait for store to initialize before redirecting
     if (!isInitialized) return;
 
     // Check if tutorial is being started
-    const startingTutorial = safeGetItem('start-tutorial') === 'true';
+    const startingTutorial = safeGetItem("start-tutorial") === "true";
 
     if (!isLoggedIn && !isLoginPage) {
-      navigate({ to: '/' });
-    } else if (isLoggedIn && !onboardingCompleted && !isOnboardingPage && !isLoginPage && !startingTutorial) {
-      navigate({ to: '/onboarding' });
-    } else if (isLoggedIn && onboardingCompleted && (isLoginPage || isOnboardingPage) && !startingTutorial) {
+      navigate({ to: "/" });
+    } else if (
+      isLoggedIn &&
+      !onboardingCompleted &&
+      !isOnboardingPage &&
+      !isLoginPage &&
+      !startingTutorial
+    ) {
+      navigate({ to: "/onboarding" });
+    } else if (
+      isLoggedIn &&
+      onboardingCompleted &&
+      (isLoginPage || isOnboardingPage) &&
+      !startingTutorial
+    ) {
       // User completed onboarding, redirect to home
-      navigate({ to: '/home' });
+      navigate({ to: "/home" });
     }
-  }, [isInitialized, isLoggedIn, onboardingCompleted, isLoginPage, isOnboardingPage, navigate]);
+  }, [
+    isInitialized,
+    isLoggedIn,
+    onboardingCompleted,
+    isLoginPage,
+    isOnboardingPage,
+    navigate,
+  ]);
 
   // Show loading state while initializing
   if (!isInitialized) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background">
         <div className="text-center">
-          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
@@ -85,7 +109,11 @@ export function AppShell() {
               <Button onClick={retryInitialization} className="flex-1">
                 Retry
               </Button>
-              <Button onClick={() => navigate({ to: '/' })} variant="outline" className="flex-1">
+              <Button
+                onClick={() => navigate({ to: "/" })}
+                variant="outline"
+                className="flex-1"
+              >
                 Go to Login
               </Button>
             </div>
@@ -101,26 +129,39 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-dvh overflow-hidden bg-background">
-      {/* Desktop Sidebar - White in light mode */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col border-r border-sidebar-border bg-sidebar">
+      {/* Desktop Sidebar - White background */}
+      <aside className="hidden lg:flex lg:w-64 lg:flex-col border-r border-border bg-white">
         <NavigationDrawer onNavigate={() => {}} />
       </aside>
 
       {/* Mobile Layout */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Mobile Header - White in light mode */}
-        <header className="flex items-center gap-4 border-b border-sidebar-border bg-sidebar px-4 py-3 lg:hidden">
+        {/* Mobile Header - White background */}
+        <header
+          className="flex items-center gap-4 border-b border-border px-4 py-3 lg:hidden bg-white"
+          style={{ colorScheme: "light" }}
+        >
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-foreground hover:bg-muted"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
+            <SheetContent
+              side="left"
+              className="w-64 p-0 border-border bg-white"
+              style={{ colorScheme: "light" }}
+            >
               <NavigationDrawer onNavigate={() => setMobileMenuOpen(false)} />
             </SheetContent>
           </Sheet>
-          <h1 className="text-lg font-semibold text-sidebar-foreground">Test Paper Maker</h1>
+          <h1 className="text-lg font-semibold text-foreground">
+            Test Paper Maker
+          </h1>
         </header>
 
         {/* Main Content */}

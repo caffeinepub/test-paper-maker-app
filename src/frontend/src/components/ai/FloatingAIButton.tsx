@@ -1,12 +1,12 @@
-import { useNavigate } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "@tanstack/react-router";
+import { Sparkles } from "lucide-react";
 
 export function FloatingAIButton() {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate({ to: '/ai' });
+    navigate({ to: "/ai" });
   };
 
   return (

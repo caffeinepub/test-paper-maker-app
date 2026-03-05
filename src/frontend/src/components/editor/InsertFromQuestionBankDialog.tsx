@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,11 +6,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BOARDS, STANDARDS } from '../../lib/questionBank/questionBankTaxonomy';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
+import { BOARDS, STANDARDS } from "../../lib/questionBank/questionBankTaxonomy";
 
 interface InsertFromQuestionBankDialogProps {
   open: boolean;
@@ -37,7 +43,8 @@ export function InsertFromQuestionBankDialog({
         <DialogHeader>
           <DialogTitle>Select Board and Standard</DialogTitle>
           <DialogDescription>
-            Choose the board and standard to browse questions from your Question Bank.
+            Choose the board and standard to browse questions from your Question
+            Bank.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">

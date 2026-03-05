@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -14,40 +14,56 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { PaperSurface } from '../../components/paper/PaperSurface';
-import { PaperActionOverflowMenu } from '../../components/paper/PaperActionOverflowMenu';
-import { AlertCircle, Sparkles, Info, Copy, Check, FileText, Printer } from 'lucide-react';
-import { downloadPaperAsText } from '../../lib/export/paperTextExport';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  Check,
+  Copy,
+  FileText,
+  Info,
+  Printer,
+  Sparkles,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { PaperActionOverflowMenu } from "../../components/paper/PaperActionOverflowMenu";
+import { PaperSurface } from "../../components/paper/PaperSurface";
+import { downloadPaperAsText } from "../../lib/export/paperTextExport";
+import { useMockStore } from "../../state/mockStore";
 
 export function ExportPrintPreviewWireframe() {
   const navigate = useNavigate();
-  const { paperId } = useParams({ from: '/export/$paperId' });
+  const { paperId } = useParams({ from: "/export/$paperId" });
   const { getPaperById, updatePaper, profile } = useMockStore();
 
   const paper = getPaperById(paperId);
   const [showCleanupDialog, setShowCleanupDialog] = useState(false);
-  const [previewTab, setPreviewTab] = useState<'original' | 'cleaned'>('original');
+  const [previewTab, setPreviewTab] = useState<"original" | "cleaned">(
+    "original",
+  );
   const [copied, setCopied] = useState(false);
 
-  const currentLayoutMode = paper?.layoutMode || 'original';
+  const currentLayoutMode = paper?.layoutMode || "original";
 
   const handleOpenCleanup = () => {
     setShowCleanupDialog(true);
-    setPreviewTab('original');
+    setPreviewTab("original");
   };
 
   const handleSaveCleanedVersion = () => {
     if (paper) {
-      updatePaper(paperId, { layoutMode: 'cleaned' });
+      updatePaper(paperId, { layoutMode: "cleaned" });
     }
     setShowCleanupDialog(false);
   };
 
   const handleKeepOriginal = () => {
     if (paper) {
-      updatePaper(paperId, { layoutMode: 'original' });
+      updatePaper(paperId, { layoutMode: "original" });
     }
     setShowCleanupDialog(false);
   };
@@ -62,30 +78,36 @@ export function ExportPrintPreviewWireframe() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      toast.success('Link copied to clipboard!');
+      toast.success("Link copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      toast.error('Failed to copy link');
+    } catch (_error) {
+      toast.error("Failed to copy link");
     }
   };
 
   const handleDownloadText = () => {
     if (!paper) {
-      toast.error('Paper not found');
+      toast.error("Paper not found");
       return;
     }
-    
+
     try {
       downloadPaperAsText(paper);
-      toast.success('Text file downloaded successfully');
-    } catch (error) {
-      toast.error('Failed to download text file');
+      toast.success("Text file downloaded successfully");
+    } catch (_error) {
+      toast.error("Failed to download text file");
     }
   };
 
   const handlePrint = () => {
-    window.print();
-    toast.info('Use your browser\'s print dialog to save as PDF');
+    // Slight delay to allow the browser to prepare the print layout
+    setTimeout(() => {
+      window.print();
+    }, 200);
+    toast.info(
+      "In the print dialog: set Paper = A4, Margins = None, enable Background Graphics, then Save as PDF",
+      { duration: 6000 },
+    );
   };
 
   if (!paper) {
@@ -98,12 +120,15 @@ export function ExportPrintPreviewWireframe() {
               <CardTitle>Paper Not Found</CardTitle>
             </div>
             <CardDescription>
-              The paper you're trying to export doesn't exist or has been deleted.
+              The paper you're trying to export doesn't exist or has been
+              deleted.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex gap-4">
-            <Button onClick={() => navigate({ to: '/papers' })}>View All Papers</Button>
-            <Button variant="outline" onClick={() => navigate({ to: '/home' })}>
+            <Button onClick={() => navigate({ to: "/papers" })}>
+              View All Papers
+            </Button>
+            <Button variant="outline" onClick={() => navigate({ to: "/home" })}>
               Go to Home
             </Button>
           </CardContent>
@@ -112,17 +137,24 @@ export function ExportPrintPreviewWireframe() {
     );
   }
 
-  const isCleanedMode = currentLayoutMode === 'cleaned';
+  const isCleanedMode = currentLayoutMode === "cleaned";
 
   return (
     <div className="container mx-auto max-w-6xl p-4 py-8">
       <div className="mb-6 flex items-center justify-between print:hidden">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Export & Print Preview</h1>
-          <p className="mt-2 text-muted-foreground">Review and export your paper</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            Export & Print Preview
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Review and export your paper
+          </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => navigate({ to: `/editor/${paperId}/real-paper` })}>
+          <Button
+            variant="outline"
+            onClick={() => navigate({ to: `/editor/${paperId}/real-paper` })}
+          >
             Back to Editor
           </Button>
           <PaperActionOverflowMenu paperId={paperId} />
@@ -140,10 +172,18 @@ export function ExportPrintPreviewWireframe() {
             <CardContent className="space-y-3">
               <div className="rounded-lg border border-border bg-muted/30 p-3">
                 <p className="text-sm font-medium">
-                  Active Mode: <span className="text-primary">{isCleanedMode ? 'Cleaned' : 'Original'}</span>
+                  Active Mode:{" "}
+                  <span className="text-primary">
+                    {isCleanedMode ? "Cleaned" : "Original"}
+                  </span>
                 </p>
               </div>
-              <Button variant="outline" className="w-full" size="lg" onClick={handleOpenCleanup}>
+              <Button
+                variant="outline"
+                className="w-full"
+                size="lg"
+                onClick={handleOpenCleanup}
+              >
                 <Sparkles className="mr-2 h-4 w-4" />
                 Auto Format (Layout Only)
               </Button>
@@ -156,11 +196,19 @@ export function ExportPrintPreviewWireframe() {
               <CardDescription>Download and share your paper</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start" onClick={handlePrint}>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handlePrint}
+              >
                 <Printer className="mr-2 h-4 w-4" />
                 Print / Save as PDF
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={handleDownloadText}>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleDownloadText}
+              >
                 <FileText className="mr-2 h-4 w-4" />
                 Download as Text
               </Button>
@@ -178,7 +226,11 @@ export function ExportPrintPreviewWireframe() {
                     variant="outline"
                     onClick={handleCopyLink}
                   >
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -195,15 +247,16 @@ export function ExportPrintPreviewWireframe() {
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>• Paper Size: A4</p>
               <p>• Margins: Standard</p>
-              <p>• Include Logo: {profile.schoolLogo ? 'Yes' : 'No'}</p>
-              <p>• Layout Mode: {isCleanedMode ? 'Cleaned' : 'Original'}</p>
+              <p>• Include Logo: {profile.schoolLogo ? "Yes" : "No"}</p>
+              <p>• Layout Mode: {isCleanedMode ? "Cleaned" : "Original"}</p>
             </CardContent>
           </Card>
 
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-xs">
-              Use your browser's print dialog to save as PDF or adjust print settings.
+              Use your browser's print dialog to save as PDF or adjust print
+              settings.
             </AlertDescription>
           </Alert>
         </div>
@@ -213,7 +266,9 @@ export function ExportPrintPreviewWireframe() {
           <Card className="print:border-0 print:shadow-none">
             <CardHeader className="print:hidden">
               <CardTitle>Paper Preview</CardTitle>
-              <CardDescription>This is how your paper will look when printed</CardDescription>
+              <CardDescription>
+                This is how your paper will look when printed
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
               <PaperSurface paper={paper} isEditable={false} />
@@ -231,11 +286,19 @@ export function ExportPrintPreviewWireframe() {
               Auto Format (Layout Only)
             </DialogTitle>
             <DialogDescription>
-              Compare the original and cleaned versions. <strong>No text content, wording, or spelling will be changed</strong> — only spacing, alignment, and layout will be improved.
+              Compare the original and cleaned versions.{" "}
+              <strong>
+                No text content, wording, or spelling will be changed
+              </strong>{" "}
+              — only spacing, alignment, and layout will be improved.
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={previewTab} onValueChange={(v) => setPreviewTab(v as any)} className="w-full">
+          <Tabs
+            value={previewTab}
+            onValueChange={(v) => setPreviewTab(v as any)}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="original">Original Version</TabsTrigger>
               <TabsTrigger value="cleaned">Cleaned Version</TabsTrigger>
@@ -243,22 +306,35 @@ export function ExportPrintPreviewWireframe() {
 
             <TabsContent value="original" className="mt-4">
               <div className="max-h-[60vh] overflow-y-auto rounded-lg border-2 border-border">
-                <PaperSurface paper={{ ...paper, layoutMode: 'original' }} isEditable={false} />
+                <PaperSurface
+                  paper={{ ...paper, layoutMode: "original" }}
+                  isEditable={false}
+                />
               </div>
             </TabsContent>
 
             <TabsContent value="cleaned" className="mt-4">
               <div className="max-h-[60vh] overflow-y-auto rounded-lg border-2 border-primary">
-                <PaperSurface paper={{ ...paper, layoutMode: 'cleaned' }} isEditable={false} />
+                <PaperSurface
+                  paper={{ ...paper, layoutMode: "cleaned" }}
+                  isEditable={false}
+                />
               </div>
             </TabsContent>
           </Tabs>
 
           <DialogFooter className="flex-col gap-2 sm:flex-row">
-            <Button variant="outline" onClick={handleKeepOriginal} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={handleKeepOriginal}
+              className="w-full sm:w-auto"
+            >
               Keep Original Version
             </Button>
-            <Button onClick={handleSaveCleanedVersion} className="w-full sm:w-auto">
+            <Button
+              onClick={handleSaveCleanedVersion}
+              className="w-full sm:w-auto"
+            >
               <Sparkles className="mr-2 h-4 w-4" />
               Save Cleaned Version
             </Button>

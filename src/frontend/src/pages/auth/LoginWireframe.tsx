@@ -1,10 +1,16 @@
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogIn, UserCircle } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { LogIn, UserCircle } from "lucide-react";
+import { useState } from "react";
+import { useInternetIdentity } from "../../hooks/useInternetIdentity";
+import { useMockStore } from "../../state/mockStore";
 
 export function LoginWireframe() {
   const navigate = useNavigate();
@@ -17,9 +23,9 @@ export function LoginWireframe() {
     try {
       await iiLogin();
       login();
-      navigate({ to: '/home' });
+      navigate({ to: "/home" });
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     } finally {
       setIsLoggingIn(false);
     }
@@ -27,10 +33,10 @@ export function LoginWireframe() {
 
   const handleGuestLogin = () => {
     login();
-    navigate({ to: '/home' });
+    navigate({ to: "/home" });
   };
 
-  const isLoading = isLoggingIn || loginStatus === 'logging-in';
+  const isLoading = isLoggingIn || loginStatus === "logging-in";
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
@@ -49,7 +55,7 @@ export function LoginWireframe() {
             size="lg"
           >
             <LogIn className="mr-2 h-5 w-5" />
-            {isLoading ? 'Logging in...' : 'Login with Internet Identity'}
+            {isLoading ? "Logging in..." : "Login with Internet Identity"}
           </Button>
 
           <div className="relative">

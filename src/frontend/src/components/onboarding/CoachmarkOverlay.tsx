@@ -1,13 +1,19 @@
-import { useEffect, useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface CoachmarkOverlayProps {
   title: string;
   description: string;
   targetSelector: string;
-  position?: 'top' | 'bottom' | 'left' | 'right';
+  position?: "top" | "bottom" | "left" | "right";
   stepIndex: number;
   totalSteps: number;
   onNext: () => void;
@@ -19,7 +25,7 @@ export function CoachmarkOverlay({
   title,
   description,
   targetSelector,
-  position = 'right',
+  position = "right",
   stepIndex,
   totalSteps,
   onNext,
@@ -27,7 +33,10 @@ export function CoachmarkOverlay({
   onSkip,
 }: CoachmarkOverlayProps) {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
-  const [calloutRect, setCalloutRect] = useState<{ width: number; height: number } | null>(null);
+  const [calloutRect, setCalloutRect] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
   const calloutRef = useRef<HTMLDivElement>(null);
@@ -86,7 +95,7 @@ export function CoachmarkOverlay({
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['style', 'class'],
+      attributeFilter: ["style", "class"],
     });
 
     // Listen to scroll and resize with throttling
@@ -101,8 +110,8 @@ export function CoachmarkOverlay({
       }
     };
 
-    window.addEventListener('resize', handleUpdate);
-    window.addEventListener('scroll', handleUpdate, true);
+    window.addEventListener("resize", handleUpdate);
+    window.addEventListener("scroll", handleUpdate, true);
 
     return () => {
       isMounted = false;
@@ -115,11 +124,12 @@ export function CoachmarkOverlay({
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
-      window.removeEventListener('resize', handleUpdate);
-      window.removeEventListener('scroll', handleUpdate, true);
+      window.removeEventListener("resize", handleUpdate);
+      window.removeEventListener("scroll", handleUpdate, true);
     };
   }, [targetSelector, retryCount]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: title and description are used to re-measure layout when content changes
   useEffect(() => {
     if (calloutRef.current) {
       const rect = calloutRef.current.getBoundingClientRect();
@@ -131,7 +141,10 @@ export function CoachmarkOverlay({
   if (showFallback || !targetRect) {
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm print:hidden">
-        <Card ref={calloutRef} className="w-80 max-w-[calc(100vw-32px)] shadow-2xl">
+        <Card
+          ref={calloutRef}
+          className="w-80 max-w-[calc(100vw-32px)] shadow-2xl"
+        >
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -139,13 +152,17 @@ export function CoachmarkOverlay({
                   <AlertCircle className="h-5 w-5 text-warning" />
                   <CardTitle className="text-lg">{title}</CardTitle>
                 </div>
-                <CardDescription className="mt-1">{description}</CardDescription>
+                <CardDescription className="mt-1">
+                  {description}
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <p className="mb-4 text-sm text-muted-foreground">
-              {showFallback ? 'The highlighted element is not currently visible. You can continue the tour or skip it.' : 'Loading tutorial step...'}
+              {showFallback
+                ? "The highlighted element is not currently visible. You can continue the tour or skip it."
+                : "Loading tutorial step..."}
             </p>
             <div className="flex items-center justify-between">
               <Button variant="ghost" size="sm" onClick={onSkip}>
@@ -197,7 +214,7 @@ export function CoachmarkOverlay({
     let bottom: number | undefined;
 
     switch (position) {
-      case 'right':
+      case "right":
         left = targetRect.right + gap;
         top = targetRect.top;
         if (left + calloutWidth > viewportWidth - padding) {
@@ -211,7 +228,7 @@ export function CoachmarkOverlay({
         }
         break;
 
-      case 'left':
+      case "left":
         right = viewportWidth - targetRect.left + gap;
         top = targetRect.top;
         if (viewportWidth - right + calloutWidth > viewportWidth - padding) {
@@ -225,7 +242,7 @@ export function CoachmarkOverlay({
         }
         break;
 
-      case 'bottom':
+      case "bottom":
         left = targetRect.left;
         top = targetRect.bottom + gap;
         if (left + calloutWidth > viewportWidth - padding) {
@@ -239,7 +256,7 @@ export function CoachmarkOverlay({
         }
         break;
 
-      case 'top':
+      case "top":
         left = targetRect.left;
         bottom = viewportHeight - targetRect.top + gap;
         if (left + calloutWidth > viewportWidth - padding) {
@@ -248,7 +265,10 @@ export function CoachmarkOverlay({
         if (left < padding) {
           left = padding;
         }
-        if (viewportHeight - bottom + calloutHeight > viewportHeight - padding) {
+        if (
+          viewportHeight - bottom + calloutHeight >
+          viewportHeight - padding
+        ) {
           bottom = viewportHeight - calloutHeight - padding;
         }
         break;
@@ -268,13 +288,17 @@ export function CoachmarkOverlay({
     if (calloutPos.left !== undefined) {
       calloutX = calloutPos.left + (calloutRect?.width || 320) / 2;
     } else if (calloutPos.right !== undefined) {
-      calloutX = window.innerWidth - calloutPos.right - (calloutRect?.width || 320) / 2;
+      calloutX =
+        window.innerWidth - calloutPos.right - (calloutRect?.width || 320) / 2;
     }
 
     if (calloutPos.top !== undefined) {
       calloutY = calloutPos.top + (calloutRect?.height || 200) / 2;
     } else if (calloutPos.bottom !== undefined) {
-      calloutY = window.innerHeight - calloutPos.bottom - (calloutRect?.height || 200) / 2;
+      calloutY =
+        window.innerHeight -
+        calloutPos.bottom -
+        (calloutRect?.height || 200) / 2;
     }
 
     return `M ${calloutX} ${calloutY} L ${targetCenterX} ${targetCenterY}`;
@@ -293,7 +317,7 @@ export function CoachmarkOverlay({
           height: `${Math.max(0, spotlightY)}px`,
         }}
       />
-      
+
       {/* Bottom panel */}
       <div
         className="absolute left-0 right-0 bg-black/60 backdrop-blur-sm"
@@ -302,7 +326,7 @@ export function CoachmarkOverlay({
           bottom: 0,
         }}
       />
-      
+
       {/* Left panel */}
       <div
         className="absolute bg-black/60 backdrop-blur-sm"
@@ -313,7 +337,7 @@ export function CoachmarkOverlay({
           height: `${spotlightHeight}px`,
         }}
       />
-      
+
       {/* Right panel */}
       <div
         className="absolute bg-black/60 backdrop-blur-sm"
@@ -333,12 +357,17 @@ export function CoachmarkOverlay({
           top: `${spotlightY}px`,
           width: `${spotlightWidth}px`,
           height: `${spotlightHeight}px`,
-          pointerEvents: 'none',
+          pointerEvents: "none",
         }}
       />
 
       {/* Connector line with arrowhead - purple primary */}
-      <svg className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%' }}>
+      <svg
+        className="absolute inset-0 pointer-events-none"
+        style={{ width: "100%", height: "100%" }}
+        aria-hidden="true"
+        role="presentation"
+      >
         <defs>
           <marker
             id="arrowhead-primary"
@@ -366,10 +395,22 @@ export function CoachmarkOverlay({
         ref={calloutRef}
         className="absolute w-80 max-w-[calc(100vw-32px)] shadow-2xl pointer-events-auto"
         style={{
-          left: calloutPosition.left !== undefined ? `${calloutPosition.left}px` : undefined,
-          top: calloutPosition.top !== undefined ? `${calloutPosition.top}px` : undefined,
-          right: calloutPosition.right !== undefined ? `${calloutPosition.right}px` : undefined,
-          bottom: calloutPosition.bottom !== undefined ? `${calloutPosition.bottom}px` : undefined,
+          left:
+            calloutPosition.left !== undefined
+              ? `${calloutPosition.left}px`
+              : undefined,
+          top:
+            calloutPosition.top !== undefined
+              ? `${calloutPosition.top}px`
+              : undefined,
+          right:
+            calloutPosition.right !== undefined
+              ? `${calloutPosition.right}px`
+              : undefined,
+          bottom:
+            calloutPosition.bottom !== undefined
+              ? `${calloutPosition.bottom}px`
+              : undefined,
         }}
       >
         <CardHeader>

@@ -1,19 +1,45 @@
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Sparkles, Plus, Check, Edit2, Trash2, Info, AlertCircle } from 'lucide-react';
-import { Question, QuestionType } from '../../state/mockData';
-import { generateMockQuestions } from '../../lib/ai/mockQuestionGenerator';
-import { getSectionInsertContext, clearSectionInsertContext } from '../../lib/editor/sectionInsertContext';
-import { insertQuestionsIntoSection, insertQuestionsIntoHeading } from '../../lib/editor/insertQuestionsIntoPaper';
-import { QuestionCategorizationDialog } from '../../components/questionBank/QuestionCategorizationDialog';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  Check,
+  Edit2,
+  Info,
+  Plus,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import { QuestionCategorizationDialog } from "../../components/questionBank/QuestionCategorizationDialog";
+import { generateMockQuestions } from "../../lib/ai/mockQuestionGenerator";
+import {
+  insertQuestionsIntoHeading,
+  insertQuestionsIntoSection,
+} from "../../lib/editor/insertQuestionsIntoPaper";
+import {
+  clearSectionInsertContext,
+  getSectionInsertContext,
+} from "../../lib/editor/sectionInsertContext";
+import type { Question, QuestionType } from "../../state/mockData";
+import { useMockStore } from "../../state/mockStore";
 
 interface GeneratedQuestion {
   id: string;
@@ -27,21 +53,29 @@ interface GeneratedQuestion {
 
 export function AIPreferencesWireframe() {
   const navigate = useNavigate();
-  const { addPersonalQuestion, getPaperById, updatePaper, profile } = useMockStore();
-  const [topic, setTopic] = useState('');
-  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const { addPersonalQuestion, getPaperById, updatePaper, profile } =
+    useMockStore();
+  const [topic, setTopic] = useState("");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
+    "medium",
+  );
   const [count, setCount] = useState(5);
-  const [focusArea, setFocusArea] = useState('');
-  const [questionStyle, setQuestionStyle] = useState<'conceptual' | 'numerical' | 'mixed'>('mixed');
-  const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
+  const [focusArea, setFocusArea] = useState("");
+  const [questionStyle, setQuestionStyle] = useState<
+    "conceptual" | "numerical" | "mixed"
+  >("mixed");
+  const [generatedQuestions, setGeneratedQuestions] = useState<
+    GeneratedQuestion[]
+  >([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showCategorizationDialog, setShowCategorizationDialog] = useState(false);
+  const [showCategorizationDialog, setShowCategorizationDialog] =
+    useState(false);
 
   const insertContext = getSectionInsertContext();
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
-      alert('Please enter a topic');
+      alert("Please enter a topic");
       return;
     }
 
@@ -51,38 +85,38 @@ export function AIPreferencesWireframe() {
 
     const questions = generateMockQuestions({
       focusArea: focusArea || topic,
-      marks: '2',
+      marks: "2",
       difficulty,
-      questionStyle: questionStyle === 'mixed' ? undefined : questionStyle,
+      questionStyle: questionStyle === "mixed" ? undefined : questionStyle,
     });
 
     setGeneratedQuestions(
       questions.map((q) => ({
         ...q,
         type: difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
-        questionType: 'short-answer' as QuestionType,
+        questionType: "short-answer" as QuestionType,
         selected: false,
         editing: false,
-      }))
+      })),
     );
     setIsGenerating(false);
   };
 
   const handleToggleSelect = (id: string) => {
     setGeneratedQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, selected: !q.selected } : q))
+      prev.map((q) => (q.id === id ? { ...q, selected: !q.selected } : q)),
     );
   };
 
   const handleEdit = (id: string) => {
     setGeneratedQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, editing: !q.editing } : q))
+      prev.map((q) => (q.id === id ? { ...q, editing: !q.editing } : q)),
     );
   };
 
   const handleUpdateQuestion = (id: string, text: string) => {
     setGeneratedQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, text } : q))
+      prev.map((q) => (q.id === id ? { ...q, text } : q)),
     );
   };
 
@@ -93,17 +127,21 @@ export function AIPreferencesWireframe() {
   const handleAddToBank = () => {
     const selectedQuestions = generatedQuestions.filter((q) => q.selected);
     if (selectedQuestions.length === 0) {
-      alert('Please select at least one question');
+      alert("Please select at least one question");
       return;
     }
 
     setShowCategorizationDialog(true);
   };
 
-  const handleCategorizationConfirm = (metadata: { board: string; standard: string; questionType: string }) => {
+  const handleCategorizationConfirm = (metadata: {
+    board: string;
+    standard: string;
+    questionType: string;
+  }) => {
     const selectedQuestions = generatedQuestions.filter((q) => q.selected);
 
-    selectedQuestions.forEach((q) => {
+    for (const q of selectedQuestions) {
       const newQuestion: Question = {
         id: `q-${Date.now()}-${Math.random()}`,
         text: q.text,
@@ -116,9 +154,11 @@ export function AIPreferencesWireframe() {
         standard: metadata.standard,
       };
       addPersonalQuestion(newQuestion);
-    });
+    }
 
-    alert(`${selectedQuestions.length} question(s) added to your personal bank!`);
+    alert(
+      `${selectedQuestions.length} question(s) added to your personal bank!`,
+    );
     setGeneratedQuestions([]);
   };
 
@@ -129,19 +169,21 @@ export function AIPreferencesWireframe() {
 
     const selectedQuestions = generatedQuestions.filter((q) => q.selected);
     if (selectedQuestions.length === 0) {
-      alert('Please select at least one question');
+      alert("Please select at least one question");
       return;
     }
 
     const paper = getPaperById(insertContext.paperId);
     if (!paper) {
-      alert('Paper not found');
+      alert("Paper not found");
       return;
     }
 
-    const targetSection = paper.sections.find((s) => s.id === insertContext.sectionId);
+    const targetSection = paper.sections.find(
+      (s) => s.id === insertContext.sectionId,
+    );
     if (!targetSection) {
-      alert('Section not found');
+      alert("Section not found");
       return;
     }
 
@@ -158,11 +200,20 @@ export function AIPreferencesWireframe() {
       standard: paper.standard,
     }));
 
-    let updatedSections;
+    let updatedSections: ReturnType<typeof insertQuestionsIntoHeading>;
     if (insertContext.headingId) {
-      updatedSections = insertQuestionsIntoHeading(paper, insertContext.sectionId, insertContext.headingId, fullQuestions);
+      updatedSections = insertQuestionsIntoHeading(
+        paper,
+        insertContext.sectionId,
+        insertContext.headingId,
+        fullQuestions,
+      );
     } else {
-      updatedSections = insertQuestionsIntoSection(paper, insertContext.sectionId, fullQuestions);
+      updatedSections = insertQuestionsIntoSection(
+        paper,
+        insertContext.sectionId,
+        fullQuestions,
+      );
     }
 
     updatePaper(insertContext.paperId, { sections: updatedSections });
@@ -175,19 +226,23 @@ export function AIPreferencesWireframe() {
     if (!insertContext) return null;
     const paper = getPaperById(insertContext.paperId);
     if (!paper) return null;
-    const sectionIndex = paper.sections.findIndex((s) => s.id === insertContext.sectionId);
+    const sectionIndex = paper.sections.findIndex(
+      (s) => s.id === insertContext.sectionId,
+    );
     if (sectionIndex === -1) return null;
-    
+
     let label = `Section ${String.fromCharCode(65 + sectionIndex)}`;
-    
+
     if (insertContext.headingId) {
       const section = paper.sections[sectionIndex];
-      const heading = section.headings?.find((h) => h.id === insertContext.headingId);
+      const heading = section.headings?.find(
+        (h) => h.id === insertContext.headingId,
+      );
       if (heading) {
         label += ` - ${heading.title}`;
       }
     }
-    
+
     return label;
   };
 
@@ -207,8 +262,8 @@ export function AIPreferencesWireframe() {
         <Alert className="mb-6">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Generating questions for <strong>{getSectionLabel()}</strong> in paper{' '}
-            <strong>{getPaperById(insertContext.paperId)?.title}</strong>
+            Generating questions for <strong>{getSectionLabel()}</strong> in
+            paper <strong>{getPaperById(insertContext.paperId)?.title}</strong>
           </AlertDescription>
         </Alert>
       )}
@@ -217,7 +272,9 @@ export function AIPreferencesWireframe() {
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            No paper context found. You can only add questions to your personal bank. To add directly to a paper, navigate here from the Real Paper editor.
+            No paper context found. You can only add questions to your personal
+            bank. To add directly to a paper, navigate here from the Real Paper
+            editor.
           </AlertDescription>
         </Alert>
       )}
@@ -227,7 +284,9 @@ export function AIPreferencesWireframe() {
         <Card>
           <CardHeader>
             <CardTitle>Question Preferences</CardTitle>
-            <CardDescription>Configure the AI to generate questions matching your needs</CardDescription>
+            <CardDescription>
+              Configure the AI to generate questions matching your needs
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -254,7 +313,10 @@ export function AIPreferencesWireframe() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="difficulty">Difficulty</Label>
-                <Select value={difficulty} onValueChange={(value: any) => setDifficulty(value)}>
+                <Select
+                  value={difficulty}
+                  onValueChange={(value: any) => setDifficulty(value)}
+                >
                   <SelectTrigger id="difficulty">
                     <SelectValue />
                   </SelectTrigger>
@@ -272,7 +334,9 @@ export function AIPreferencesWireframe() {
                   id="count"
                   type="number"
                   value={count}
-                  onChange={(e) => setCount(parseInt(e.target.value) || 1)}
+                  onChange={(e) =>
+                    setCount(Number.parseInt(e.target.value) || 1)
+                  }
                   min={1}
                   max={20}
                 />
@@ -281,7 +345,10 @@ export function AIPreferencesWireframe() {
 
             <div className="space-y-2">
               <Label htmlFor="questionStyle">Question Style</Label>
-              <Select value={questionStyle} onValueChange={(value: any) => setQuestionStyle(value)}>
+              <Select
+                value={questionStyle}
+                onValueChange={(value: any) => setQuestionStyle(value)}
+              >
                 <SelectTrigger id="questionStyle">
                   <SelectValue />
                 </SelectTrigger>
@@ -293,9 +360,13 @@ export function AIPreferencesWireframe() {
               </Select>
             </div>
 
-            <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
+            <Button
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="w-full"
+            >
               <Sparkles className="mr-2 h-4 w-4" />
-              {isGenerating ? 'Generating...' : 'Generate Questions'}
+              {isGenerating ? "Generating..." : "Generate Questions"}
             </Button>
           </CardContent>
         </Card>
@@ -307,7 +378,7 @@ export function AIPreferencesWireframe() {
             <CardDescription>
               {generatedQuestions.length > 0
                 ? `${generatedQuestions.filter((q) => q.selected).length} of ${generatedQuestions.length} selected`
-                : 'Questions will appear here after generation'}
+                : "Questions will appear here after generation"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -315,7 +386,8 @@ export function AIPreferencesWireframe() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Sparkles className="mb-4 h-16 w-16 text-muted-foreground" />
                 <p className="text-muted-foreground">
-                  Configure your preferences and click "Generate Questions" to get started
+                  Configure your preferences and click "Generate Questions" to
+                  get started
                 </p>
               </div>
             ) : (
@@ -325,7 +397,7 @@ export function AIPreferencesWireframe() {
                     <Card
                       key={question.id}
                       className={`cursor-pointer transition-all ${
-                        question.selected ? 'border-primary bg-primary/5' : ''
+                        question.selected ? "border-primary bg-primary/5" : ""
                       }`}
                     >
                       <CardContent className="p-4">
@@ -333,7 +405,12 @@ export function AIPreferencesWireframe() {
                           <div className="space-y-2">
                             <Textarea
                               value={question.text}
-                              onChange={(e) => handleUpdateQuestion(question.id, e.target.value)}
+                              onChange={(e) =>
+                                handleUpdateQuestion(
+                                  question.id,
+                                  e.target.value,
+                                )
+                              }
                               className="min-h-[80px]"
                             />
                             <Button
@@ -356,7 +433,8 @@ export function AIPreferencesWireframe() {
                               <p className="text-foreground">{question.text}</p>
                               <div className="mt-2 flex gap-2">
                                 <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
-                                  {question.marks} Mark{question.marks > 1 ? 's' : ''}
+                                  {question.marks} Mark
+                                  {question.marks > 1 ? "s" : ""}
                                 </span>
                                 <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
                                   {question.type}
@@ -391,7 +469,9 @@ export function AIPreferencesWireframe() {
                     onClick={handleAddToBank}
                     variant="outline"
                     className="flex-1"
-                    disabled={generatedQuestions.filter((q) => q.selected).length === 0}
+                    disabled={
+                      generatedQuestions.filter((q) => q.selected).length === 0
+                    }
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add to Personal Bank
@@ -400,7 +480,8 @@ export function AIPreferencesWireframe() {
                     onClick={handleAddToPaper}
                     className="flex-1"
                     disabled={
-                      !insertContext || generatedQuestions.filter((q) => q.selected).length === 0
+                      !insertContext ||
+                      generatedQuestions.filter((q) => q.selected).length === 0
                     }
                   >
                     <Check className="mr-2 h-4 w-4" />

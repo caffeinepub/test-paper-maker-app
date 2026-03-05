@@ -1,18 +1,29 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { QuestionHeading } from '../../state/mockData';
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import type { QuestionHeading } from "../../state/mockData";
 
 interface AddQuestionHeadingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (heading: Omit<QuestionHeading, 'id'>) => void;
+  onAdd: (heading: Omit<QuestionHeading, "id">) => void;
 }
 
-export function AddQuestionHeadingDialog({ open, onOpenChange, onAdd }: AddQuestionHeadingDialogProps) {
-  const [title, setTitle] = useState('');
+export function AddQuestionHeadingDialog({
+  open,
+  onOpenChange,
+  onAdd,
+}: AddQuestionHeadingDialogProps) {
+  const [title, setTitle] = useState("");
   const [plannedCount, setPlannedCount] = useState(5);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -25,7 +36,7 @@ export function AddQuestionHeadingDialog({ open, onOpenChange, onAdd }: AddQuest
     });
 
     // Reset form
-    setTitle('');
+    setTitle("");
     setPlannedCount(5);
     onOpenChange(false);
   };
@@ -58,15 +69,22 @@ export function AddQuestionHeadingDialog({ open, onOpenChange, onAdd }: AddQuest
                 type="number"
                 min="0"
                 value={plannedCount}
-                onChange={(e) => setPlannedCount(parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  setPlannedCount(Number.parseInt(e.target.value) || 0)
+                }
               />
               <p className="text-xs text-muted-foreground">
-                Approximate number of questions you plan to add under this heading
+                Approximate number of questions you plan to add under this
+                heading
               </p>
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={!title.trim()}>

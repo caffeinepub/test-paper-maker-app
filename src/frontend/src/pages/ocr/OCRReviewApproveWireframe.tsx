@@ -1,32 +1,40 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Check, X } from 'lucide-react';
-import { loadOCRSession, clearOCRSession, convertOCRQuestionsToPersonalQuestions, OCRQuestion } from '../../lib/ocr/mockOcrExtractor';
-import { QuestionCategorizationDialog } from '../../components/questionBank/QuestionCategorizationDialog';
-import { Question } from '../../state/mockData';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, Check, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { QuestionCategorizationDialog } from "../../components/questionBank/QuestionCategorizationDialog";
+import {
+  OCRQuestion,
+  clearOCRSession,
+  convertOCRQuestionsToPersonalQuestions,
+  loadOCRSession,
+} from "../../lib/ocr/mockOcrExtractor";
+import type { Question } from "../../state/mockData";
+import { useMockStore } from "../../state/mockStore";
 
 export function OCRReviewApproveWireframe() {
   const navigate = useNavigate();
   const { addPersonalQuestion, profile } = useMockStore();
   const [session, setSession] = useState(loadOCRSession());
-  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(
+    new Set(),
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState('');
-  const [showCategorizationDialog, setShowCategorizationDialog] = useState(false);
+  const [editText, setEditText] = useState("");
+  const [showCategorizationDialog, setShowCategorizationDialog] =
+    useState(false);
 
   useEffect(() => {
     if (!session) {
-      navigate({ to: '/ocr' });
+      navigate({ to: "/ocr" });
     }
   }, [session, navigate]);
 
   const handleBack = () => {
-    navigate({ to: '/ocr' });
+    navigate({ to: "/ocr" });
   };
 
   const handleToggleSelect = (questionId: string) => {
@@ -49,34 +57,41 @@ export function OCRReviewApproveWireframe() {
   const handleSaveEdit = (questionId: string) => {
     if (session) {
       const updatedQuestions = session.questions.map((q) =>
-        q.id === questionId ? { ...q, text: editText } : q
+        q.id === questionId ? { ...q, text: editText } : q,
       );
       setSession({ ...session, questions: updatedQuestions });
     }
     setEditingId(null);
-    setEditText('');
+    setEditText("");
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setEditText('');
+    setEditText("");
   };
 
   const handleApprove = () => {
     if (selectedQuestions.size === 0) {
-      alert('Please select at least one question');
+      alert("Please select at least one question");
       return;
     }
     setShowCategorizationDialog(true);
   };
 
-  const handleCategorizationConfirm = (metadata: { board: string; standard: string; questionType: string }) => {
+  const handleCategorizationConfirm = (metadata: {
+    board: string;
+    standard: string;
+    questionType: string;
+  }) => {
     if (!session) return;
 
-    const selectedOcrQuestions = session.questions.filter((q) => selectedQuestions.has(q.id));
-    const personalQuestions = convertOCRQuestionsToPersonalQuestions(selectedOcrQuestions);
+    const selectedOcrQuestions = session.questions.filter((q) =>
+      selectedQuestions.has(q.id),
+    );
+    const personalQuestions =
+      convertOCRQuestionsToPersonalQuestions(selectedOcrQuestions);
 
-    personalQuestions.forEach((personalQuestion) => {
+    for (const personalQuestion of personalQuestions) {
       const enrichedQuestion: Question = {
         ...personalQuestion,
         board: metadata.board,
@@ -84,14 +99,16 @@ export function OCRReviewApproveWireframe() {
         questionType: metadata.questionType as any,
       };
       addPersonalQuestion(enrichedQuestion);
-    });
+    }
 
     clearOCRSession();
-    alert(`${selectedOcrQuestions.length} question(s) added to your personal bank!`);
+    alert(
+      `${selectedOcrQuestions.length} question(s) added to your personal bank!`,
+    );
     navigate({
-      to: '/question-bank/$board/$standard',
+      to: "/question-bank/$board/$standard",
       params: { board: metadata.board, standard: metadata.standard },
-      search: { tab: 'personal' },
+      search: { tab: "personal" },
     });
   };
 
@@ -107,16 +124,20 @@ export function OCRReviewApproveWireframe() {
       </Button>
 
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Review Extracted Questions</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Review Extracted Questions
+        </h1>
         <p className="mt-2 text-muted-foreground">
-          Review and edit the questions extracted from your image. Select the ones you want to add to your question bank.
+          Review and edit the questions extracted from your image. Select the
+          ones you want to add to your question bank.
         </p>
       </div>
 
       {selectedQuestions.size > 0 && (
         <div className="mb-4 flex items-center justify-between rounded-lg border bg-card p-4">
           <span className="text-sm font-medium">
-            {selectedQuestions.size} question{selectedQuestions.size > 1 ? 's' : ''} selected
+            {selectedQuestions.size} question
+            {selectedQuestions.size > 1 ? "s" : ""} selected
           </span>
           <Button onClick={handleApprove}>
             <Check className="mr-2 h-4 w-4" />
@@ -137,11 +158,18 @@ export function OCRReviewApproveWireframe() {
                     className="min-h-[100px]"
                   />
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleSaveEdit(question.id)}>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSaveEdit(question.id)}
+                    >
                       <Check className="mr-2 h-4 w-4" />
                       Save
                     </Button>
-                    <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                    >
                       <X className="mr-2 h-4 w-4" />
                       Cancel
                     </Button>
@@ -158,14 +186,19 @@ export function OCRReviewApproveWireframe() {
                     <p className="text-foreground">{question.text}</p>
                     <div className="mt-2 flex gap-2">
                       <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
-                        {question.marks || 2} Mark{(question.marks || 2) > 1 ? 's' : ''}
+                        {question.marks || 2} Mark
+                        {(question.marks || 2) > 1 ? "s" : ""}
                       </span>
                       <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
-                        {question.difficulty || 'Medium'}
+                        {question.difficulty || "Medium"}
                       </span>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(question.id, question.text)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(question.id, question.text)}
+                  >
                     Edit
                   </Button>
                 </div>

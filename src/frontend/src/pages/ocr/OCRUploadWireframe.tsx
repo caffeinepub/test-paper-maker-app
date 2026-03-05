@@ -1,27 +1,51 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileImage, FileText, Info, Loader2, AlertCircle, CheckCircle2, Camera } from 'lucide-react';
-import { generateMockExtractedQuestions, saveOCRSession } from '../../lib/ocr/mockOcrExtractor';
-import { extractTextFromFile } from '../../lib/ocr/ocrSpaceClient';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  Camera,
+  CheckCircle2,
+  FileImage,
+  FileText,
+  Info,
+  Loader2,
+  Upload,
+} from "lucide-react";
+import { useRef, useState } from "react";
+import {
+  generateMockExtractedQuestions,
+  saveOCRSession,
+} from "../../lib/ocr/mockOcrExtractor";
+import { extractTextFromFile } from "../../lib/ocr/ocrSpaceClient";
 
 export function OCRUploadWireframe() {
   const navigate = useNavigate();
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
-  const [extractionError, setExtractionError] = useState<{ message: string; details?: string } | null>(null);
-  const [extractionProgress, setExtractionProgress] = useState<string>('');
+  const [extractionError, setExtractionError] = useState<{
+    message: string;
+    details?: string;
+  } | null>(null);
+  const [extractionProgress, setExtractionProgress] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (file: File | null) => {
-    if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
+    if (
+      file &&
+      (file.type.startsWith("image/") || file.type === "application/pdf")
+    ) {
       setSelectedFile(file);
       setExtractionError(null);
-      setExtractionProgress('');
+      setExtractionProgress("");
     }
   };
 
@@ -42,7 +66,7 @@ export function OCRUploadWireframe() {
 
     setIsExtracting(true);
     setExtractionError(null);
-    setExtractionProgress('Uploading file to OCR service...');
+    setExtractionProgress("Uploading file to OCR service...");
 
     try {
       // Perform real OCR extraction
@@ -50,46 +74,52 @@ export function OCRUploadWireframe() {
 
       if (!result.success) {
         setExtractionError({
-          message: result.error || 'OCR extraction failed',
+          message: result.error || "OCR extraction failed",
           details: result.errorDetails,
         });
         setIsExtracting(false);
-        setExtractionProgress('');
+        setExtractionProgress("");
         return;
       }
 
-      setExtractionProgress('Processing extracted text...');
+      setExtractionProgress("Processing extracted text...");
 
       // Generate questions from extracted text
-      const session = generateMockExtractedQuestions(selectedFile, result.extractedText);
+      const session = generateMockExtractedQuestions(
+        selectedFile,
+        result.extractedText,
+      );
       saveOCRSession(session);
 
-      setExtractionProgress('Complete!');
-      
+      setExtractionProgress("Complete!");
+
       // Navigate to review page
       setTimeout(() => {
-        navigate({ to: '/ocr/review' });
+        navigate({ to: "/ocr/review" });
       }, 500);
     } catch (error) {
-      console.error('Extraction error:', error);
+      console.error("Extraction error:", error);
       setExtractionError({
-        message: 'Unexpected error',
-        details: error instanceof Error ? error.message : 'An unexpected error occurred',
+        message: "Unexpected error",
+        details:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
       });
       setIsExtracting(false);
-      setExtractionProgress('');
+      setExtractionProgress("");
     }
   };
 
   const handleReset = () => {
     setSelectedFile(null);
     setExtractionError(null);
-    setExtractionProgress('');
+    setExtractionProgress("");
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
     if (cameraInputRef.current) {
-      cameraInputRef.current.value = '';
+      cameraInputRef.current.value = "";
     }
   };
 
@@ -97,30 +127,34 @@ export function OCRUploadWireframe() {
     <div className="container mx-auto max-w-3xl p-4 py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-foreground">OCR Upload</h1>
-        <p className="mt-2 text-muted-foreground">Extract questions from images or PDFs using OCR</p>
+        <p className="mt-2 text-muted-foreground">
+          Extract questions from images or PDFs using OCR
+        </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Upload Document</CardTitle>
           <CardDescription>
-            Upload an image or PDF containing text to extract questions automatically
+            Upload an image or PDF containing text to extract questions
+            automatically
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              <strong>Real OCR Extraction:</strong> This app uses OCR.space API to automatically extract text from your documents.
-              The free tier supports up to 25,000 requests per month.
+              <strong>Real OCR Extraction:</strong> This app uses OCR.space API
+              to automatically extract text from your documents. The free tier
+              supports up to 25,000 requests per month.
             </AlertDescription>
           </Alert>
 
           <div
             className={`flex min-h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors ${
               isDragging
-                ? 'border-primary bg-primary/5'
-                : 'border-border bg-muted/20'
+                ? "border-primary bg-primary/5"
+                : "border-border bg-muted/20"
             }`}
             onDragOver={(e) => {
               e.preventDefault();
@@ -152,7 +186,9 @@ export function OCRUploadWireframe() {
                 <h3 className="mb-2 text-lg font-semibold text-foreground">
                   Drag & drop files here
                 </h3>
-                <p className="mb-4 text-sm text-muted-foreground">or choose from options below</p>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  or choose from options below
+                </p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   <Button
                     variant="outline"
@@ -217,10 +253,17 @@ export function OCRUploadWireframe() {
           </div>
 
           <div className="flex justify-end gap-4">
-            <Button variant="outline" onClick={() => navigate({ to: '/home' })} disabled={isExtracting}>
+            <Button
+              variant="outline"
+              onClick={() => navigate({ to: "/home" })}
+              disabled={isExtracting}
+            >
               Cancel
             </Button>
-            <Button onClick={handleExtract} disabled={!selectedFile || isExtracting}>
+            <Button
+              onClick={handleExtract}
+              disabled={!selectedFile || isExtracting}
+            >
               {isExtracting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

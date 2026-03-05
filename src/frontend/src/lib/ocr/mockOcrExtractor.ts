@@ -1,14 +1,28 @@
-import { safeGetItem, safeSetItem, safeRemoveItem } from '../storage/safeStorage';
-import { parseExtractedText } from './extractedTextQuestionParser';
-import { generateQuestionsFromLines, generateQuestionsFromParagraph } from './ocrQuestionGenerator';
-import { Question } from '../../state/mockData';
+import type { Question } from "../../state/mockData";
+import {
+  safeGetItem,
+  safeRemoveItem,
+  safeSetItem,
+} from "../storage/safeStorage";
+import { parseExtractedText } from "./extractedTextQuestionParser";
+import {
+  generateQuestionsFromLines,
+  generateQuestionsFromParagraph,
+} from "./ocrQuestionGenerator";
 
-const OCR_SESSION_KEY = 'ocr-session';
+const OCR_SESSION_KEY = "ocr-session";
 
 export interface OCRQuestion {
   id: string;
   text: string;
-  questionType?: 'mcq' | 'fill-in-blank' | 'short-answer' | 'numerical' | 'true-false' | 'match-pairs' | 'table';
+  questionType?:
+    | "mcq"
+    | "fill-in-blank"
+    | "short-answer"
+    | "numerical"
+    | "true-false"
+    | "match-pairs"
+    | "table";
   marks?: number;
   difficulty?: string;
   mcqOptions?: { options: string[]; correctAnswer?: number };
@@ -24,13 +38,13 @@ export interface OCRSession {
 
 export function createOCRSession(extractedText: string): OCRSession {
   const parseResult = parseExtractedText(extractedText);
-  
+
   let questions: OCRQuestion[] = [];
   let extractionFailed = false;
 
   // First, try line-based generation (new approach)
   const lineGenerated = generateQuestionsFromLines(extractedText);
-  
+
   if (lineGenerated.length >= 3) {
     // Line-based generation succeeded
     questions = lineGenerated.map((q, idx) => ({
@@ -40,21 +54,27 @@ export function createOCRSession(extractedText: string): OCRSession {
       marks: q.marks,
       difficulty: q.difficulty,
       mcqOptions: q.mcqOptions,
-      fillInBlankData: q.fillInBlankData
+      fillInBlankData: q.fillInBlankData,
     }));
   }
   // If we have high-confidence parsed questions, use them
-  else if (parseResult.confidence === 'high' && parseResult.questions.length >= 3) {
+  else if (
+    parseResult.confidence === "high" &&
+    parseResult.questions.length >= 3
+  ) {
     questions = parseResult.questions.map((q, idx) => ({
       id: `ocr-q-${Date.now()}-${idx}`,
       text: q.text,
-      questionType: 'short-answer' as const,
+      questionType: "short-answer" as const,
       marks: 2,
-      difficulty: 'Medium'
+      difficulty: "Medium",
     }));
   }
   // If it's paragraph style with meaningful content, generate questions
-  else if (parseResult.isParagraphStyle && parseResult.meaningfulTextLength > 100) {
+  else if (
+    parseResult.isParagraphStyle &&
+    parseResult.meaningfulTextLength > 100
+  ) {
     const generated = generateQuestionsFromParagraph(extractedText, 10);
     questions = generated.map((q, idx) => ({
       id: `ocr-q-${Date.now()}-${idx}`,
@@ -63,7 +83,7 @@ export function createOCRSession(extractedText: string): OCRSession {
       marks: q.marks,
       difficulty: q.difficulty,
       mcqOptions: q.mcqOptions,
-      fillInBlankData: q.fillInBlankData
+      fillInBlankData: q.fillInBlankData,
     }));
   }
   // If we have some parsed questions but not many, use them
@@ -71,9 +91,9 @@ export function createOCRSession(extractedText: string): OCRSession {
     questions = parseResult.questions.map((q, idx) => ({
       id: `ocr-q-${Date.now()}-${idx}`,
       text: q.text,
-      questionType: 'short-answer' as const,
+      questionType: "short-answer" as const,
       marks: 2,
-      difficulty: 'Medium'
+      difficulty: "Medium",
     }));
   }
   // Otherwise, mark as extraction failed
@@ -85,14 +105,17 @@ export function createOCRSession(extractedText: string): OCRSession {
     extractedText,
     questions,
     extractionFailed,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 
   safeSetItem(OCR_SESSION_KEY, JSON.stringify(session));
   return session;
 }
 
-export function generateMockExtractedQuestions(file: File, extractedText: string): OCRSession {
+export function generateMockExtractedQuestions(
+  _file: File,
+  extractedText: string,
+): OCRSession {
   return createOCRSession(extractedText);
 }
 
@@ -103,7 +126,7 @@ export function saveOCRSession(session: OCRSession): void {
 export function loadOCRSession(): OCRSession | null {
   const stored = safeGetItem(OCR_SESSION_KEY);
   if (!stored) return null;
-  
+
   try {
     return JSON.parse(stored);
   } catch {
@@ -115,22 +138,24 @@ export function clearOCRSession(): void {
   safeRemoveItem(OCR_SESSION_KEY);
 }
 
-export function convertOCRQuestionsToPersonalQuestions(ocrQuestions: OCRQuestion[]): Question[] {
-  return ocrQuestions.map(ocrQ => {
+export function convertOCRQuestionsToPersonalQuestions(
+  ocrQuestions: OCRQuestion[],
+): Question[] {
+  return ocrQuestions.map((ocrQ) => {
     const baseQuestion: Question = {
       id: `q-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       text: ocrQ.text,
-      questionType: ocrQ.questionType || 'short-answer',
+      questionType: ocrQ.questionType || "short-answer",
       marks: ocrQ.marks || 2,
-      type: ocrQ.difficulty || 'Medium', // Store difficulty in the type field
+      type: ocrQ.difficulty || "Medium", // Store difficulty in the type field
       headingId: null,
-      imageAttachment: null
+      imageAttachment: null,
     };
 
     // Add type-specific data
-    if (ocrQ.questionType === 'mcq' && ocrQ.mcqOptions) {
+    if (ocrQ.questionType === "mcq" && ocrQ.mcqOptions) {
       baseQuestion.mcqOptions = ocrQ.mcqOptions;
-    } else if (ocrQ.questionType === 'fill-in-blank' && ocrQ.fillInBlankData) {
+    } else if (ocrQ.questionType === "fill-in-blank" && ocrQ.fillInBlankData) {
       baseQuestion.fillInBlankData = ocrQ.fillInBlankData;
     }
 

@@ -1,34 +1,45 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save } from 'lucide-react';
-import { Question, QuestionType } from '../../state/mockData';
-import { loadQuestionDraft, saveQuestionDraft, clearQuestionDraft } from '../../lib/storage/questionDraftStorage';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { ArrowLeft, Save } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  clearQuestionDraft,
+  loadQuestionDraft,
+  saveQuestionDraft,
+} from "../../lib/storage/questionDraftStorage";
+import type { Question, QuestionType } from "../../state/mockData";
+import { useMockStore } from "../../state/mockStore";
 
 export function QuestionEntryWireframe() {
   const navigate = useNavigate();
-  const { paperId } = useParams({ from: '/editor/$paperId/question-entry' });
+  const { paperId } = useParams({ from: "/editor/$paperId/question-entry" });
   const { getPaperById, addPersonalQuestion, profile } = useMockStore();
   const paper = getPaperById(paperId);
 
-  const [questionText, setQuestionText] = useState('');
+  const [questionText, setQuestionText] = useState("");
   const [marks, setMarks] = useState(2);
-  const [questionType, setQuestionType] = useState<QuestionType>('short-answer');
-  const [type, setType] = useState('Conceptual');
+  const [questionType, setQuestionType] =
+    useState<QuestionType>("short-answer");
+  const [type, setType] = useState("Conceptual");
 
   // Load draft on mount
   useEffect(() => {
     const draft = loadQuestionDraft(paperId);
     if (draft) {
-      setQuestionText(draft.questionText || '');
+      setQuestionText(draft.questionText || "");
       setMarks(draft.marks || 2);
-      setQuestionType((draft.questionType as QuestionType) || 'short-answer');
+      setQuestionType((draft.questionType as QuestionType) || "short-answer");
     }
   }, [paperId]);
 
@@ -49,7 +60,7 @@ export function QuestionEntryWireframe() {
 
   const handleSave = () => {
     if (!questionText.trim()) {
-      alert('Please enter question text');
+      alert("Please enter question text");
       return;
     }
 
@@ -67,7 +78,7 @@ export function QuestionEntryWireframe() {
 
     addPersonalQuestion(newQuestion);
     clearQuestionDraft(paperId);
-    alert('Question added to your personal bank!');
+    alert("Question added to your personal bank!");
     navigate({ to: `/editor/${paperId}` });
   };
 
@@ -109,7 +120,7 @@ export function QuestionEntryWireframe() {
                 id="marks"
                 type="number"
                 value={marks}
-                onChange={(e) => setMarks(parseInt(e.target.value) || 0)}
+                onChange={(e) => setMarks(Number.parseInt(e.target.value) || 0)}
                 min={1}
               />
             </div>
@@ -131,7 +142,10 @@ export function QuestionEntryWireframe() {
 
           <div className="space-y-2">
             <Label htmlFor="questionType">Question Type</Label>
-            <Select value={questionType} onValueChange={(value: QuestionType) => setQuestionType(value)}>
+            <Select
+              value={questionType}
+              onValueChange={(value: QuestionType) => setQuestionType(value)}
+            >
               <SelectTrigger id="questionType">
                 <SelectValue />
               </SelectTrigger>

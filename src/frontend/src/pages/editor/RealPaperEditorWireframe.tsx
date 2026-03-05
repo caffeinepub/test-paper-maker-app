@@ -1,46 +1,73 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PaperSurface } from '../../components/paper/PaperSurface';
-import { FloatingRealPaperToolbox } from '../../components/editor/FloatingRealPaperToolbox';
-import { MobileRealPaperFabToolbox } from '../../components/editor/MobileRealPaperFabToolbox';
-import { PaperActionOverflowMenu } from '../../components/paper/PaperActionOverflowMenu';
-import { AddQuestionHeadingDialog } from '../../components/editor/AddQuestionHeadingDialog';
-import { RealPaperToolboxSpotlight } from '../../components/editor/RealPaperToolboxSpotlight';
-import { useRealPaperToolboxSpotlight } from '../../hooks/useRealPaperToolboxSpotlight';
-import { useUndoRedo } from '../../hooks/useUndoRedo';
-import { useDebouncedEffect } from '../../hooks/useDebouncedEffect';
-import { AlertCircle, ArrowLeft, Undo, Redo, Image as ImageIcon } from 'lucide-react';
-import { Question, QuestionType, QuestionHeading, Paper } from '../../state/mockData';
-import { toast } from 'sonner';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Image as ImageIcon,
+  Redo,
+  Undo,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { AddQuestionHeadingDialog } from "../../components/editor/AddQuestionHeadingDialog";
+import { FloatingRealPaperToolbox } from "../../components/editor/FloatingRealPaperToolbox";
+import { MobileRealPaperFabToolbox } from "../../components/editor/MobileRealPaperFabToolbox";
+import { RealPaperToolboxSpotlight } from "../../components/editor/RealPaperToolboxSpotlight";
+import { PaperActionOverflowMenu } from "../../components/paper/PaperActionOverflowMenu";
+import { PaperSurface } from "../../components/paper/PaperSurface";
+import { useDebouncedEffect } from "../../hooks/useDebouncedEffect";
+import { useRealPaperToolboxSpotlight } from "../../hooks/useRealPaperToolboxSpotlight";
+import { useUndoRedo } from "../../hooks/useUndoRedo";
+import type {
+  Paper,
+  Question,
+  QuestionHeading,
+  QuestionType,
+} from "../../state/mockData";
+import { useMockStore } from "../../state/mockStore";
 
 export function RealPaperEditorWireframe() {
   const navigate = useNavigate();
-  const { paperId } = useParams({ from: '/editor/$paperId/real-paper' });
+  const { paperId } = useParams({ from: "/editor/$paperId/real-paper" });
   const { isInitialized, getPaperById, updatePaper } = useMockStore();
   const toolboxSpotlight = useRealPaperToolboxSpotlight();
 
   const paper = getPaperById(paperId);
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-  const [selectedHeadingId, setSelectedHeadingId] = useState<string | null>(null);
-  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
+    null,
+  );
+  const [selectedHeadingId, setSelectedHeadingId] = useState<string | null>(
+    null,
+  );
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
+    null,
+  );
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    "saved" | "saving" | "idle"
+  >("idle");
   const [showAddHeadingDialog, setShowAddHeadingDialog] = useState(false);
-  const [autoFocusQuestionId, setAutoFocusQuestionId] = useState<string | null>(null);
+  const [autoFocusQuestionId, setAutoFocusQuestionId] = useState<string | null>(
+    null,
+  );
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const isInitialLoadRef = useRef(true);
 
-  const { state: paperState, setState: setPaperState, undo, redo, canUndo, canRedo, reset } = useUndoRedo<Paper | null>(
-    paper || null,
-    {
-      maxHistorySize: 50,
-    }
-  );
+  const {
+    state: paperState,
+    setState: setPaperState,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    reset,
+  } = useUndoRedo<Paper | null>(paper || null, {
+    maxHistorySize: 50,
+  });
 
   // Initialize state from paper
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally only re-runs when paperId or init status changes
   useEffect(() => {
     if (paper && isInitialized) {
       isInitialLoadRef.current = true;
@@ -69,16 +96,16 @@ export function RealPaperEditorWireframe() {
         return;
       }
 
-      setAutoSaveStatus('saving');
+      setAutoSaveStatus("saving");
       updatePaper(paperId, paperState);
 
       setTimeout(() => {
-        setAutoSaveStatus('saved');
-        setTimeout(() => setAutoSaveStatus('idle'), 2000);
+        setAutoSaveStatus("saved");
+        setTimeout(() => setAutoSaveStatus("idle"), 2000);
       }, 300);
     },
     500,
-    [paperState, isInitialized]
+    [paperState, isInitialized],
   );
 
   // Update heading selection when section changes
@@ -92,7 +119,11 @@ export function RealPaperEditorWireframe() {
     }
   };
 
-  const handleAddQuestion = (sectionId: string, headingId: string, questionType: QuestionType) => {
+  const handleAddQuestion = (
+    sectionId: string,
+    headingId: string,
+    questionType: QuestionType,
+  ) => {
     if (!paperState) return;
 
     const section = paperState.sections.find((s) => s.id === sectionId);
@@ -100,26 +131,33 @@ export function RealPaperEditorWireframe() {
 
     const newQuestion: Question = {
       id: `q-${Date.now()}`,
-      text: '',
+      text: "",
       marks: section.marks,
-      type: 'General',
+      type: "General",
       questionType,
       headingId: headingId,
       imageAttachment: null,
-      ...(questionType === 'mcq' && {
-        mcqOptions: { options: ['', '', '', ''] },
+      ...(questionType === "mcq" && {
+        mcqOptions: { options: ["", "", "", ""] },
       }),
-      ...(questionType === 'fill-in-blank' && {
-        fillInBlankData: { blanks: [''] },
+      ...(questionType === "fill-in-blank" && {
+        fillInBlankData: { blanks: [""] },
       }),
-      ...(questionType === 'true-false' && {
+      ...(questionType === "true-false" && {
         trueFalseData: {},
       }),
-      ...(questionType === 'match-pairs' && {
-        matchPairsData: { pairs: [{ left: '', right: '' }] },
+      ...(questionType === "match-pairs" && {
+        matchPairsData: { pairs: [{ left: "", right: "" }] },
       }),
-      ...(questionType === 'table' && {
-        tableData: { rows: 2, cols: 2, cells: [['', ''], ['', '']] },
+      ...(questionType === "table" && {
+        tableData: {
+          rows: 2,
+          cols: 2,
+          cells: [
+            ["", ""],
+            ["", ""],
+          ],
+        },
       }),
     };
 
@@ -139,10 +177,14 @@ export function RealPaperEditorWireframe() {
     // Set both selected and autofocus
     setSelectedQuestionId(newQuestion.id);
     setAutoFocusQuestionId(newQuestion.id);
-    toast.success('Question added');
+    toast.success("Question added");
   };
 
-  const handleUpdateQuestion = (sectionId: string, questionId: string, updates: Partial<Question>) => {
+  const handleUpdateQuestion = (
+    sectionId: string,
+    questionId: string,
+    updates: Partial<Question>,
+  ) => {
     setPaperState((prev) => {
       if (!prev) return prev;
       return {
@@ -151,7 +193,9 @@ export function RealPaperEditorWireframe() {
           if (s.id === sectionId) {
             return {
               ...s,
-              questions: s.questions.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
+              questions: s.questions.map((q) =>
+                q.id === questionId ? { ...q, ...updates } : q,
+              ),
             };
           }
           return s;
@@ -179,7 +223,7 @@ export function RealPaperEditorWireframe() {
     if (selectedQuestionId === questionId) {
       setSelectedQuestionId(null);
     }
-    toast.success('Question deleted');
+    toast.success("Question deleted");
   };
 
   const handleSelectQuestion = (questionId: string | null) => {
@@ -194,7 +238,14 @@ export function RealPaperEditorWireframe() {
     setAutoFocusQuestionId(null);
   };
 
-  const handleAddHeading = (heading: Omit<QuestionHeading, 'id'>) => {
+  const handleUpdatePaperMeta = (updates: Partial<Paper>) => {
+    setPaperState((prev) => {
+      if (!prev) return prev;
+      return { ...prev, ...updates };
+    });
+  };
+
+  const handleAddHeading = (heading: Omit<QuestionHeading, "id">) => {
     if (!selectedSectionId) return;
 
     const newHeading: QuestionHeading = {
@@ -220,7 +271,7 @@ export function RealPaperEditorWireframe() {
 
     setSelectedHeadingId(newHeading.id);
     setShowAddHeadingDialog(false);
-    toast.success('Heading added');
+    toast.success("Heading added");
   };
 
   const handleInsertImage = () => {
@@ -232,7 +283,7 @@ export function RealPaperEditorWireframe() {
     if (!file) return;
 
     if (!selectedQuestionId || !selectedSectionId) {
-      toast.error('Please select a question first');
+      toast.error("Please select a question first");
       return;
     }
 
@@ -242,11 +293,11 @@ export function RealPaperEditorWireframe() {
       handleUpdateQuestion(selectedSectionId, selectedQuestionId, {
         imageAttachment: base64,
       });
-      toast.success('Image attached to question');
+      toast.success("Image attached to question");
     };
     reader.readAsDataURL(file);
 
-    e.target.value = '';
+    e.target.value = "";
   };
 
   if (!isInitialized) {
@@ -262,7 +313,9 @@ export function RealPaperEditorWireframe() {
       <div className="container mx-auto max-w-4xl p-4 py-8">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Paper not found or has been deleted.</AlertDescription>
+          <AlertDescription>
+            Paper not found or has been deleted.
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -274,23 +327,41 @@ export function RealPaperEditorWireframe() {
       <div className="sticky top-0 z-10 border-b bg-background shadow-sm">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate({ to: `/editor/${paperId}` })}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate({ to: `/editor/${paperId}` })}
+            >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-lg font-semibold text-foreground">{paperState.title || 'Untitled Paper'}</h1>
+              <h1 className="text-lg font-semibold text-foreground">
+                {paperState.title || "Untitled Paper"}
+              </h1>
               <p className="text-xs text-muted-foreground">
-                {autoSaveStatus === 'saving' && 'Saving...'}
-                {autoSaveStatus === 'saved' && 'Saved'}
-                {autoSaveStatus === 'idle' && 'Real Paper Editor'}
+                {autoSaveStatus === "saving" && "Saving..."}
+                {autoSaveStatus === "saved" && "Saved"}
+                {autoSaveStatus === "idle" && "Real Paper Editor"}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={undo} disabled={!canUndo} title="Undo">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo"
+            >
               <Undo className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={redo} disabled={!canRedo} title="Redo">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo"
+            >
               <Redo className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={handleInsertImage}>
@@ -313,6 +384,7 @@ export function RealPaperEditorWireframe() {
           onDeleteQuestion={handleDeleteQuestion}
           autoFocusQuestionId={autoFocusQuestionId}
           onAutoFocusComplete={handleAutoFocusComplete}
+          onUpdatePaperMeta={handleUpdatePaperMeta}
         />
       </div>
 
@@ -353,9 +425,7 @@ export function RealPaperEditorWireframe() {
 
       {/* Toolbox Spotlight */}
       {toolboxSpotlight.shouldShow && (
-        <RealPaperToolboxSpotlight
-          onComplete={toolboxSpotlight.complete}
-        />
+        <RealPaperToolboxSpotlight onComplete={toolboxSpotlight.complete} />
       )}
 
       {/* Hidden file input */}

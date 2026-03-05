@@ -1,7 +1,8 @@
-import React, { Component, ReactNode } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
+import type React from "react";
+import { Component, type ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -23,7 +24,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('App Error Boundary caught an error:', error, errorInfo);
+    console.error("App Error Boundary caught an error:", error, errorInfo);
   }
 
   handleReload = () => {
@@ -32,7 +33,7 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   handleGoHome = () => {
     this.setState({ hasError: false, error: null });
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   render() {
@@ -48,11 +49,14 @@ export class AppErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                The app encountered an unexpected error. Please try reloading the page or returning to the home screen.
+                The app encountered an unexpected error. Please try reloading
+                the page or returning to the home screen.
               </p>
               {this.state.error && (
                 <details className="text-xs text-muted-foreground">
-                  <summary className="cursor-pointer font-medium">Error details</summary>
+                  <summary className="cursor-pointer font-medium">
+                    Error details
+                  </summary>
                   <pre className="mt-2 overflow-auto rounded bg-muted p-2">
                     {this.state.error.toString()}
                   </pre>
@@ -62,7 +66,11 @@ export class AppErrorBoundary extends Component<Props, State> {
                 <Button onClick={this.handleReload} className="flex-1">
                   Reload Page
                 </Button>
-                <Button onClick={this.handleGoHome} variant="outline" className="flex-1">
+                <Button
+                  onClick={this.handleGoHome}
+                  variant="outline"
+                  className="flex-1"
+                >
                   Go Home
                 </Button>
               </div>

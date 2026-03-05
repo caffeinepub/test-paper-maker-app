@@ -1,7 +1,25 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Profile, Paper, Question, defaultProfile, samplePapers, starterQuestions } from './mockData';
-import { safeGetItem, safeSetItem, safeRemoveItem, isStorageAvailable } from '../lib/storage/safeStorage';
-import { normalizeToRichContent } from '../lib/editor/richCellContent';
+import {
+  type ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { normalizeToRichContent } from "../lib/editor/richCellContent";
+import {
+  isStorageAvailable,
+  safeGetItem,
+  safeRemoveItem,
+  safeSetItem,
+} from "../lib/storage/safeStorage";
+import {
+  type Paper,
+  type Profile,
+  type Question,
+  defaultProfile,
+  samplePapers,
+  starterQuestions,
+} from "./mockData";
 
 interface MockStoreContextType {
   isInitialized: boolean;
@@ -21,18 +39,25 @@ interface MockStoreContextType {
   deletePaper: (paperId: string) => void;
   getPaperById: (paperId: string) => Paper | undefined;
   addPersonalQuestion: (question: Question) => void;
-  updatePersonalQuestion: (questionId: string, updates: Partial<Question>) => void;
+  updatePersonalQuestion: (
+    questionId: string,
+    updates: Partial<Question>,
+  ) => void;
   deletePersonalQuestion: (questionId: string) => void;
   getStarterQuestions: () => Question[];
   resetTutorial: () => void;
   clearAllData: () => void;
 }
 
-const MockStoreContext = createContext<MockStoreContextType | undefined>(undefined);
+const MockStoreContext = createContext<MockStoreContextType | undefined>(
+  undefined,
+);
 
 export function MockStoreProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [initializationError, setInitializationError] = useState<string | null>(
+    null,
+  );
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [profile, setProfile] = useState<Profile>(defaultProfile);
@@ -48,19 +73,22 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
         headings: section.headings || [],
         questions: section.questions.map((question) => {
           // Normalize table cells
-          if (question.questionType === 'table' && question.tableData) {
+          if (question.questionType === "table" && question.tableData) {
             return {
               ...question,
               tableData: {
                 ...question.tableData,
                 cells: question.tableData.cells.map((row) =>
-                  row.map((cell) => normalizeToRichContent(cell))
+                  row.map((cell) => normalizeToRichContent(cell)),
                 ),
               },
             };
           }
           // Normalize match-pairs
-          if (question.questionType === 'match-pairs' && question.matchPairsData) {
+          if (
+            question.questionType === "match-pairs" &&
+            question.matchPairsData
+          ) {
             return {
               ...question,
               matchPairsData: {
@@ -82,8 +110,8 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     if (!question.board || !question.standard) {
       return {
         ...question,
-        board: question.board || profile.preferredBoard || 'CBSE',
-        standard: question.standard || profile.defaultStandard || 'Standard 10',
+        board: question.board || profile.preferredBoard || "CBSE",
+        standard: question.standard || profile.defaultStandard || "Standard 10",
       };
     }
     return question;
@@ -96,16 +124,17 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
       // Check if storage is available
       if (!isStorageAvailable()) {
         throw new Error(
-          'Local storage is not available. Please check your browser settings and ensure cookies/site data are enabled.'
+          "Local storage is not available. Please check your browser settings and ensure cookies/site data are enabled.",
         );
       }
 
       // Load state from localStorage
-      const storedIsLoggedIn = safeGetItem('isLoggedIn') === 'true';
-      const storedOnboardingCompleted = safeGetItem('onboardingCompleted') === 'true';
-      const storedProfile = safeGetItem('profile');
-      const storedPapers = safeGetItem('papers');
-      const storedPersonalQuestions = safeGetItem('personalQuestions');
+      const storedIsLoggedIn = safeGetItem("isLoggedIn") === "true";
+      const storedOnboardingCompleted =
+        safeGetItem("onboardingCompleted") === "true";
+      const storedProfile = safeGetItem("profile");
+      const storedPapers = safeGetItem("papers");
+      const storedPersonalQuestions = safeGetItem("personalQuestions");
 
       setIsLoggedIn(storedIsLoggedIn);
       setOnboardingCompleted(storedOnboardingCompleted);
@@ -134,7 +163,11 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
         try {
           const parsedQuestions = JSON.parse(storedPersonalQuestions);
           // Migrate legacy questions
-          setPersonalQuestions(parsedQuestions.map((q: Question) => migrateQuestion(q, loadedProfile)));
+          setPersonalQuestions(
+            parsedQuestions.map((q: Question) =>
+              migrateQuestion(q, loadedProfile),
+            ),
+          );
         } catch {
           setPersonalQuestions([]);
         }
@@ -142,14 +175,15 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
 
       setIsInitialized(true);
     } catch (error) {
-      console.error('Initialization error:', error);
+      console.error("Initialization error:", error);
       setInitializationError(
-        error instanceof Error ? error.message : 'Failed to initialize storage'
+        error instanceof Error ? error.message : "Failed to initialize storage",
       );
       setIsInitialized(true); // Still mark as initialized to show error UI
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initialize is called once on mount
   useEffect(() => {
     initialize();
   }, []);
@@ -160,31 +194,31 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isInitialized && !initializationError) {
-      safeSetItem('isLoggedIn', isLoggedIn.toString());
+      safeSetItem("isLoggedIn", isLoggedIn.toString());
     }
   }, [isLoggedIn, isInitialized, initializationError]);
 
   useEffect(() => {
     if (isInitialized && !initializationError) {
-      safeSetItem('onboardingCompleted', onboardingCompleted.toString());
+      safeSetItem("onboardingCompleted", onboardingCompleted.toString());
     }
   }, [onboardingCompleted, isInitialized, initializationError]);
 
   useEffect(() => {
     if (isInitialized && !initializationError) {
-      safeSetItem('profile', JSON.stringify(profile));
+      safeSetItem("profile", JSON.stringify(profile));
     }
   }, [profile, isInitialized, initializationError]);
 
   useEffect(() => {
     if (isInitialized && !initializationError) {
-      safeSetItem('papers', JSON.stringify(papers));
+      safeSetItem("papers", JSON.stringify(papers));
     }
   }, [papers, isInitialized, initializationError]);
 
   useEffect(() => {
     if (isInitialized && !initializationError) {
-      safeSetItem('personalQuestions', JSON.stringify(personalQuestions));
+      safeSetItem("personalQuestions", JSON.stringify(personalQuestions));
     }
   }, [personalQuestions, isInitialized, initializationError]);
 
@@ -211,7 +245,7 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
           return normalizePaper(updated);
         }
         return paper;
-      })
+      }),
     );
   };
 
@@ -229,9 +263,12 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     setPersonalQuestions((prev) => [...prev, enrichedQuestion]);
   };
 
-  const updatePersonalQuestion = (questionId: string, updates: Partial<Question>) => {
+  const updatePersonalQuestion = (
+    questionId: string,
+    updates: Partial<Question>,
+  ) => {
     setPersonalQuestions((prev) =>
-      prev.map((q) => (q.id === questionId ? { ...q, ...updates } : q))
+      prev.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
     );
   };
 
@@ -244,16 +281,16 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   };
 
   const resetTutorial = () => {
-    safeRemoveItem('coachmarks-completed');
-    safeRemoveItem('coachmarks-active');
-    safeRemoveItem('real-paper-toolbox-spotlight-completed');
+    safeRemoveItem("coachmarks-completed");
+    safeRemoveItem("coachmarks-active");
+    safeRemoveItem("real-paper-toolbox-spotlight-completed");
   };
 
   const clearAllData = () => {
     setPapers([]);
     setPersonalQuestions([]);
-    safeRemoveItem('papers');
-    safeRemoveItem('personalQuestions');
+    safeRemoveItem("papers");
+    safeRemoveItem("personalQuestions");
   };
 
   const value: MockStoreContextType = {
@@ -281,13 +318,17 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     clearAllData,
   };
 
-  return <MockStoreContext.Provider value={value}>{children}</MockStoreContext.Provider>;
+  return (
+    <MockStoreContext.Provider value={value}>
+      {children}
+    </MockStoreContext.Provider>
+  );
 }
 
 export function useMockStore() {
   const context = useContext(MockStoreContext);
   if (context === undefined) {
-    throw new Error('useMockStore must be used within a MockStoreProvider');
+    throw new Error("useMockStore must be used within a MockStoreProvider");
   }
   return context;
 }

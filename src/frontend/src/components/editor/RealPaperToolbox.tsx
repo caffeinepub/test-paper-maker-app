@@ -1,16 +1,22 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Paper, QuestionType } from '../../state/mockData';
+import { Button } from "@/components/ui/button";
 import {
-  FileText,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
   CheckSquare,
-  Type,
-  ToggleLeft,
+  FileText,
   Link2,
   Table as TableIcon,
-} from 'lucide-react';
+  ToggleLeft,
+  Type,
+} from "lucide-react";
+import type { Paper, QuestionType } from "../../state/mockData";
 
 interface RealPaperToolboxProps {
   paper: Paper;
@@ -25,14 +31,15 @@ export function RealPaperToolbox({
   onSelectSection,
   onAddQuestion,
 }: RealPaperToolboxProps) {
-  const questionTypes: Array<{ type: QuestionType; label: string; icon: any }> = [
-    { type: 'short-answer', label: 'Short Answer', icon: FileText },
-    { type: 'mcq', label: 'MCQ (4 Options)', icon: CheckSquare },
-    { type: 'fill-in-blank', label: 'Fill in the Blank', icon: Type },
-    { type: 'true-false', label: 'True/False', icon: ToggleLeft },
-    { type: 'match-pairs', label: 'Match Pairs', icon: Link2 },
-    { type: 'table', label: 'Table', icon: TableIcon },
-  ];
+  const questionTypes: Array<{ type: QuestionType; label: string; icon: any }> =
+    [
+      { type: "short-answer", label: "Short Answer", icon: FileText },
+      { type: "mcq", label: "MCQ (4 Options)", icon: CheckSquare },
+      { type: "fill-in-blank", label: "Fill in the Blank", icon: Type },
+      { type: "true-false", label: "True/False", icon: ToggleLeft },
+      { type: "match-pairs", label: "Match Pairs", icon: Link2 },
+      { type: "table", label: "Table", icon: TableIcon },
+    ];
 
   return (
     <Card className="sticky top-4">
@@ -49,13 +56,15 @@ export function RealPaperToolbox({
               {paper.sections.map((section, idx) => (
                 <Button
                   key={section.id}
-                  variant={selectedSectionId === section.id ? 'default' : 'ghost'}
+                  variant={
+                    selectedSectionId === section.id ? "default" : "ghost"
+                  }
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => onSelectSection(section.id)}
                 >
                   Section {String.fromCharCode(65 + idx)} ({section.marks} mark
-                  {section.marks > 1 ? 's' : ''})
+                  {section.marks > 1 ? "s" : ""})
                 </Button>
               ))}
             </div>
@@ -75,7 +84,9 @@ export function RealPaperToolbox({
                   variant="outline"
                   size="sm"
                   className="w-full justify-start gap-2"
-                  onClick={() => selectedSectionId && onAddQuestion(selectedSectionId, type)}
+                  onClick={() =>
+                    selectedSectionId && onAddQuestion(selectedSectionId, type)
+                  }
                   disabled={!selectedSectionId}
                 >
                   <Icon className="h-4 w-4" />

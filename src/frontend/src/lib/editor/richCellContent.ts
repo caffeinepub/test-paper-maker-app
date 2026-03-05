@@ -3,7 +3,7 @@
  * Supports text + inline images with formatting metadata
  */
 
-import { CellContent } from '../../state/mockData';
+import type { CellContent } from "../../state/mockData";
 
 export interface RichCellImage {
   id: string;
@@ -11,7 +11,7 @@ export interface RichCellImage {
   widthCm: number;
   heightCm: number;
   aspectRatioLocked: boolean;
-  alignment: 'left' | 'center' | 'right';
+  alignment: "left" | "center" | "right";
   caption: string;
 }
 
@@ -49,21 +49,23 @@ export function createRichCellImage(dataUrl: string): RichCellImage {
     widthCm: DEFAULT_IMAGE_SIZE_CM,
     heightCm: DEFAULT_IMAGE_SIZE_CM,
     aspectRatioLocked: true,
-    alignment: 'left',
-    caption: '',
+    alignment: "left",
+    caption: "",
   };
 }
 
 /**
  * Extract image from clipboard paste event
  */
-export async function extractImageFromClipboard(event: ClipboardEvent): Promise<string | null> {
+export async function extractImageFromClipboard(
+  event: ClipboardEvent,
+): Promise<string | null> {
   const items = event.clipboardData?.items;
   if (!items) return null;
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (item.type.startsWith('image/')) {
+    if (item.type.startsWith("image/")) {
       const blob = item.getAsFile();
       if (blob) {
         return new Promise((resolve) => {
@@ -82,7 +84,7 @@ export async function extractImageFromClipboard(event: ClipboardEvent): Promise<
  * Extract image from file input
  */
 export async function extractImageFromFile(file: File): Promise<string | null> {
-  if (!file.type.startsWith('image/')) return null;
+  if (!file.type.startsWith("image/")) return null;
 
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -96,15 +98,20 @@ export async function extractImageFromFile(file: File): Promise<string | null> {
  * Normalize legacy string content to rich content
  */
 export function normalizeToRichContent(value: CellContent): RichCellContent {
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return { text: value, images: [] };
   }
   // If it's already a RichCellContent object
-  if (value && typeof value === 'object' && 'text' in value && 'images' in value) {
+  if (
+    value &&
+    typeof value === "object" &&
+    "text" in value &&
+    "images" in value
+  ) {
     return value as RichCellContent;
   }
   // Fallback for any other type
-  return { text: '', images: [] };
+  return { text: "", images: [] };
 }
 
 /**
@@ -120,25 +127,26 @@ export function richContentToString(content: RichCellContent): string {
 export function updateImageSize(
   image: RichCellImage,
   newWidth: number,
-  newHeight: number
+  newHeight: number,
 ): RichCellImage {
   if (image.aspectRatioLocked) {
     const aspectRatio = image.widthCm / image.heightCm;
     // If width changed more, adjust height
-    if (Math.abs(newWidth - image.widthCm) > Math.abs(newHeight - image.heightCm)) {
+    if (
+      Math.abs(newWidth - image.widthCm) > Math.abs(newHeight - image.heightCm)
+    ) {
       return {
         ...image,
         widthCm: newWidth,
         heightCm: newWidth / aspectRatio,
       };
-    } else {
-      // Height changed more, adjust width
-      return {
-        ...image,
-        widthCm: newHeight * aspectRatio,
-        heightCm: newHeight,
-      };
     }
+    // Height changed more, adjust width
+    return {
+      ...image,
+      widthCm: newHeight * aspectRatio,
+      heightCm: newHeight,
+    };
   }
   return {
     ...image,
@@ -146,4 +154,3 @@ export function updateImageSize(
     heightCm: newHeight,
   };
 }
-

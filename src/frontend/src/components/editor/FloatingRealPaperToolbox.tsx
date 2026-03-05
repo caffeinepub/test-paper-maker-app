@@ -1,19 +1,25 @@
-import { useState, useRef } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Paper, QuestionType } from '../../state/mockData';
-import { useDraggableFloatingPanel } from '../../hooks/useDraggableFloatingPanel';
+import { Button } from "@/components/ui/button";
 import {
-  FileText,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
   CheckSquare,
-  Type,
-  ToggleLeft,
+  FileText,
   Link2,
-  Table as TableIcon,
   Plus,
-} from 'lucide-react';
+  Table as TableIcon,
+  ToggleLeft,
+  Type,
+} from "lucide-react";
+import { useRef, useState } from "react";
+import { useDraggableFloatingPanel } from "../../hooks/useDraggableFloatingPanel";
+import type { Paper, QuestionType } from "../../state/mockData";
 
 interface FloatingRealPaperToolboxProps {
   paper: Paper;
@@ -21,7 +27,11 @@ interface FloatingRealPaperToolboxProps {
   selectedHeadingId: string | null;
   onSelectSection: (sectionId: string) => void;
   onSelectHeading: (headingId: string) => void;
-  onAddQuestion: (sectionId: string, headingId: string, questionType: QuestionType) => void;
+  onAddQuestion: (
+    sectionId: string,
+    headingId: string,
+    questionType: QuestionType,
+  ) => void;
   onAddHeading?: () => void;
 }
 
@@ -37,24 +47,28 @@ export function FloatingRealPaperToolbox({
   const [isExpanded, setIsExpanded] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  
-  const { position, isDragging, handleMouseDown, handleTouchStart } = useDraggableFloatingPanel({
-    initialPosition: { x: window.innerWidth - 96, y: 100 },
-    storageKey: 'desktop-fab-toolbox-position',
-    constrainToViewport: true,
-    elementSize: { width: 64, height: 64 },
-  });
 
-  const questionTypes: Array<{ type: QuestionType; label: string; icon: any }> = [
-    { type: 'short-answer', label: 'Short Answer', icon: FileText },
-    { type: 'mcq', label: 'MCQ (4 Options)', icon: CheckSquare },
-    { type: 'fill-in-blank', label: 'Fill in the Blank', icon: Type },
-    { type: 'true-false', label: 'True/False', icon: ToggleLeft },
-    { type: 'match-pairs', label: 'Match Pairs', icon: Link2 },
-    { type: 'table', label: 'Table', icon: TableIcon },
-  ];
+  const { position, isDragging, handleMouseDown, handleTouchStart } =
+    useDraggableFloatingPanel({
+      initialPosition: { x: window.innerWidth - 96, y: 100 },
+      storageKey: "desktop-fab-toolbox-position",
+      constrainToViewport: true,
+      elementSize: { width: 64, height: 64 },
+    });
 
-  const selectedSection = paper.sections.find((s) => s.id === selectedSectionId);
+  const questionTypes: Array<{ type: QuestionType; label: string; icon: any }> =
+    [
+      { type: "short-answer", label: "Short Answer", icon: FileText },
+      { type: "mcq", label: "MCQ (4 Options)", icon: CheckSquare },
+      { type: "fill-in-blank", label: "Fill in the Blank", icon: Type },
+      { type: "true-false", label: "True/False", icon: ToggleLeft },
+      { type: "match-pairs", label: "Match Pairs", icon: Link2 },
+      { type: "table", label: "Table", icon: TableIcon },
+    ];
+
+  const selectedSection = paper.sections.find(
+    (s) => s.id === selectedSectionId,
+  );
   const availableHeadings = selectedSection?.headings || [];
 
   const handleFabClick = () => {
@@ -71,7 +85,7 @@ export function FloatingRealPaperToolbox({
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
-        cursor: isDragging ? 'grabbing' : 'grab',
+        cursor: isDragging ? "grabbing" : "grab",
       }}
     >
       {/* Expanded Panel */}
@@ -82,7 +96,9 @@ export function FloatingRealPaperToolbox({
         >
           <CardHeader>
             <CardTitle className="text-lg">Question Toolbox</CardTitle>
-            <CardDescription className="text-xs">Select section & heading, then add questions</CardDescription>
+            <CardDescription className="text-xs">
+              Select section & heading, then add questions
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 overflow-y-auto flex-1">
             {/* Section Selector */}
@@ -93,13 +109,16 @@ export function FloatingRealPaperToolbox({
                   {paper.sections.map((section, idx) => (
                     <Button
                       key={section.id}
-                      variant={selectedSectionId === section.id ? 'default' : 'ghost'}
+                      variant={
+                        selectedSectionId === section.id ? "default" : "ghost"
+                      }
                       size="sm"
                       className="w-full justify-start"
                       onClick={() => onSelectSection(section.id)}
                     >
-                      Section {String.fromCharCode(65 + idx)} ({section.totalMarks} mark
-                      {section.totalMarks > 1 ? 's' : ''})
+                      Section {String.fromCharCode(65 + idx)} (
+                      {section.totalMarks} mark
+                      {section.totalMarks > 1 ? "s" : ""})
                     </Button>
                   ))}
                 </div>
@@ -119,7 +138,11 @@ export function FloatingRealPaperToolbox({
                         {availableHeadings.map((heading) => (
                           <Button
                             key={heading.id}
-                            variant={selectedHeadingId === heading.id ? 'default' : 'ghost'}
+                            variant={
+                              selectedHeadingId === heading.id
+                                ? "default"
+                                : "ghost"
+                            }
                             size="sm"
                             className="w-full justify-start"
                             onClick={() => onSelectHeading(heading.id)}
@@ -130,7 +153,9 @@ export function FloatingRealPaperToolbox({
                       </div>
                     </ScrollArea>
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">No headings yet. Add one below.</p>
+                    <p className="text-sm text-muted-foreground italic">
+                      No headings yet. Add one below.
+                    </p>
                   )}
                 </div>
                 <Separator />
@@ -166,7 +191,11 @@ export function FloatingRealPaperToolbox({
                     variant="outline"
                     size="sm"
                     className="rounded-full px-4 py-2 h-auto gap-2"
-                    onClick={() => selectedSectionId && selectedHeadingId && onAddQuestion(selectedSectionId, selectedHeadingId, type)}
+                    onClick={() =>
+                      selectedSectionId &&
+                      selectedHeadingId &&
+                      onAddQuestion(selectedSectionId, selectedHeadingId, type)
+                    }
                     disabled={!selectedSectionId || !selectedHeadingId}
                   >
                     <Icon className="h-4 w-4" />
@@ -187,18 +216,23 @@ export function FloatingRealPaperToolbox({
 
       {/* Main FAB Button */}
       <button
+        type="button"
         onClick={handleFabClick}
         onMouseDown={(e) => handleMouseDown(e, fabRef.current)}
         onTouchStart={(e) => handleTouchStart(e, fabRef.current)}
         className="flex h-16 w-16 items-center justify-center rounded-full shadow-2xl transition-all duration-300 active:scale-95 border-2 border-white"
         style={{
-          background: 'white',
+          background: "white",
         }}
-        aria-label={isExpanded ? 'Close toolbox' : 'Open toolbox'}
+        aria-label={isExpanded ? "Close toolbox" : "Open toolbox"}
       >
         <img
-          src={isExpanded ? '/assets/generated/fab-x-rainbow.dim_96x96.png' : '/assets/generated/fab-plus-rainbow.dim_96x96.png'}
-          alt={isExpanded ? 'Close' : 'Add'}
+          src={
+            isExpanded
+              ? "/assets/generated/fab-x-rainbow.dim_96x96.png"
+              : "/assets/generated/fab-plus-rainbow.dim_96x96.png"
+          }
+          alt={isExpanded ? "Close" : "Add"}
           className="h-9 w-9 transition-opacity duration-300"
           style={{
             opacity: 1,

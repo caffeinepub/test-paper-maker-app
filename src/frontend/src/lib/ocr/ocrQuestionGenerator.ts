@@ -1,44 +1,44 @@
-import { Question } from '../../state/mockData';
+import { Question } from "../../state/mockData";
 
 interface GeneratedQuestion {
   text: string;
-  questionType: 'mcq' | 'fill-in-blank' | 'short-answer';
+  questionType: "mcq" | "fill-in-blank" | "short-answer";
   marks: number;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
+  difficulty: "Easy" | "Medium" | "Hard";
   mcqOptions?: { options: string[]; correctAnswer?: number };
   fillInBlankData?: { blanks: string[] };
 }
 
 // Trailing fragments that indicate incomplete sentences
 const TRAILING_FRAGMENTS = [
-  'is one of',
-  'are one of',
-  'is a',
-  'are a',
-  'is the',
-  'are the',
-  'of the',
-  'of a',
-  'to the',
-  'to a',
-  'and the',
-  'and a',
-  'or the',
-  'or a',
-  'in the',
-  'in a',
-  'on the',
-  'on a',
-  'at the',
-  'at a',
-  'for the',
-  'for a',
-  'with the',
-  'with a',
-  'by the',
-  'by a',
-  'from the',
-  'from a',
+  "is one of",
+  "are one of",
+  "is a",
+  "are a",
+  "is the",
+  "are the",
+  "of the",
+  "of a",
+  "to the",
+  "to a",
+  "and the",
+  "and a",
+  "or the",
+  "or a",
+  "in the",
+  "in a",
+  "on the",
+  "on a",
+  "at the",
+  "at a",
+  "for the",
+  "for a",
+  "with the",
+  "with a",
+  "by the",
+  "by a",
+  "from the",
+  "from a",
 ];
 
 // Clean and validate a line
@@ -60,7 +60,7 @@ function cleanAndValidateLine(line: string): string | null {
       // Remove the fragment
       cleaned = cleaned.substring(0, cleaned.length - fragment.length).trim();
       // Remove trailing punctuation after removal
-      cleaned = cleaned.replace(/[,;:\s]+$/, '');
+      cleaned = cleaned.replace(/[,;:\s]+$/, "");
     }
   }
 
@@ -69,7 +69,7 @@ function cleanAndValidateLine(line: string): string | null {
 
   // Ensure it ends with proper punctuation
   if (!/[.!?]$/.test(cleaned)) {
-    cleaned += '.';
+    cleaned += ".";
   }
 
   return cleaned;
@@ -78,126 +78,126 @@ function cleanAndValidateLine(line: string): string | null {
 // Extract key terms from text using simple heuristics
 function extractKeyTerms(text: string): string[] {
   const stopWords = new Set([
-    'a',
-    'an',
-    'the',
-    'is',
-    'are',
-    'was',
-    'were',
-    'be',
-    'been',
-    'being',
-    'have',
-    'has',
-    'had',
-    'do',
-    'does',
-    'did',
-    'will',
-    'would',
-    'should',
-    'could',
-    'may',
-    'might',
-    'must',
-    'can',
-    'of',
-    'at',
-    'by',
-    'for',
-    'with',
-    'about',
-    'against',
-    'between',
-    'into',
-    'through',
-    'during',
-    'before',
-    'after',
-    'above',
-    'below',
-    'to',
-    'from',
-    'up',
-    'down',
-    'in',
-    'out',
-    'on',
-    'off',
-    'over',
-    'under',
-    'again',
-    'further',
-    'then',
-    'once',
-    'here',
-    'there',
-    'when',
-    'where',
-    'why',
-    'how',
-    'all',
-    'both',
-    'each',
-    'few',
-    'more',
-    'most',
-    'other',
-    'some',
-    'such',
-    'no',
-    'nor',
-    'not',
-    'only',
-    'own',
-    'same',
-    'so',
-    'than',
-    'too',
-    'very',
-    'just',
-    'but',
-    'and',
-    'or',
-    'if',
-    'because',
-    'as',
-    'until',
-    'while',
-    'it',
-    'they',
-    'them',
-    'their',
-    'what',
-    'which',
-    'who',
-    'whom',
-    'this',
-    'that',
-    'these',
-    'those',
-    'am',
-    'his',
-    'her',
-    'its',
-    'our',
-    'your',
-    'also',
-    'known',
+    "a",
+    "an",
+    "the",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "should",
+    "could",
+    "may",
+    "might",
+    "must",
+    "can",
+    "of",
+    "at",
+    "by",
+    "for",
+    "with",
+    "about",
+    "against",
+    "between",
+    "into",
+    "through",
+    "during",
+    "before",
+    "after",
+    "above",
+    "below",
+    "to",
+    "from",
+    "up",
+    "down",
+    "in",
+    "out",
+    "on",
+    "off",
+    "over",
+    "under",
+    "again",
+    "further",
+    "then",
+    "once",
+    "here",
+    "there",
+    "when",
+    "where",
+    "why",
+    "how",
+    "all",
+    "both",
+    "each",
+    "few",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "no",
+    "nor",
+    "not",
+    "only",
+    "own",
+    "same",
+    "so",
+    "than",
+    "too",
+    "very",
+    "just",
+    "but",
+    "and",
+    "or",
+    "if",
+    "because",
+    "as",
+    "until",
+    "while",
+    "it",
+    "they",
+    "them",
+    "their",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "this",
+    "that",
+    "these",
+    "those",
+    "am",
+    "his",
+    "her",
+    "its",
+    "our",
+    "your",
+    "also",
+    "known",
   ]);
 
   const words = text
     .toLowerCase()
-    .replace(/[^\w\s]/g, ' ')
+    .replace(/[^\w\s]/g, " ")
     .split(/\s+/)
     .filter((word) => word.length > 3 && !stopWords.has(word));
 
   // Count frequency
   const frequency: Record<string, number> = {};
-  words.forEach((word) => {
+  for (const word of words) {
     frequency[word] = (frequency[word] || 0) + 1;
-  });
+  }
 
   // Sort by frequency and return top terms
   return Object.entries(frequency)
@@ -215,13 +215,20 @@ function extractLines(text: string): string[] {
 }
 
 // Extract meaningful phrases from text for MCQ options
+// biome-ignore lint/correctness/noUnusedVariables: utility function reserved for future use
 function extractPhrasesFromText(text: string, count: number): string[] {
-  const lines = text.split(/\n+/).map((l) => l.trim()).filter((l) => l.length > 15);
+  const lines = text
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 15);
   const phrases: string[] = [];
 
   for (const line of lines) {
     // Split by sentence-ending punctuation
-    const sentences = line.split(/[.!?]+/).map((s) => s.trim()).filter((s) => s.length > 10);
+    const sentences = line
+      .split(/[.!?]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 10);
     phrases.push(...sentences);
   }
 
@@ -231,7 +238,11 @@ function extractPhrasesFromText(text: string, count: number): string[] {
 }
 
 // Generate MCQ from a line with grounded options
-function generateMCQFromLine(line: string, allLines: string[], keyTerms: string[]): GeneratedQuestion | null {
+function generateMCQFromLine(
+  line: string,
+  allLines: string[],
+  keyTerms: string[],
+): GeneratedQuestion | null {
   const words = line.split(/\s+/);
   if (words.length < 5) return null;
 
@@ -245,7 +256,7 @@ function generateMCQFromLine(line: string, allLines: string[], keyTerms: string[
   const questionText = `Which of the following statements is correct about ${relevantTerm}?`;
 
   // Correct option: use the current line (truncated if too long)
-  const correctOption = line.length > 80 ? line.substring(0, 77) + '...' : line;
+  const correctOption = line.length > 80 ? `${line.substring(0, 77)}...` : line;
 
   // Generate distractors from other lines
   const otherLines = allLines.filter((l) => l !== line && l.length > 20);
@@ -253,7 +264,8 @@ function generateMCQFromLine(line: string, allLines: string[], keyTerms: string[
 
   for (const otherLine of otherLines) {
     if (distractors.length >= 3) break;
-    const distractor = otherLine.length > 80 ? otherLine.substring(0, 77) + '...' : otherLine;
+    const distractor =
+      otherLine.length > 80 ? `${otherLine.substring(0, 77)}...` : otherLine;
     if (distractor !== correctOption && !distractors.includes(distractor)) {
       distractors.push(distractor);
     }
@@ -266,15 +278,18 @@ function generateMCQFromLine(line: string, allLines: string[], keyTerms: string[
 
   return {
     text: questionText,
-    questionType: 'mcq',
+    questionType: "mcq",
     marks: 2,
-    difficulty: 'Medium',
+    difficulty: "Medium",
     mcqOptions: { options, correctAnswer: 0 },
   };
 }
 
 // Generate fill-in-the-blank from a line
-function generateFillInBlankFromLine(line: string, keyTerms: string[]): GeneratedQuestion | null {
+function generateFillInBlankFromLine(
+  line: string,
+  keyTerms: string[],
+): GeneratedQuestion | null {
   const lineLower = line.toLowerCase();
   const relevantTerm = keyTerms.find((term) => lineLower.includes(term));
 
@@ -284,32 +299,42 @@ function generateFillInBlankFromLine(line: string, keyTerms: string[]): Generate
     const significantWords = words.filter((w) => w.length > 4);
     if (significantWords.length === 0) return null;
 
-    const wordToBlank = significantWords[Math.floor(significantWords.length / 2)];
-    const blankSentence = line.replace(new RegExp(`\\b${wordToBlank}\\b`, 'i'), '________');
+    const wordToBlank =
+      significantWords[Math.floor(significantWords.length / 2)];
+    const blankSentence = line.replace(
+      new RegExp(`\\b${wordToBlank}\\b`, "i"),
+      "________",
+    );
 
     return {
       text: blankSentence,
-      questionType: 'fill-in-blank',
+      questionType: "fill-in-blank",
       marks: 1,
-      difficulty: 'Easy',
-      fillInBlankData: { blanks: [wordToBlank.replace(/[.,!?;:]$/, '')] },
+      difficulty: "Easy",
+      fillInBlankData: { blanks: [wordToBlank.replace(/[.,!?;:]$/, "")] },
     };
   }
 
   // Replace the key term with a blank
-  const blankSentence = line.replace(new RegExp(`\\b${relevantTerm}\\b`, 'i'), '________');
+  const blankSentence = line.replace(
+    new RegExp(`\\b${relevantTerm}\\b`, "i"),
+    "________",
+  );
 
   return {
     text: blankSentence,
-    questionType: 'fill-in-blank',
+    questionType: "fill-in-blank",
     marks: 1,
-    difficulty: 'Easy',
+    difficulty: "Easy",
     fillInBlankData: { blanks: [relevantTerm] },
   };
 }
 
 // Generate short-answer from a line
-function generateShortAnswerFromLine(line: string, keyTerms: string[]): GeneratedQuestion | null {
+function generateShortAnswerFromLine(
+  line: string,
+  keyTerms: string[],
+): GeneratedQuestion | null {
   const lineLower = line.toLowerCase();
   const relevantTerm = keyTerms.find((term) => lineLower.includes(term));
 
@@ -319,9 +344,9 @@ function generateShortAnswerFromLine(line: string, keyTerms: string[]): Generate
 
   return {
     text: questionText,
-    questionType: 'short-answer',
+    questionType: "short-answer",
     marks: 3,
-    difficulty: 'Medium',
+    difficulty: "Medium",
   };
 }
 
@@ -357,7 +382,10 @@ export function generateQuestionsFromLines(text: string): GeneratedQuestion[] {
 }
 
 // Generate questions from paragraph-style text
-export function generateQuestionsFromParagraph(text: string, maxQuestions: number): GeneratedQuestion[] {
+export function generateQuestionsFromParagraph(
+  text: string,
+  maxQuestions: number,
+): GeneratedQuestion[] {
   const keyTerms = extractKeyTerms(text);
   const questions: GeneratedQuestion[] = [];
 

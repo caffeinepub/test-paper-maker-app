@@ -1,30 +1,56 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FloatingAIButton } from '../../components/ai/FloatingAIButton';
-import { getSectionInsertContext, clearSectionInsertContext } from '../../lib/editor/sectionInsertContext';
-import { insertQuestionIntoSection, insertQuestionIntoHeading, insertQuestionsIntoHeading } from '../../lib/editor/insertQuestionsIntoPaper';
-import { Info, ArrowLeft, Check, X } from 'lucide-react';
-import { Question } from '../../state/mockData';
-import { Textarea } from '@/components/ui/textarea';
-import { QUESTION_TYPES, QuestionTypeFilter } from '../../lib/questionBank/questionBankTaxonomy';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { ArrowLeft, Check, Info, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FloatingAIButton } from "../../components/ai/FloatingAIButton";
+import {
+  insertQuestionIntoHeading,
+  insertQuestionIntoSection,
+  insertQuestionsIntoHeading,
+} from "../../lib/editor/insertQuestionsIntoPaper";
+import {
+  clearSectionInsertContext,
+  getSectionInsertContext,
+} from "../../lib/editor/sectionInsertContext";
+import {
+  QUESTION_TYPES,
+  type QuestionTypeFilter,
+} from "../../lib/questionBank/questionBankTaxonomy";
+import type { Question } from "../../state/mockData";
+import { useMockStore } from "../../state/mockStore";
 
 export function QuestionBankBoardStandardWireframe() {
   const navigate = useNavigate();
-  const { board, standard } = useParams({ from: '/question-bank/$board/$standard' });
+  const { board, standard } = useParams({
+    from: "/question-bank/$board/$standard",
+  });
   const search = useSearch({ strict: false }) as { tab?: string };
-  const { getStarterQuestions, personalQuestions, getPaperById, updatePaper, updatePersonalQuestion } = useMockStore();
-  const [selectedTab] = useState(search?.tab || 'starter');
-  const [selectedType, setSelectedType] = useState<QuestionTypeFilter>('all');
+  const {
+    getStarterQuestions,
+    personalQuestions,
+    getPaperById,
+    updatePaper,
+    updatePersonalQuestion,
+  } = useMockStore();
+  const [selectedTab] = useState(search?.tab || "starter");
+  const [selectedType, setSelectedType] = useState<QuestionTypeFilter>("all");
   const [insertContext, setInsertContext] = useState(getSectionInsertContext());
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState('');
-  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
+  const [editText, setEditText] = useState("");
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     setInsertContext(getSectionInsertContext());
@@ -32,40 +58,51 @@ export function QuestionBankBoardStandardWireframe() {
 
   const isMultiSelectMode = insertContext?.headingId !== undefined;
 
-  const allQuestions = selectedTab === 'starter' ? getStarterQuestions() : personalQuestions;
+  const allQuestions =
+    selectedTab === "starter" ? getStarterQuestions() : personalQuestions;
   const filteredQuestions = allQuestions.filter((q) => {
     const matchesBoard = q.board === board;
     const matchesStandard = q.standard === standard;
-    const matchesType = selectedType === 'all' || q.questionType === selectedType;
+    const matchesType =
+      selectedType === "all" || q.questionType === selectedType;
     return matchesBoard && matchesStandard && matchesType;
   });
 
   const handleBack = () => {
-    navigate({ to: '/question-bank', search: { tab: selectedTab } });
+    navigate({ to: "/question-bank", search: { tab: selectedTab } });
   };
 
   const handleUseQuestion = (question: Question) => {
     if (!insertContext) {
-      alert('No paper context found. Please navigate from the paper editor.');
+      alert("No paper context found. Please navigate from the paper editor.");
       return;
     }
 
     const paper = getPaperById(insertContext.paperId);
     if (!paper) {
-      alert('Paper not found');
+      alert("Paper not found");
       return;
     }
 
-    let updatedSections;
+    let updatedSections: ReturnType<typeof insertQuestionIntoHeading>;
     if (insertContext.headingId) {
-      updatedSections = insertQuestionIntoHeading(paper, insertContext.sectionId, insertContext.headingId, question);
+      updatedSections = insertQuestionIntoHeading(
+        paper,
+        insertContext.sectionId,
+        insertContext.headingId,
+        question,
+      );
     } else {
-      updatedSections = insertQuestionIntoSection(paper, insertContext.sectionId, question);
+      updatedSections = insertQuestionIntoSection(
+        paper,
+        insertContext.sectionId,
+        question,
+      );
     }
 
     updatePaper(insertContext.paperId, { sections: updatedSections });
     clearSectionInsertContext();
-    alert('Question added to paper!');
+    alert("Question added to paper!");
     navigate({ to: `/editor/${insertContext.paperId}/real-paper` });
   };
 
@@ -83,27 +120,29 @@ export function QuestionBankBoardStandardWireframe() {
 
   const handleInsertSelected = () => {
     if (!insertContext || !insertContext.headingId) {
-      alert('No heading context found');
+      alert("No heading context found");
       return;
     }
 
     if (selectedQuestions.size === 0) {
-      alert('Please select at least one question');
+      alert("Please select at least one question");
       return;
     }
 
     const paper = getPaperById(insertContext.paperId);
     if (!paper) {
-      alert('Paper not found');
+      alert("Paper not found");
       return;
     }
 
-    const questionsToInsert = filteredQuestions.filter((q) => selectedQuestions.has(q.id));
+    const questionsToInsert = filteredQuestions.filter((q) =>
+      selectedQuestions.has(q.id),
+    );
     const updatedSections = insertQuestionsIntoHeading(
       paper,
       insertContext.sectionId,
       insertContext.headingId,
-      questionsToInsert
+      questionsToInsert,
     );
 
     updatePaper(insertContext.paperId, { sections: updatedSections });
@@ -118,30 +157,34 @@ export function QuestionBankBoardStandardWireframe() {
   };
 
   const handleSaveEdit = (questionId: string) => {
-    if (selectedTab === 'personal') {
+    if (selectedTab === "personal") {
       updatePersonalQuestion(questionId, { text: editText });
     }
     setEditingId(null);
-    setEditText('');
+    setEditText("");
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setEditText('');
+    setEditText("");
   };
 
   const getSectionLabel = () => {
     if (!insertContext) return null;
     const paper = getPaperById(insertContext.paperId);
     if (!paper) return null;
-    const sectionIndex = paper.sections.findIndex((s) => s.id === insertContext.sectionId);
+    const sectionIndex = paper.sections.findIndex(
+      (s) => s.id === insertContext.sectionId,
+    );
     if (sectionIndex === -1) return null;
 
     let label = `Section ${String.fromCharCode(65 + sectionIndex)}`;
 
     if (insertContext.headingId) {
       const section = paper.sections[sectionIndex];
-      const heading = section.headings?.find((h) => h.id === insertContext.headingId);
+      const heading = section.headings?.find(
+        (h) => h.id === insertContext.headingId,
+      );
       if (heading) {
         label += ` - ${heading.title}`;
       }
@@ -162,7 +205,7 @@ export function QuestionBankBoardStandardWireframe() {
           {board} - {standard}
         </h1>
         <p className="mt-2 text-muted-foreground">
-          {selectedTab === 'starter' ? 'Starter Questions' : 'My Questions'}
+          {selectedTab === "starter" ? "Starter Questions" : "My Questions"}
         </p>
       </div>
 
@@ -172,14 +215,17 @@ export function QuestionBankBoardStandardWireframe() {
           <AlertDescription>
             {isMultiSelectMode ? (
               <>
-                Adding questions to <strong>{getSectionLabel()}</strong> for paper{' '}
-                <strong>{getPaperById(insertContext.paperId)?.title}</strong>. Select multiple questions and click
-                "Insert Selected".
+                Adding questions to <strong>{getSectionLabel()}</strong> for
+                paper{" "}
+                <strong>{getPaperById(insertContext.paperId)?.title}</strong>.
+                Select multiple questions and click "Insert Selected".
               </>
             ) : (
               <>
-                Adding question to <strong>{getSectionLabel()}</strong> for paper{' '}
-                <strong>{getPaperById(insertContext.paperId)?.title}</strong>. Select a standard to browse questions.
+                Adding question to <strong>{getSectionLabel()}</strong> for
+                paper{" "}
+                <strong>{getPaperById(insertContext.paperId)?.title}</strong>.
+                Select a standard to browse questions.
               </>
             )}
           </AlertDescription>
@@ -187,9 +233,17 @@ export function QuestionBankBoardStandardWireframe() {
       )}
 
       <div className="mb-6">
-        <label className="mb-2 block text-sm font-medium text-foreground">Find questions using question type</label>
-        <Select value={selectedType} onValueChange={(value: QuestionTypeFilter) => setSelectedType(value)}>
-          <SelectTrigger className="max-w-xs">
+        <label
+          htmlFor="question-type-filter"
+          className="mb-2 block text-sm font-medium text-foreground"
+        >
+          Find questions using question type
+        </label>
+        <Select
+          value={selectedType}
+          onValueChange={(value: QuestionTypeFilter) => setSelectedType(value)}
+        >
+          <SelectTrigger id="question-type-filter" className="max-w-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -205,7 +259,8 @@ export function QuestionBankBoardStandardWireframe() {
       {isMultiSelectMode && selectedQuestions.size > 0 && (
         <div className="mb-4 flex items-center justify-between rounded-lg border bg-card p-4">
           <span className="text-sm font-medium">
-            {selectedQuestions.size} question{selectedQuestions.size > 1 ? 's' : ''} selected
+            {selectedQuestions.size} question
+            {selectedQuestions.size > 1 ? "s" : ""} selected
           </span>
           <Button onClick={handleInsertSelected}>
             <Check className="mr-2 h-4 w-4" />
@@ -217,8 +272,12 @@ export function QuestionBankBoardStandardWireframe() {
       {filteredQuestions.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-lg font-medium text-foreground">No questions added yet.</p>
-            <p className="mt-2 text-muted-foreground">Start by selecting add questions .</p>
+            <p className="text-lg font-medium text-foreground">
+              No questions added yet.
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              Start by selecting add questions .
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -234,11 +293,18 @@ export function QuestionBankBoardStandardWireframe() {
                       className="min-h-[100px]"
                     />
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleSaveEdit(question.id)}>
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveEdit(question.id)}
+                      >
                         <Check className="mr-2 h-4 w-4" />
                         Save
                       </Button>
-                      <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelEdit}
+                      >
                         <X className="mr-2 h-4 w-4" />
                         Cancel
                       </Button>
@@ -257,7 +323,7 @@ export function QuestionBankBoardStandardWireframe() {
                       <p className="text-foreground">{question.text}</p>
                       <div className="mt-2 flex gap-2">
                         <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
-                          {question.marks} Mark{question.marks > 1 ? 's' : ''}
+                          {question.marks} Mark{question.marks > 1 ? "s" : ""}
                         </span>
                         <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
                           {question.type}
@@ -265,13 +331,20 @@ export function QuestionBankBoardStandardWireframe() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      {selectedTab === 'personal' && (
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(question)}>
+                      {selectedTab === "personal" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(question)}
+                        >
                           Edit
                         </Button>
                       )}
                       {!isMultiSelectMode && insertContext && (
-                        <Button size="sm" onClick={() => handleUseQuestion(question)}>
+                        <Button
+                          size="sm"
+                          onClick={() => handleUseQuestion(question)}
+                        >
                           Use
                         </Button>
                       )}

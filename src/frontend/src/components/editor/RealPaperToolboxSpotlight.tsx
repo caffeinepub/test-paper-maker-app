@@ -1,21 +1,33 @@
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lightbulb, X } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Lightbulb, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface RealPaperToolboxSpotlightProps {
   onComplete: () => void;
 }
 
-export function RealPaperToolboxSpotlight({ onComplete }: RealPaperToolboxSpotlightProps) {
+export function RealPaperToolboxSpotlight({
+  onComplete,
+}: RealPaperToolboxSpotlightProps) {
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [_position, setPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     // Find the toolbox element
     const findTarget = () => {
-      const desktop = document.querySelector('[data-coachmark="real-paper-toolbox"]') as HTMLElement;
-      const mobile = document.querySelector('[data-coachmark="mobile-real-paper-toolbox"]') as HTMLElement;
+      const desktop = document.querySelector(
+        '[data-coachmark="real-paper-toolbox"]',
+      ) as HTMLElement;
+      const mobile = document.querySelector(
+        '[data-coachmark="mobile-real-paper-toolbox"]',
+      ) as HTMLElement;
       return desktop || mobile;
     };
 
@@ -49,12 +61,12 @@ export function RealPaperToolboxSpotlight({ onComplete }: RealPaperToolboxSpotli
     };
 
     updatePosition();
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition);
 
     return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition);
     };
   }, [targetElement]);
 
@@ -68,7 +80,8 @@ export function RealPaperToolboxSpotlight({ onComplete }: RealPaperToolboxSpotli
               Toolbox Tutorial
             </CardTitle>
             <CardDescription>
-              The toolbox is loading. If it doesn't appear, you can dismiss this message.
+              The toolbox is loading. If it doesn't appear, you can dismiss this
+              message.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -88,7 +101,14 @@ export function RealPaperToolboxSpotlight({ onComplete }: RealPaperToolboxSpotli
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm" onClick={onComplete} />
+      <div
+        className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm"
+        onClick={onComplete}
+        onKeyDown={(e) => e.key === "Escape" && onComplete()}
+        role="button"
+        tabIndex={0}
+        aria-label="Close tutorial"
+      />
 
       {/* Highlight */}
       <div
@@ -107,7 +127,7 @@ export function RealPaperToolboxSpotlight({ onComplete }: RealPaperToolboxSpotli
         style={{
           top: `${calloutTop}px`,
           left: `${calloutLeft}px`,
-          transform: 'translateY(-50%)',
+          transform: "translateY(-50%)",
         }}
       >
         <CardHeader>
@@ -116,12 +136,18 @@ export function RealPaperToolboxSpotlight({ onComplete }: RealPaperToolboxSpotli
               <Lightbulb className="h-5 w-5 text-primary" />
               <CardTitle className="text-lg">Real Paper Toolbox</CardTitle>
             </div>
-            <Button variant="ghost" size="icon" onClick={onComplete} className="h-6 w-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onComplete}
+              className="h-6 w-6"
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>
           <CardDescription>
-            Use this floating toolbox to add questions directly to your paper. Select a section and heading, then choose a question type to insert.
+            Use this floating toolbox to add questions directly to your paper.
+            Select a section and heading, then choose a question type to insert.
           </CardDescription>
         </CardHeader>
         <CardContent>

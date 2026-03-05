@@ -1,4 +1,4 @@
-import { Question, Paper, PaperSection } from '../../state/mockData';
+import type { Paper, PaperSection, Question } from "../../state/mockData";
 
 /**
  * Generate a unique question ID
@@ -44,8 +44,14 @@ export function deepCloneQuestion(source: Question): Question {
   if (source.matchPairsData) {
     cloned.matchPairsData = {
       pairs: source.matchPairsData.pairs.map((pair) => ({
-        left: typeof pair.left === 'string' ? pair.left : JSON.parse(JSON.stringify(pair.left)),
-        right: typeof pair.right === 'string' ? pair.right : JSON.parse(JSON.stringify(pair.right)),
+        left:
+          typeof pair.left === "string"
+            ? pair.left
+            : JSON.parse(JSON.stringify(pair.left)),
+        right:
+          typeof pair.right === "string"
+            ? pair.right
+            : JSON.parse(JSON.stringify(pair.right)),
       })),
     };
   }
@@ -55,7 +61,9 @@ export function deepCloneQuestion(source: Question): Question {
       rows: source.tableData.rows,
       cols: source.tableData.cols,
       cells: source.tableData.cells.map((row) =>
-        row.map((cell) => (typeof cell === 'string' ? cell : JSON.parse(JSON.stringify(cell))))
+        row.map((cell) =>
+          typeof cell === "string" ? cell : JSON.parse(JSON.stringify(cell)),
+        ),
       ),
       columnHeaders: source.tableData.columnHeaders
         ? [...source.tableData.columnHeaders]
@@ -81,10 +89,15 @@ export function computeHeadingId(section: PaperSection): string | null {
  * Find the insertion index for questions under a specific heading
  * Returns the index after all questions of that heading, before the next heading's questions
  */
-function findHeadingInsertionIndex(section: PaperSection, targetHeadingId: string): number {
+function findHeadingInsertionIndex(
+  section: PaperSection,
+  targetHeadingId: string,
+): number {
   const headings = section.headings || [];
-  const targetHeadingIndex = headings.findIndex((h) => h.id === targetHeadingId);
-  
+  const targetHeadingIndex = headings.findIndex(
+    (h) => h.id === targetHeadingId,
+  );
+
   if (targetHeadingIndex === -1) {
     // Heading not found, append to end
     return section.questions.length;
@@ -108,7 +121,9 @@ function findHeadingInsertionIndex(section: PaperSection, targetHeadingId: strin
   // Insert before the first question of any subsequent heading
   const subsequentHeadings = headings.slice(targetHeadingIndex + 1);
   for (const heading of subsequentHeadings) {
-    const firstQuestionIndex = section.questions.findIndex((q) => q.headingId === heading.id);
+    const firstQuestionIndex = section.questions.findIndex(
+      (q) => q.headingId === heading.id,
+    );
     if (firstQuestionIndex !== -1) {
       return firstQuestionIndex;
     }
@@ -124,7 +139,7 @@ function findHeadingInsertionIndex(section: PaperSection, targetHeadingId: strin
 export function insertQuestionIntoSection(
   paper: Paper,
   sectionId: string,
-  sourceQuestion: Question
+  sourceQuestion: Question,
 ): PaperSection[] {
   const clonedQuestion = deepCloneQuestion(sourceQuestion);
 
@@ -147,16 +162,16 @@ export function insertQuestionIntoSection(
 export function insertQuestionsIntoSection(
   paper: Paper,
   sectionId: string,
-  sourceQuestions: Question[]
+  sourceQuestions: Question[],
 ): PaperSection[] {
   const clonedQuestions = sourceQuestions.map((q) => deepCloneQuestion(q));
 
   return paper.sections.map((section) => {
     if (section.id === sectionId) {
       const headingId = computeHeadingId(section);
-      clonedQuestions.forEach((q) => {
+      for (const q of clonedQuestions) {
         q.headingId = headingId;
-      });
+      }
       return {
         ...section,
         questions: [...section.questions, ...clonedQuestions],
@@ -173,7 +188,7 @@ export function insertQuestionIntoHeading(
   paper: Paper,
   sectionId: string,
   headingId: string,
-  sourceQuestion: Question
+  sourceQuestion: Question,
 ): PaperSection[] {
   const clonedQuestion = deepCloneQuestion(sourceQuestion);
   clonedQuestion.headingId = headingId;
@@ -199,7 +214,7 @@ export function insertQuestionsIntoHeading(
   paper: Paper,
   sectionId: string,
   headingId: string,
-  sourceQuestions: Question[]
+  sourceQuestions: Question[],
 ): PaperSection[] {
   const clonedQuestions = sourceQuestions.map((q) => {
     const cloned = deepCloneQuestion(q);

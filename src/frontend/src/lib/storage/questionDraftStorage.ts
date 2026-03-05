@@ -1,4 +1,4 @@
-import { safeGetItem, safeSetItem, safeRemoveItem } from './safeStorage';
+import { safeGetItem, safeRemoveItem, safeSetItem } from "./safeStorage";
 
 interface QuestionDraft {
   paperId: string;
@@ -8,9 +8,12 @@ interface QuestionDraft {
   timestamp: number;
 }
 
-const DRAFT_KEY_PREFIX = 'question-draft-';
+const DRAFT_KEY_PREFIX = "question-draft-";
 
-export function saveQuestionDraft(paperId: string, draft: Omit<QuestionDraft, 'paperId' | 'timestamp'>): void {
+export function saveQuestionDraft(
+  paperId: string,
+  draft: Omit<QuestionDraft, "paperId" | "timestamp">,
+): void {
   const fullDraft: QuestionDraft = {
     paperId,
     ...draft,

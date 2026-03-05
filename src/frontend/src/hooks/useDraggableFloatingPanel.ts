@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Position {
   x: number;
@@ -33,7 +33,7 @@ export function useDraggableFloatingPanel({
           setPosition(parsed);
         }
       } catch (error) {
-        console.error('Failed to load panel position:', error);
+        console.error("Failed to load panel position:", error);
       }
     }
   }, [storageKey]);
@@ -44,40 +44,49 @@ export function useDraggableFloatingPanel({
       try {
         localStorage.setItem(storageKey, JSON.stringify(position));
       } catch (error) {
-        console.error('Failed to save panel position:', error);
+        console.error("Failed to save panel position:", error);
       }
     }
   }, [position, storageKey, isDragging]);
 
-  const constrainPosition = useCallback((pos: Position, elWidth: number, elHeight: number): Position => {
-    if (!constrainToViewport) return pos;
+  const constrainPosition = useCallback(
+    (pos: Position, elWidth: number, elHeight: number): Position => {
+      if (!constrainToViewport) return pos;
 
-    const maxX = window.innerWidth - elWidth - 20;
-    const maxY = window.innerHeight - elHeight - 20;
+      const maxX = window.innerWidth - elWidth - 20;
+      const maxY = window.innerHeight - elHeight - 20;
 
-    return {
-      x: Math.max(20, Math.min(pos.x, maxX)),
-      y: Math.max(20, Math.min(pos.y, maxY)),
-    };
-  }, [constrainToViewport]);
+      return {
+        x: Math.max(20, Math.min(pos.x, maxX)),
+        y: Math.max(20, Math.min(pos.y, maxY)),
+      };
+    },
+    [constrainToViewport],
+  );
 
-  const handleMouseDown = useCallback((e: React.MouseEvent, elementRef: HTMLElement | null) => {
-    if (!elementRef) return;
-    
-    e.preventDefault();
-    setIsDragging(true);
-    dragStartPos.current = { x: e.clientX, y: e.clientY };
-    elementStartPos.current = position;
-  }, [position]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent, elementRef: HTMLElement | null) => {
+      if (!elementRef) return;
 
-  const handleTouchStart = useCallback((e: React.TouchEvent, elementRef: HTMLElement | null) => {
-    if (!elementRef || e.touches.length === 0) return;
-    
-    setIsDragging(true);
-    const touch = e.touches[0];
-    dragStartPos.current = { x: touch.clientX, y: touch.clientY };
-    elementStartPos.current = position;
-  }, [position]);
+      e.preventDefault();
+      setIsDragging(true);
+      dragStartPos.current = { x: e.clientX, y: e.clientY };
+      elementStartPos.current = position;
+    },
+    [position],
+  );
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent, elementRef: HTMLElement | null) => {
+      if (!elementRef || e.touches.length === 0) return;
+
+      setIsDragging(true);
+      const touch = e.touches[0];
+      dragStartPos.current = { x: touch.clientX, y: touch.clientY };
+      elementStartPos.current = position;
+    },
+    [position],
+  );
 
   useEffect(() => {
     if (!isDragging) return;
@@ -91,7 +100,9 @@ export function useDraggableFloatingPanel({
         y: elementStartPos.current.y + deltaY,
       };
 
-      setPosition(constrainPosition(newPos, elementSize.width, elementSize.height));
+      setPosition(
+        constrainPosition(newPos, elementSize.width, elementSize.height),
+      );
     };
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -105,23 +116,25 @@ export function useDraggableFloatingPanel({
         y: elementStartPos.current.y + deltaY,
       };
 
-      setPosition(constrainPosition(newPos, elementSize.width, elementSize.height));
+      setPosition(
+        constrainPosition(newPos, elementSize.width, elementSize.height),
+      );
     };
 
     const handleEnd = () => {
       setIsDragging(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleTouchMove);
-    document.addEventListener('touchend', handleEnd);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleEnd);
+    document.addEventListener("touchmove", handleTouchMove);
+    document.addEventListener("touchend", handleEnd);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleEnd);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleEnd);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleEnd);
     };
   }, [isDragging, constrainPosition, elementSize]);
 

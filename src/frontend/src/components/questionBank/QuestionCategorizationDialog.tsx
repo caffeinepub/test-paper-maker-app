@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,16 +6,30 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BOARDS, STANDARDS, QUESTION_TYPES } from '../../lib/questionBank/questionBankTaxonomy';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
+import {
+  BOARDS,
+  QUESTION_TYPES,
+  STANDARDS,
+} from "../../lib/questionBank/questionBankTaxonomy";
 
 interface QuestionCategorizationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (metadata: { board: string; standard: string; questionType: string }) => void;
+  onConfirm: (metadata: {
+    board: string;
+    standard: string;
+    questionType: string;
+  }) => void;
   defaultBoard?: string;
   defaultStandard?: string;
 }
@@ -29,7 +43,7 @@ export function QuestionCategorizationDialog({
 }: QuestionCategorizationDialogProps) {
   const [board, setBoard] = useState(defaultBoard || BOARDS[0]);
   const [standard, setStandard] = useState(defaultStandard || STANDARDS[9]); // Default to Standard 10
-  const [questionType, setQuestionType] = useState('short-answer');
+  const [questionType, setQuestionType] = useState("short-answer");
 
   const handleConfirm = () => {
     onConfirm({ board, standard, questionType });
@@ -42,7 +56,8 @@ export function QuestionCategorizationDialog({
         <DialogHeader>
           <DialogTitle>Categorize Questions</DialogTitle>
           <DialogDescription>
-            Select the board, standard, and question type for these questions to organize them in your Question Bank.
+            Select the board, standard, and question type for these questions to
+            organize them in your Question Bank.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -83,7 +98,7 @@ export function QuestionCategorizationDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {QUESTION_TYPES.filter((t) => t.value !== 'all').map((type) => (
+                {QUESTION_TYPES.filter((t) => t.value !== "all").map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>

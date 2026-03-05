@@ -1,18 +1,30 @@
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Image as ImageIcon, X, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
-import { CellContent } from '../../state/mockData';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  RichCellContent,
-  RichCellImage,
-  normalizeToRichContent,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Image as ImageIcon,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  type RichCellContent,
+  type RichCellImage,
+  cmToPixels,
   extractImageFromClipboard,
   extractImageFromFile,
-  cmToPixels,
-} from '../../lib/editor/richCellContent';
+  normalizeToRichContent,
+} from "../../lib/editor/richCellContent";
+import type { CellContent } from "../../state/mockData";
 
 interface RichCellEditorProps {
   value: CellContent;
@@ -21,8 +33,15 @@ interface RichCellEditorProps {
   autoFocus?: boolean;
 }
 
-export function RichCellEditor({ value, onChange, placeholder, autoFocus }: RichCellEditorProps) {
-  const [richContent, setRichContent] = useState<RichCellContent>(() => normalizeToRichContent(value));
+export function RichCellEditor({
+  value,
+  onChange,
+  placeholder,
+  autoFocus,
+}: RichCellEditorProps) {
+  const [richContent, setRichContent] = useState<RichCellContent>(() =>
+    normalizeToRichContent(value),
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,10 +73,13 @@ export function RichCellEditor({ value, onChange, placeholder, autoFocus }: Rich
         widthCm: 4,
         heightCm: 3,
         aspectRatioLocked: true,
-        alignment: 'left',
-        caption: '',
+        alignment: "left",
+        caption: "",
       };
-      const updated = { ...richContent, images: [...richContent.images, newImage] };
+      const updated = {
+        ...richContent,
+        images: [...richContent.images, newImage],
+      };
       setRichContent(updated);
       onChange(updated);
     }
@@ -74,23 +96,31 @@ export function RichCellEditor({ value, onChange, placeholder, autoFocus }: Rich
           widthCm: 4,
           heightCm: 3,
           aspectRatioLocked: true,
-          alignment: 'left',
-          caption: '',
+          alignment: "left",
+          caption: "",
         };
-        const updated = { ...richContent, images: [...richContent.images, newImage] };
+        const updated = {
+          ...richContent,
+          images: [...richContent.images, newImage],
+        };
         setRichContent(updated);
         onChange(updated);
       }
     }
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
-  const handleImageUpdate = (imageId: string, updates: Partial<RichCellImage>) => {
+  const handleImageUpdate = (
+    imageId: string,
+    updates: Partial<RichCellImage>,
+  ) => {
     const updated = {
       ...richContent,
-      images: richContent.images.map((img) => (img.id === imageId ? { ...img, ...updates } : img)),
+      images: richContent.images.map((img) =>
+        img.id === imageId ? { ...img, ...updates } : img,
+      ),
     };
     setRichContent(updated);
     onChange(updated);
@@ -109,6 +139,7 @@ export function RichCellEditor({ value, onChange, placeholder, autoFocus }: Rich
     <div
       className="rich-cell-editor-container"
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
       <textarea
@@ -120,6 +151,7 @@ export function RichCellEditor({ value, onChange, placeholder, autoFocus }: Rich
         className="w-full resize-none border-0 bg-transparent p-1 text-sm focus:outline-none focus:ring-0"
         rows={2}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       />
 
@@ -132,12 +164,12 @@ export function RichCellEditor({ value, onChange, placeholder, autoFocus }: Rich
           <div className="relative inline-block max-w-full">
             <img
               src={image.dataUrl}
-              alt={image.caption || 'Cell image'}
+              alt={image.caption || "Cell image"}
               className="rich-cell-image max-w-full"
               style={{
                 width: `${cmToPixels(image.widthCm)}px`,
                 height: `${cmToPixels(image.heightCm)}px`,
-                objectFit: 'contain',
+                objectFit: "contain",
               }}
             />
             <div className="rich-cell-image-controls">
@@ -158,34 +190,34 @@ export function RichCellEditor({ value, onChange, placeholder, autoFocus }: Rich
           <div className="mt-1 space-y-1">
             <div className="flex gap-1">
               <Button
-                variant={image.alignment === 'left' ? 'default' : 'outline'}
+                variant={image.alignment === "left" ? "default" : "outline"}
                 size="icon"
                 className="h-6 w-6"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleImageUpdate(image.id, { alignment: 'left' });
+                  handleImageUpdate(image.id, { alignment: "left" });
                 }}
               >
                 <AlignLeft className="h-3 w-3" />
               </Button>
               <Button
-                variant={image.alignment === 'center' ? 'default' : 'outline'}
+                variant={image.alignment === "center" ? "default" : "outline"}
                 size="icon"
                 className="h-6 w-6"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleImageUpdate(image.id, { alignment: 'center' });
+                  handleImageUpdate(image.id, { alignment: "center" });
                 }}
               >
                 <AlignCenter className="h-3 w-3" />
               </Button>
               <Button
-                variant={image.alignment === 'right' ? 'default' : 'outline'}
+                variant={image.alignment === "right" ? "default" : "outline"}
                 size="icon"
                 className="h-6 w-6"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleImageUpdate(image.id, { alignment: 'right' });
+                  handleImageUpdate(image.id, { alignment: "right" });
                 }}
               >
                 <AlignRight className="h-3 w-3" />
@@ -198,7 +230,9 @@ export function RichCellEditor({ value, onChange, placeholder, autoFocus }: Rich
                 value={image.widthCm}
                 onChange={(e) => {
                   e.stopPropagation();
-                  handleImageUpdate(image.id, { widthCm: parseFloat(e.target.value) || 1 });
+                  handleImageUpdate(image.id, {
+                    widthCm: Number.parseFloat(e.target.value) || 1,
+                  });
                 }}
                 className="h-6 w-16 text-xs"
                 step="0.5"
@@ -213,7 +247,9 @@ export function RichCellEditor({ value, onChange, placeholder, autoFocus }: Rich
                 value={image.heightCm}
                 onChange={(e) => {
                   e.stopPropagation();
-                  handleImageUpdate(image.id, { heightCm: parseFloat(e.target.value) || 1 });
+                  handleImageUpdate(image.id, {
+                    heightCm: Number.parseFloat(e.target.value) || 1,
+                  });
                 }}
                 className="h-6 w-16 text-xs"
                 step="0.5"

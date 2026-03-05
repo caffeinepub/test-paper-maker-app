@@ -1,14 +1,3 @@
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,16 +7,35 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MoreVertical, Printer, FileDown, Share2, Trash2 } from 'lucide-react';
-import { downloadPaperAsText } from '../../lib/export/paperTextExport';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "@tanstack/react-router";
+import { FileDown, MoreVertical, Printer, Share2, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { downloadPaperAsText } from "../../lib/export/paperTextExport";
+import { useMockStore } from "../../state/mockStore";
 
 interface PaperActionOverflowMenuProps {
   paperId: string;
 }
 
-export function PaperActionOverflowMenu({ paperId }: PaperActionOverflowMenuProps) {
+export function PaperActionOverflowMenu({
+  paperId,
+}: PaperActionOverflowMenuProps) {
   const navigate = useNavigate();
   const { getPaperById, deletePaper } = useMockStore();
   const paper = getPaperById(paperId);
@@ -54,12 +62,12 @@ export function PaperActionOverflowMenu({ paperId }: PaperActionOverflowMenuProp
     if (navigator.share) {
       try {
         await navigator.share({
-          title: paper?.title || 'Test Paper',
-          text: `Check out this test paper: ${paper?.title || 'Untitled'}`,
+          title: paper?.title || "Test Paper",
+          text: `Check out this test paper: ${paper?.title || "Untitled"}`,
           url: shareUrl,
         });
       } catch (err) {
-        console.error('Share failed:', err);
+        console.error("Share failed:", err);
         setShowShareDialog(true);
       }
     } else {
@@ -70,12 +78,12 @@ export function PaperActionOverflowMenu({ paperId }: PaperActionOverflowMenuProp
   const handleCopyLink = () => {
     const shareUrl = window.location.href;
     navigator.clipboard.writeText(shareUrl);
-    alert('Link copied to clipboard!');
+    alert("Link copied to clipboard!");
   };
 
   const handleDelete = () => {
     deletePaper(paperId);
-    navigate({ to: '/papers' });
+    navigate({ to: "/papers" });
   };
 
   return (
@@ -104,7 +112,10 @@ export function PaperActionOverflowMenu({ paperId }: PaperActionOverflowMenuProp
             Share / Send
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-destructive focus:text-destructive">
+          <DropdownMenuItem
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive focus:text-destructive"
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete Paper
           </DropdownMenuItem>
@@ -116,7 +127,9 @@ export function PaperActionOverflowMenu({ paperId }: PaperActionOverflowMenuProp
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Share Paper</DialogTitle>
-            <DialogDescription>Copy the link below to share this paper</DialogDescription>
+            <DialogDescription>
+              Copy the link below to share this paper
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="rounded-md bg-muted p-3">
@@ -135,13 +148,17 @@ export function PaperActionOverflowMenu({ paperId }: PaperActionOverflowMenuProp
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Paper</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{paper?.title || 'Untitled Paper'}"? This action cannot be undone and
-              you will be redirected to the papers list.
+              Are you sure you want to delete "
+              {paper?.title || "Untitled Paper"}"? This action cannot be undone
+              and you will be redirected to the papers list.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

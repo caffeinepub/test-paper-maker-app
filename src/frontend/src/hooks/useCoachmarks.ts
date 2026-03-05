@@ -1,38 +1,42 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useMockStore } from '../state/mockStore';
-import { useLocation } from '@tanstack/react-router';
+import { useLocation } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
+import { useMockStore } from "../state/mockStore";
 
 interface CoachmarkStep {
   title: string;
   description: string;
   targetSelector: string;
-  position: 'top' | 'bottom' | 'left' | 'right';
+  position: "top" | "bottom" | "left" | "right";
 }
 
 const coachmarkSteps: CoachmarkStep[] = [
   {
-    title: 'Welcome to Test Paper Maker',
-    description: 'Let\'s take a quick tour of the key features to help you get started.',
-    targetSelector: '#create-paper-cta',
-    position: 'bottom',
+    title: "Welcome to Test Paper Maker",
+    description:
+      "Let's take a quick tour of the key features to help you get started.",
+    targetSelector: "#create-paper-cta",
+    position: "bottom",
   },
   {
-    title: 'Create New Papers',
-    description: 'Click here to start creating a new test paper. You can set up sections, marks, and time limits.',
-    targetSelector: '#nav-create-paper',
-    position: 'right',
+    title: "Create New Papers",
+    description:
+      "Click here to start creating a new test paper. You can set up sections, marks, and time limits.",
+    targetSelector: "#nav-create-paper",
+    position: "right",
   },
   {
-    title: 'Question Bank',
-    description: 'Browse starter questions or manage your personal question library here.',
-    targetSelector: '#nav-question-bank',
-    position: 'right',
+    title: "Question Bank",
+    description:
+      "Browse starter questions or manage your personal question library here.",
+    targetSelector: "#nav-question-bank",
+    position: "right",
   },
   {
-    title: 'AI Assistant',
-    description: 'Use the AI button to generate question suggestions based on your topics and preferences.',
+    title: "AI Assistant",
+    description:
+      "Use the AI button to generate question suggestions based on your topics and preferences.",
     targetSelector: '[data-coachmark="ai-button"]',
-    position: 'left',
+    position: "left",
   },
 ];
 
@@ -43,13 +47,15 @@ export function useCoachmarks() {
   const [stepIndex, setStepIndex] = useState(0);
 
   // Check for tutorial start flag on mount and location changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: location.pathname detects navigation changes
   useEffect(() => {
-    const shouldStartTutorial = localStorage.getItem('start-tutorial') === 'true';
-    
+    const shouldStartTutorial =
+      localStorage.getItem("start-tutorial") === "true";
+
     if (shouldStartTutorial && !isActive) {
       // Clear the flag
-      localStorage.removeItem('start-tutorial');
-      
+      localStorage.removeItem("start-tutorial");
+
       // Delay to ensure DOM is ready and navigation is complete
       const timer = setTimeout(() => {
         setIsActive(true);

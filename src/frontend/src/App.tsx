@@ -1,26 +1,34 @@
-import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet } from '@tanstack/react-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { InternetIdentityProvider } from './hooks/useInternetIdentity';
-import { MockStoreProvider } from './state/mockStore';
-import { AppShell } from './components/layout/AppShell';
-import { AppErrorBoundary } from './components/errors/AppErrorBoundary';
-import { LoginWireframe } from './pages/auth/LoginWireframe';
-import { OnboardingWireframe } from './pages/onboarding/OnboardingWireframe';
-import { HomeDashboardWireframe } from './pages/home/HomeDashboardWireframe';
-import { ProfileWireframe } from './pages/profile/ProfileWireframe';
-import { GeneratedPapersWireframe } from './pages/papers/GeneratedPapersWireframe';
-import { PaperEditorWireframe } from './pages/editor/PaperEditorWireframe';
-import { RealPaperEditorWireframe } from './pages/editor/RealPaperEditorWireframe';
-import { QuestionEntryWireframe } from './pages/editor/QuestionEntryWireframe';
-import { QuestionBankWireframe } from './pages/questionBank/QuestionBankWireframe';
-import { QuestionBankBoardStandardWireframe } from './pages/questionBank/QuestionBankBoardStandardWireframe';
-import { AIPreferencesWireframe } from './pages/ai/AIPreferencesWireframe';
-import { ExportPrintPreviewWireframe } from './pages/export/ExportPrintPreviewWireframe';
-import { OCRUploadWireframe } from './pages/ocr/OCRUploadWireframe';
-import { OCRReviewApproveWireframe } from './pages/ocr/OCRReviewApproveWireframe';
-import { SettingsWireframe } from './pages/settings/SettingsWireframe';
-import { DraftWireframe } from './pages/draft/DraftWireframe';
-import { AddQuestionsWireframe } from './pages/questionBank/AddQuestionsWireframe';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  Outlet,
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from "@tanstack/react-router";
+import { useState } from "react";
+import { AppErrorBoundary } from "./components/errors/AppErrorBoundary";
+import { AppShell } from "./components/layout/AppShell";
+import { SplashScreen } from "./components/splash/SplashScreen";
+import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
+import { AIPreferencesWireframe } from "./pages/ai/AIPreferencesWireframe";
+import { LoginWireframe } from "./pages/auth/LoginWireframe";
+import { DraftWireframe } from "./pages/draft/DraftWireframe";
+import { PaperEditorWireframe } from "./pages/editor/PaperEditorWireframe";
+import { QuestionEntryWireframe } from "./pages/editor/QuestionEntryWireframe";
+import { RealPaperEditorWireframe } from "./pages/editor/RealPaperEditorWireframe";
+import { ExportPrintPreviewWireframe } from "./pages/export/ExportPrintPreviewWireframe";
+import { HomeDashboardWireframe } from "./pages/home/HomeDashboardWireframe";
+import { OCRReviewApproveWireframe } from "./pages/ocr/OCRReviewApproveWireframe";
+import { OCRUploadWireframe } from "./pages/ocr/OCRUploadWireframe";
+import { OnboardingWireframe } from "./pages/onboarding/OnboardingWireframe";
+import { GeneratedPapersWireframe } from "./pages/papers/GeneratedPapersWireframe";
+import { ProfileWireframe } from "./pages/profile/ProfileWireframe";
+import { AddQuestionsWireframe } from "./pages/questionBank/AddQuestionsWireframe";
+import { QuestionBankBoardStandardWireframe } from "./pages/questionBank/QuestionBankBoardStandardWireframe";
+import { QuestionBankWireframe } from "./pages/questionBank/QuestionBankWireframe";
+import { SettingsWireframe } from "./pages/settings/SettingsWireframe";
+import { MockStoreProvider } from "./state/mockStore";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,103 +51,103 @@ const rootRoute = createRootRoute({
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  path: "/",
   component: LoginWireframe,
 });
 
 const onboardingRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/onboarding',
+  path: "/onboarding",
   component: OnboardingWireframe,
 });
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/home',
+  path: "/home",
   component: HomeDashboardWireframe,
 });
 
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/profile',
+  path: "/profile",
   component: ProfileWireframe,
 });
 
 const papersRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/papers',
+  path: "/papers",
   component: GeneratedPapersWireframe,
 });
 
 const editorRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/editor/$paperId',
+  path: "/editor/$paperId",
   component: PaperEditorWireframe,
 });
 
 const realPaperEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/editor/$paperId/real-paper',
+  path: "/editor/$paperId/real-paper",
   component: RealPaperEditorWireframe,
 });
 
 const questionEntryRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/editor/$paperId/question-entry',
+  path: "/editor/$paperId/question-entry",
   component: QuestionEntryWireframe,
 });
 
 const questionBankRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/question-bank',
+  path: "/question-bank",
   component: QuestionBankWireframe,
 });
 
 const questionBankBoardStandardRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/question-bank/$board/$standard',
+  path: "/question-bank/$board/$standard",
   component: QuestionBankBoardStandardWireframe,
 });
 
 const addQuestionsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/add-questions',
+  path: "/add-questions",
   component: AddQuestionsWireframe,
 });
 
 const aiRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/ai',
+  path: "/ai",
   component: AIPreferencesWireframe,
 });
 
 const exportRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/export/$paperId',
+  path: "/export/$paperId",
   component: ExportPrintPreviewWireframe,
 });
 
 const ocrUploadRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/ocr',
+  path: "/ocr",
   component: OCRUploadWireframe,
 });
 
 const ocrReviewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/ocr/review',
+  path: "/ocr/review",
   component: OCRReviewApproveWireframe,
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/settings',
+  path: "/settings",
   component: SettingsWireframe,
 });
 
 const draftRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/draft',
+  path: "/draft",
   component: DraftWireframe,
 });
 
@@ -165,19 +173,26 @@ const routeTree = rootRoute.addChildren([
 
 const router = createRouter({ routeTree });
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <InternetIdentityProvider>
-        <RouterProvider router={router} />
-      </InternetIdentityProvider>
-    </QueryClientProvider>
+    <>
+      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      {!showSplash && (
+        <QueryClientProvider client={queryClient}>
+          <InternetIdentityProvider>
+            <RouterProvider router={router} />
+          </InternetIdentityProvider>
+        </QueryClientProvider>
+      )}
+    </>
   );
 }
 

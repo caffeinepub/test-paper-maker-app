@@ -1,13 +1,25 @@
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { useMockStore } from '../../state/mockStore';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useNavigate } from "@tanstack/react-router";
+import { Info } from "lucide-react";
+import { useState } from "react";
+import { useMockStore } from "../../state/mockStore";
 
 export function ProfileWireframe() {
   const navigate = useNavigate();
@@ -16,11 +28,11 @@ export function ProfileWireframe() {
 
   const handleSave = () => {
     updateProfile(formData);
-    navigate({ to: '/home' });
+    navigate({ to: "/home" });
   };
 
   const handleCancel = () => {
-    navigate({ to: '/home' });
+    navigate({ to: "/home" });
   };
 
   return (
@@ -29,14 +41,16 @@ export function ProfileWireframe() {
         <CardHeader>
           <CardTitle>Teacher Profile</CardTitle>
           <CardDescription>
-            Set your default information. These values will be used when creating new papers.
+            Set your default information. These values will be used when
+            creating new papers.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              Profile defaults are applied automatically to new papers but can be edited per paper.
+              Profile defaults are applied automatically to new papers but can
+              be edited per paper.
             </AlertDescription>
           </Alert>
 
@@ -47,7 +61,9 @@ export function ProfileWireframe() {
                 id="teacherName"
                 placeholder="Enter your name"
                 value={formData.teacherName}
-                onChange={(e) => setFormData({ ...formData, teacherName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, teacherName: e.target.value })
+                }
               />
             </div>
 
@@ -57,7 +73,9 @@ export function ProfileWireframe() {
                 id="instituteName"
                 placeholder="Enter institute name"
                 value={formData.instituteName}
-                onChange={(e) => setFormData({ ...formData, instituteName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, instituteName: e.target.value })
+                }
               />
             </div>
 
@@ -66,7 +84,7 @@ export function ProfileWireframe() {
                 <Label htmlFor="board">Preferred Board *</Label>
                 <Select
                   value={formData.preferredBoard}
-                  onValueChange={(value: 'CBSE' | 'GSEB' | 'Both') =>
+                  onValueChange={(value: "CBSE" | "GSEB" | "Both") =>
                     setFormData({ ...formData, preferredBoard: value })
                   }
                 >
@@ -85,7 +103,7 @@ export function ProfileWireframe() {
                 <Label htmlFor="medium">Medium *</Label>
                 <Select
                   value={formData.medium}
-                  onValueChange={(value: 'English' | 'Gujarati') =>
+                  onValueChange={(value: "English" | "Gujarati") =>
                     setFormData({ ...formData, medium: value })
                   }
                 >
@@ -101,12 +119,16 @@ export function ProfileWireframe() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="defaultStandard">Default Standard (Optional)</Label>
+              <Label htmlFor="defaultStandard">
+                Default Standard (Optional)
+              </Label>
               <Input
                 id="defaultStandard"
                 placeholder="e.g., 10"
-                value={formData.defaultStandard || ''}
-                onChange={(e) => setFormData({ ...formData, defaultStandard: e.target.value })}
+                value={formData.defaultStandard || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, defaultStandard: e.target.value })
+                }
               />
               <p className="text-xs text-muted-foreground">
                 Leave blank if you teach multiple standards
@@ -116,9 +138,43 @@ export function ProfileWireframe() {
             <div className="space-y-2">
               <Label htmlFor="schoolLogo">School Logo (Optional)</Label>
               <div className="flex items-center gap-4">
-                <Input id="schoolLogo" type="file" accept="image/*" disabled />
-                <span className="text-xs text-muted-foreground">[Placeholder]</span>
+                {formData.schoolLogo && (
+                  <img
+                    src={formData.schoolLogo}
+                    alt="School Logo Preview"
+                    className="h-16 w-16 rounded-full object-cover border border-border"
+                  />
+                )}
+                <Input
+                  id="schoolLogo"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      const base64 = event.target?.result as string;
+                      setFormData({ ...formData, schoolLogo: base64 });
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
+                {formData.schoolLogo && (
+                  <button
+                    type="button"
+                    className="text-xs text-destructive underline"
+                    onClick={() =>
+                      setFormData({ ...formData, schoolLogo: null })
+                    }
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
+              <p className="text-xs text-muted-foreground">
+                Upload your school logo (shown on papers and PDF)
+              </p>
             </div>
           </div>
 
