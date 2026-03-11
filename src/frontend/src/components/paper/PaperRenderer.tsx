@@ -32,8 +32,9 @@ export function PaperRenderer({ question }: PaperRendererProps) {
                 alt={image.caption || "Cell image"}
                 className="rich-cell-image"
                 style={{
-                  width: `${cmToPixels(image.widthCm)}px`,
-                  height: `${cmToPixels(image.heightCm)}px`,
+                  maxWidth: "100%",
+                  width: `min(${cmToPixels(image.widthCm)}px, 100%)`,
+                  height: "auto",
                   objectFit: "contain",
                 }}
               />
@@ -134,14 +135,21 @@ export function PaperRenderer({ question }: PaperRendererProps) {
             </p>
             {question.matchPairsData &&
               question.matchPairsData.pairs.length > 0 && (
-                <div className="match-pair-container ml-2 overflow-hidden">
-                  <table className="w-full border-collapse table-fixed">
+                <div className="match-pair-container w-full overflow-hidden">
+                  <table
+                    className="w-full border-collapse"
+                    style={{ tableLayout: "fixed" }}
+                  >
+                    <colgroup>
+                      <col style={{ width: "50%" }} />
+                      <col style={{ width: "50%" }} />
+                    </colgroup>
                     <thead>
                       <tr>
-                        <th className="w-1/2 border border-border bg-muted/30 px-2 py-1 text-left text-sm font-semibold">
+                        <th className="border border-border bg-muted/30 px-2 py-1 text-left text-sm font-semibold">
                           Column A
                         </th>
-                        <th className="w-1/2 border border-border bg-muted/30 px-2 py-1 text-left text-sm font-semibold">
+                        <th className="border border-border bg-muted/30 px-2 py-1 text-left text-sm font-semibold">
                           Column B
                         </th>
                       </tr>
@@ -150,22 +158,38 @@ export function PaperRenderer({ question }: PaperRendererProps) {
                       {Array.from(question.matchPairsData.pairs.entries()).map(
                         ([idx, pair]) => (
                           <tr key={`pair-row-${idx}`}>
-                            <td className="match-pair-item border border-border px-2 py-1 align-top min-w-0">
-                              <div className="flex items-start gap-1 min-w-0">
-                                <span className="font-medium shrink-0 text-sm">
+                            <td
+                              className="match-pair-item border border-border px-2 py-1 align-top"
+                              style={{
+                                overflow: "hidden",
+                                wordWrap: "break-word",
+                                wordBreak: "break-word",
+                                maxWidth: 0,
+                              }}
+                            >
+                              <div className="flex min-w-0 items-start gap-1">
+                                <span className="shrink-0 text-sm font-medium">
                                   {idx + 1}.
                                 </span>
-                                <div className="flex-1 min-w-0 overflow-hidden text-sm">
+                                <div className="min-w-0 flex-1 overflow-hidden text-sm">
                                   {renderRichContent(pair.left)}
                                 </div>
                               </div>
                             </td>
-                            <td className="match-pair-item border border-border px-2 py-1 align-top min-w-0">
-                              <div className="flex items-start gap-1 min-w-0">
-                                <span className="font-medium shrink-0 text-sm">
+                            <td
+                              className="match-pair-item border border-border px-2 py-1 align-top"
+                              style={{
+                                overflow: "hidden",
+                                wordWrap: "break-word",
+                                wordBreak: "break-word",
+                                maxWidth: 0,
+                              }}
+                            >
+                              <div className="flex min-w-0 items-start gap-1">
+                                <span className="shrink-0 text-sm font-medium">
                                   {String.fromCharCode(97 + idx)})
                                 </span>
-                                <div className="flex-1 min-w-0 overflow-hidden text-sm">
+                                <div className="min-w-0 flex-1 overflow-hidden text-sm">
                                   {renderRichContent(pair.right)}
                                 </div>
                               </div>
@@ -236,6 +260,83 @@ export function PaperRenderer({ question }: PaperRendererProps) {
           </div>
         );
       }
+      case "long-answer":
+        return (
+          <div className="space-y-2">
+            <p className="break-words whitespace-pre-wrap">
+              {question.text || "[Question text]"}
+            </p>
+            <div className="ml-2 space-y-1">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={`ans-line-${i}`}
+                  className="h-6 w-full border-b border-foreground/20"
+                />
+              ))}
+            </div>
+          </div>
+        );
+
+      case "assertion-reason":
+        return (
+          <div className="space-y-2">
+            {question.text && (
+              <p className="break-words whitespace-pre-wrap">{question.text}</p>
+            )}
+            {question.assertionReasonData && (
+              <div className="ml-2 space-y-1 text-sm">
+                <p>
+                  <span className="font-semibold">Assertion (A): </span>
+                  {question.assertionReasonData.assertion || "[Assertion text]"}
+                </p>
+                <p>
+                  <span className="font-semibold">Reason (R): </span>
+                  {question.assertionReasonData.reason || "[Reason text]"}
+                </p>
+              </div>
+            )}
+            <div className="ml-4 space-y-0.5 text-xs text-muted-foreground">
+              <p>
+                (a) Both A and R are true and R is the correct explanation of A
+              </p>
+              <p>
+                (b) Both A and R are true but R is not the correct explanation
+                of A
+              </p>
+              <p>(c) A is true but R is false</p>
+              <p>(d) A is false but R is true</p>
+            </div>
+          </div>
+        );
+
+      case "case-based":
+        return (
+          <div className="space-y-2">
+            {question.text && (
+              <p className="break-words whitespace-pre-wrap">{question.text}</p>
+            )}
+            {question.caseBasedData && (
+              <div className="ml-2 space-y-3">
+                {question.caseBasedData.passage && (
+                  <div className="rounded border border-border bg-muted/20 p-2 text-sm italic">
+                    {question.caseBasedData.passage}
+                  </div>
+                )}
+                {question.caseBasedData.subQuestions.length > 0 && (
+                  <div className="space-y-1">
+                    {question.caseBasedData.subQuestions.map((sq, idx) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: sub-questions don't have stable IDs
+                      <p key={`sq-${idx}`} className="text-sm">
+                        ({idx + 1}) {sq || `[Sub-question ${idx + 1}]`}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+
       default:
         return (
           <div className="space-y-1">
@@ -251,11 +352,11 @@ export function PaperRenderer({ question }: PaperRendererProps) {
     <div className="question-block">
       {renderQuestionContent()}
       {question.imageAttachment && (
-        <div className="mt-2">
+        <div className="mt-2 block w-full">
           <img
             src={question.imageAttachment}
             alt="Question attachment"
-            className="max-h-64 rounded border border-border object-contain"
+            className="block max-h-64 max-w-full rounded border border-border object-contain"
           />
         </div>
       )}

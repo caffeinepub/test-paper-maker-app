@@ -19,8 +19,8 @@ import { useState } from "react";
 import {
   BOARDS,
   QUESTION_TYPES,
-  STANDARDS,
 } from "../../lib/questionBank/questionBankTaxonomy";
+import { useMockStore } from "../../state/mockStore";
 
 interface QuestionCategorizationDialogProps {
   open: boolean;
@@ -41,12 +41,19 @@ export function QuestionCategorizationDialog({
   defaultBoard,
   defaultStandard,
 }: QuestionCategorizationDialogProps) {
+  const { standards } = useMockStore();
+  const defaultStandardObj =
+    standards.find((s) => s.name === (defaultStandard || "Standard 10")) ||
+    standards[9] ||
+    standards[0];
+
   const [board, setBoard] = useState(defaultBoard || BOARDS[0]);
-  const [standard, setStandard] = useState(defaultStandard || STANDARDS[9]); // Default to Standard 10
+  const [standardId, setStandardId] = useState(defaultStandardObj?.id || "");
   const [questionType, setQuestionType] = useState("short-answer");
 
   const handleConfirm = () => {
-    onConfirm({ board, standard, questionType });
+    const stdObj = standards.find((s) => s.id === standardId);
+    onConfirm({ board, standard: stdObj?.name || "", questionType });
     onOpenChange(false);
   };
 
@@ -78,14 +85,14 @@ export function QuestionCategorizationDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="standard">Standard</Label>
-            <Select value={standard} onValueChange={setStandard}>
+            <Select value={standardId} onValueChange={setStandardId}>
               <SelectTrigger id="standard">
-                <SelectValue />
+                <SelectValue placeholder="Select standard" />
               </SelectTrigger>
               <SelectContent>
-                {STANDARDS.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
+                {standards.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
                   </SelectItem>
                 ))}
               </SelectContent>

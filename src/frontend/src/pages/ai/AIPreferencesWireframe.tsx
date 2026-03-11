@@ -25,7 +25,9 @@ import {
   Info,
   Plus,
   Sparkles,
+  Tag,
   Trash2,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import { QuestionCategorizationDialog } from "../../components/questionBank/QuestionCategorizationDialog";
@@ -49,6 +51,8 @@ interface GeneratedQuestion {
   questionType: QuestionType;
   selected: boolean;
   editing: boolean;
+  suggestedAnswer: string;
+  tags: string[];
 }
 
 export function AIPreferencesWireframe() {
@@ -70,6 +74,7 @@ export function AIPreferencesWireframe() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showCategorizationDialog, setShowCategorizationDialog] =
     useState(false);
+  const [tagInputs, setTagInputs] = useState<Record<string, string>>({});
 
   const insertContext = getSectionInsertContext();
 
@@ -97,6 +102,8 @@ export function AIPreferencesWireframe() {
         questionType: "short-answer" as QuestionType,
         selected: false,
         editing: false,
+        suggestedAnswer: q.suggestedAnswer,
+        tags: q.tags,
       })),
     );
     setIsGenerating(false);
@@ -122,6 +129,32 @@ export function AIPreferencesWireframe() {
 
   const handleDelete = (id: string) => {
     setGeneratedQuestions((prev) => prev.filter((q) => q.id !== id));
+  };
+
+  const handleUpdateAnswer = (id: string, answer: string) => {
+    setGeneratedQuestions((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, suggestedAnswer: answer } : q)),
+    );
+  };
+
+  const handleAddTag = (id: string, tag: string) => {
+    const trimmed = tag.trim().toLowerCase();
+    if (!trimmed) return;
+    setGeneratedQuestions((prev) =>
+      prev.map((q) =>
+        q.id === id && !q.tags.includes(trimmed)
+          ? { ...q, tags: [...q.tags, trimmed] }
+          : q,
+      ),
+    );
+  };
+
+  const handleRemoveTag = (id: string, tag: string) => {
+    setGeneratedQuestions((prev) =>
+      prev.map((q) =>
+        q.id === id ? { ...q, tags: q.tags.filter((t) => t !== tag) } : q,
+      ),
+    );
   };
 
   const handleAddToBank = () => {
@@ -152,6 +185,8 @@ export function AIPreferencesWireframe() {
         imageAttachment: null,
         board: metadata.board,
         standard: metadata.standard,
+        answer: q.suggestedAnswer || undefined,
+        tags: q.tags.length > 0 ? q.tags : undefined,
       };
       addPersonalQuestion(newQuestion);
     }
@@ -198,6 +233,8 @@ export function AIPreferencesWireframe() {
       imageAttachment: null,
       board: paper.board,
       standard: paper.standard,
+      answer: q.suggestedAnswer || undefined,
+      tags: q.tags.length > 0 ? q.tags : undefined,
     }));
 
     let updatedSections: ReturnType<typeof insertQuestionsIntoHeading>;
@@ -422,40 +459,142 @@ export function AIPreferencesWireframe() {
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex items-start gap-3">
-                            <input
-                              type="checkbox"
-                              checked={question.selected}
-                              onChange={() => handleToggleSelect(question.id)}
-                              className="mt-1 h-4 w-4 cursor-pointer"
-                            />
-                            <div className="flex-1">
-                              <p className="text-foreground">{question.text}</p>
-                              <div className="mt-2 flex gap-2">
-                                <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
-                                  {question.marks} Mark
-                                  {question.marks > 1 ? "s" : ""}
-                                </span>
-                                <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
-                                  {question.type}
-                                </span>
+                          <div className="space-y-3">
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={question.selected}
+                                onChange={() => handleToggleSelect(question.id)}
+                                className="mt-1 h-4 w-4 cursor-pointer"
+                              />
+                              <div className="flex-1">
+                                <p className="text-foreground">
+                                  {question.text}
+                                </p>
+                                <div className="mt-2 flex gap-2">
+                                  <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
+                                    {question.marks} Mark
+                                    {question.marks > 1 ? "s" : ""}
+                                  </span>
+                                  <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                    {question.type}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(question.id)}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(question.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEdit(question.id)}
+
+                            {/* Suggested Answer */}
+                            <div className="space-y-1 pl-7">
+                              <Label
+                                htmlFor={`suggested-answer-${question.id}`}
+                                className="text-xs font-medium text-muted-foreground"
                               >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(question.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                                Suggested Answer (optional)
+                              </Label>
+                              <Textarea
+                                id={`suggested-answer-${question.id}`}
+                                value={question.suggestedAnswer}
+                                onChange={(e) =>
+                                  handleUpdateAnswer(
+                                    question.id,
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="Leave blank to skip"
+                                rows={2}
+                                className="text-xs"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+
+                            {/* Tags */}
+                            <div className="space-y-1 pl-7">
+                              <p className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                                <Tag className="h-3 w-3" />
+                                Tags
+                              </p>
+                              <div className="flex flex-wrap gap-1">
+                                {question.tags.map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
+                                  >
+                                    {tag}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRemoveTag(question.id, tag);
+                                      }}
+                                      className="hover:text-destructive"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="flex gap-1">
+                                <input
+                                  type="text"
+                                  value={tagInputs[question.id] || ""}
+                                  onChange={(e) =>
+                                    setTagInputs((prev) => ({
+                                      ...prev,
+                                      [question.id]: e.target.value,
+                                    }))
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === ",") {
+                                      e.preventDefault();
+                                      handleAddTag(
+                                        question.id,
+                                        tagInputs[question.id] || "",
+                                      );
+                                      setTagInputs((prev) => ({
+                                        ...prev,
+                                        [question.id]: "",
+                                      }));
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  placeholder="Add tag, press Enter"
+                                  className="h-7 flex-1 rounded-md border border-input bg-background px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAddTag(
+                                      question.id,
+                                      tagInputs[question.id] || "",
+                                    );
+                                    setTagInputs((prev) => ({
+                                      ...prev,
+                                      [question.id]: "",
+                                    }));
+                                  }}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         )}

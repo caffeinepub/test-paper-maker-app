@@ -15,5 +15,7 @@ export enum UserRole {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     getCallerUserRole(): Promise<UserRole>;
+    getPaper(id: string): Promise<string | null>;
     isCallerAdmin(): Promise<boolean>;
+    savePaper(id: string, data: string): Promise<void>;
 }

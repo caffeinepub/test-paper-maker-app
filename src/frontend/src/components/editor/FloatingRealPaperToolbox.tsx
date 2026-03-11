@@ -9,9 +9,13 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
+  BookOpen,
+  Brain,
+  Calculator,
   CheckSquare,
   FileText,
   Link2,
+  List,
   Plus,
   Table as TableIcon,
   ToggleLeft,
@@ -59,11 +63,15 @@ export function FloatingRealPaperToolbox({
   const questionTypes: Array<{ type: QuestionType; label: string; icon: any }> =
     [
       { type: "short-answer", label: "Short Answer", icon: FileText },
+      { type: "long-answer", label: "Long Answer", icon: List },
       { type: "mcq", label: "MCQ (4 Options)", icon: CheckSquare },
       { type: "fill-in-blank", label: "Fill in the Blank", icon: Type },
       { type: "true-false", label: "True/False", icon: ToggleLeft },
+      { type: "numerical", label: "Numerical", icon: Calculator },
       { type: "match-pairs", label: "Match Pairs", icon: Link2 },
       { type: "table", label: "Table", icon: TableIcon },
+      { type: "assertion-reason", label: "Assertion-Reason", icon: Brain },
+      { type: "case-based", label: "Case-Based", icon: BookOpen },
     ];
 
   const selectedSection = paper.sections.find(

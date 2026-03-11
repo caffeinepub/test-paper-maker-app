@@ -16,12 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
-import { BOARDS, STANDARDS } from "../../lib/questionBank/questionBankTaxonomy";
+import { BOARDS } from "../../lib/questionBank/questionBankTaxonomy";
+import { useMockStore } from "../../state/mockStore";
 
 interface InsertFromQuestionBankDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (board: string, standard: string) => void;
+  /** Now passes board + standardId (the id in standards array) */
+  onConfirm: (board: string, standardId: string) => void;
 }
 
 export function InsertFromQuestionBankDialog({
@@ -29,11 +31,17 @@ export function InsertFromQuestionBankDialog({
   onOpenChange,
   onConfirm,
 }: InsertFromQuestionBankDialogProps) {
+  const { standards } = useMockStore();
+  const defaultStandardId =
+    standards.find((s) => s.name === "Standard 10")?.id ||
+    standards[9]?.id ||
+    standards[0]?.id ||
+    "";
   const [board, setBoard] = useState<string>(BOARDS[0]);
-  const [standard, setStandard] = useState<string>(STANDARDS[9]); // Default to Standard 10
+  const [standardId, setStandardId] = useState<string>(defaultStandardId);
 
   const handleConfirm = () => {
-    onConfirm(board, standard);
+    onConfirm(board, standardId);
     onOpenChange(false);
   };
 
@@ -65,14 +73,14 @@ export function InsertFromQuestionBankDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="standard">Standard</Label>
-            <Select value={standard} onValueChange={setStandard}>
+            <Select value={standardId} onValueChange={setStandardId}>
               <SelectTrigger id="standard">
-                <SelectValue />
+                <SelectValue placeholder="Select standard" />
               </SelectTrigger>
               <SelectContent>
-                {STANDARDS.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
+                {standards.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -1,4 +1,15 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,23 +18,45 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   AlertCircle,
+  BookTemplate,
   FileEdit,
   Info,
+  LayoutTemplate,
   Plus,
   Redo,
+  Save,
   Trash2,
   Undo,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { FloatingAIButton } from "../../components/ai/FloatingAIButton";
 import { useDebouncedEffect } from "../../hooks/useDebouncedEffect";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
+import {
+  BUILT_IN_TEMPLATES,
+  type PaperTemplate,
+  type SavedTemplate,
+  deleteTemplate,
+  getSavedTemplates,
+  saveTemplate,
+  templateSectionsToEditorSections,
+} from "../../lib/editor/paperTemplates";
 import type { QuestionHeading } from "../../state/mockData";
 import { useMockStore } from "../../state/mockStore";
 
@@ -59,6 +92,14 @@ export function PaperEditorWireframe() {
     "saved" | "saving" | "idle"
   >("idle");
   const [showSuggestion, setShowSuggestion] = useState(true);
+  const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(() =>
+    getSavedTemplates(),
+  );
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
+  const [templateSaveName, setTemplateSaveName] = useState("");
+  const [templateSaveDesc, setTemplateSaveDesc] = useState("");
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
 
   const initialState: PaperEditorState = {
     paperData: {
@@ -222,6 +263,56 @@ export function PaperEditorWireframe() {
     }));
   };
 
+  const handleApplyTemplate = (template: PaperTemplate | SavedTemplate) => {
+    const newSections = templateSectionsToEditorSections(template);
+    setState((prev) => ({
+      paperData: {
+        ...prev.paperData,
+        totalMarks: template.totalMarks,
+        timeMinutes: template.timeMinutes,
+        board: template.board,
+      },
+      sections: newSections,
+    }));
+    setShowTemplatesDialog(false);
+    toast.success(`Template "${template.name}" applied`);
+  };
+
+  const handleSaveAsTemplate = () => {
+    if (!templateSaveName.trim()) return;
+    const newTemplate: SavedTemplate = {
+      id: `custom-tpl-${Date.now()}`,
+      name: templateSaveName.trim(),
+      description: templateSaveDesc.trim(),
+      createdAt: new Date().toISOString(),
+      totalMarks: state.paperData.totalMarks,
+      timeMinutes: state.paperData.timeMinutes,
+      board: state.paperData.board,
+      sections: state.sections.map((s) => ({
+        title: s.title,
+        marks: s.marks,
+        totalMarks: s.totalMarks,
+        headings: s.headings.map((h) => ({
+          title: h.title,
+          plannedCount: h.plannedCount,
+        })),
+      })),
+    };
+    saveTemplate(newTemplate);
+    setSavedTemplates(getSavedTemplates());
+    setShowSaveTemplateDialog(false);
+    setTemplateSaveName("");
+    setTemplateSaveDesc("");
+    toast.success("Paper saved as template");
+  };
+
+  const handleDeleteTemplate = (templateId: string) => {
+    deleteTemplate(templateId);
+    setSavedTemplates(getSavedTemplates());
+    setDeleteTemplateId(null);
+    toast.success("Template deleted");
+  };
+
   const handleContinueToPaper = () => {
     navigate({ to: `/editor/${paperId}/real-paper` });
   };
@@ -260,12 +351,32 @@ export function PaperEditorWireframe() {
             Configure your test paper structure and sections
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {autoSaveStatus === "saving" && (
             <span className="text-sm text-muted-foreground">Saving...</span>
           )}
           {autoSaveStatus === "saved" && (
             <span className="text-sm text-success">Saved</span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowTemplatesDialog(true)}
+            data-ocid="editor.open_modal_button"
+          >
+            <LayoutTemplate className="mr-2 h-4 w-4" />
+            Templates
+          </Button>
+          {state.sections.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSaveTemplateDialog(true)}
+              data-ocid="editor.save_button"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Save as Template
+            </Button>
           )}
           <Button
             variant="outline"
@@ -556,6 +667,219 @@ export function PaperEditorWireframe() {
       </div>
 
       <FloatingAIButton />
+
+      {/* ── Templates Browser Dialog ──────────────────────────────────── */}
+      <Dialog open={showTemplatesDialog} onOpenChange={setShowTemplatesDialog}>
+        <DialogContent
+          className="max-w-2xl max-h-[80vh] overflow-y-auto"
+          data-ocid="editor.dialog"
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LayoutTemplate className="h-5 w-5 text-primary" />
+              Paper Templates
+            </DialogTitle>
+            <DialogDescription>
+              Choose a template to pre-fill your paper structure, or start from
+              scratch.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            {/* Built-in templates */}
+            <div>
+              <p className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Built-in Templates
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {BUILT_IN_TEMPLATES.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => handleApplyTemplate(tpl)}
+                    className="group rounded-lg border border-border bg-card p-4 text-left transition-all hover:border-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    data-ocid={`editor.item.${BUILT_IN_TEMPLATES.indexOf(tpl) + 1}`}
+                  >
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <span className="text-2xl">{tpl.icon}</span>
+                      <div className="flex gap-1">
+                        <Badge variant="secondary" className="text-xs">
+                          {tpl.totalMarks}M
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {tpl.timeMinutes}min
+                        </Badge>
+                      </div>
+                    </div>
+                    <p className="font-semibold text-foreground group-hover:text-primary">
+                      {tpl.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {tpl.description}
+                    </p>
+                    <p className="mt-2 text-xs text-primary">
+                      {tpl.sections.length} section
+                      {tpl.sections.length !== 1 ? "s" : ""} &middot;{" "}
+                      {tpl.board}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Saved templates */}
+            {savedTemplates.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <p className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    My Saved Templates
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {savedTemplates.map((tpl, idx) => (
+                      <div
+                        key={tpl.id}
+                        className="group relative rounded-lg border border-border bg-card p-4"
+                        data-ocid={`editor.item.${idx + 1}`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTemplateId(tpl.id)}
+                          className="absolute right-2 top-2 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                          title="Delete template"
+                          data-ocid={`editor.delete_button.${idx + 1}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApplyTemplate(tpl)}
+                          className="w-full text-left"
+                        >
+                          <div className="mb-2 flex items-start gap-2">
+                            <BookTemplate className="mt-0.5 h-5 w-5 text-primary flex-shrink-0" />
+                            <div className="flex gap-1 flex-wrap">
+                              <Badge variant="secondary" className="text-xs">
+                                {tpl.totalMarks}M
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {tpl.timeMinutes}min
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="font-semibold text-foreground">
+                            {tpl.name}
+                          </p>
+                          {tpl.description && (
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {tpl.description}
+                            </p>
+                          )}
+                          <p className="mt-2 text-xs text-primary">
+                            {tpl.sections.length} section
+                            {tpl.sections.length !== 1 ? "s" : ""} &middot;{" "}
+                            {tpl.board}
+                          </p>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Save as Template Dialog ───────────────────────────────────── */}
+      <Dialog
+        open={showSaveTemplateDialog}
+        onOpenChange={setShowSaveTemplateDialog}
+      >
+        <DialogContent data-ocid="editor.modal">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Save className="h-5 w-5 text-primary" />
+              Save as Template
+            </DialogTitle>
+            <DialogDescription>
+              Save the current paper structure as a reusable template.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label htmlFor="tpl-name">Template Name</Label>
+              <Input
+                id="tpl-name"
+                value={templateSaveName}
+                onChange={(e) => setTemplateSaveName(e.target.value)}
+                placeholder="e.g., My Science Unit Test"
+                data-ocid="editor.input"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tpl-desc">Description (optional)</Label>
+              <Textarea
+                id="tpl-desc"
+                value={templateSaveDesc}
+                onChange={(e) => setTemplateSaveDesc(e.target.value)}
+                placeholder="Describe this template..."
+                rows={2}
+                data-ocid="editor.textarea"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowSaveTemplateDialog(false)}
+                data-ocid="editor.cancel_button"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveAsTemplate}
+                disabled={!templateSaveName.trim()}
+                data-ocid="editor.submit_button"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Template
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete template confirmation ──────────────────────────────── */}
+      <AlertDialog
+        open={!!deleteTemplateId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTemplateId(null);
+        }}
+      >
+        <AlertDialogContent data-ocid="editor.dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this template. Your papers are not
+              affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-ocid="editor.cancel_button">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                deleteTemplateId && handleDeleteTemplate(deleteTemplateId)
+              }
+              className="bg-destructive text-destructive-foreground"
+              data-ocid="editor.confirm_button"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

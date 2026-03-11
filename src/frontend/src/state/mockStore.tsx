@@ -7,6 +7,12 @@ import {
 } from "react";
 import { normalizeToRichContent } from "../lib/editor/richCellContent";
 import {
+  SUBJECT_COLOURS,
+  type StandardEntry,
+  type SubjectEntry,
+  buildDefaultStandards,
+} from "../lib/questionBank/questionBankTaxonomy";
+import {
   isStorageAvailable,
   safeGetItem,
   safeRemoveItem,
@@ -30,6 +36,22 @@ interface MockStoreContextType {
   profile: Profile;
   papers: Paper[];
   personalQuestions: Question[];
+  // Dynamic standards/subjects
+  standards: StandardEntry[];
+  addStandard: (name: string) => void;
+  renameStandard: (standardId: string, name: string) => void;
+  deleteStandard: (standardId: string) => void;
+  reorderStandard: (standardId: string, direction: "up" | "down") => void;
+  addSubject: (standardId: string, name: string) => void;
+  renameSubject: (standardId: string, subjectId: string, name: string) => void;
+  deleteSubject: (standardId: string, subjectId: string) => void;
+  reorderSubject: (
+    standardId: string,
+    subjectId: string,
+    direction: "up" | "down",
+  ) => void;
+  getSubjectsForStandard: (standardId: string) => SubjectEntry[];
+  getQuestionCountForSubject: (standardId: string, subjectId: string) => number;
   login: () => void;
   logout: () => void;
   completeOnboarding: () => void;
@@ -63,6 +85,9 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [papers, setPapers] = useState<Paper[]>(samplePapers);
   const [personalQuestions, setPersonalQuestions] = useState<Question[]>([]);
+  const [standards, setStandards] = useState<StandardEntry[]>(
+    buildDefaultStandards(),
+  );
 
   // Normalize paper data to handle rich content migration
   const normalizePaper = (paper: Paper): Paper => {
@@ -106,35 +131,53 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   };
 
   // Migrate legacy questions to include board/standard metadata
-  const migrateQuestion = (question: Question, profile: Profile): Question => {
+  const migrateQuestion = (question: Question, prof: Profile): Question => {
     if (!question.board || !question.standard) {
       return {
         ...question,
-        board: question.board || profile.preferredBoard || "CBSE",
-        standard: question.standard || profile.defaultStandard || "Standard 10",
+        board: question.board || prof.preferredBoard || "CBSE",
+        standard: question.standard || prof.defaultStandard || "Standard 10",
       };
     }
     return question;
+  };
+
+  /** Merge saved standards with defaults — ensures new default subjects/standards always appear */
+  const mergeWithDefaults = (saved: StandardEntry[]): StandardEntry[] => {
+    const defaults = buildDefaultStandards();
+    const savedMap = new Map(saved.map((s) => [s.id, s]));
+
+    // Rebuild: for each default keep saved order/subjects if exists, else use fresh default
+    const merged = defaults.map((def) => {
+      const existing = savedMap.get(def.id);
+      if (existing) {
+        return { ...def, subjects: existing.subjects };
+      }
+      return def;
+    });
+
+    // Append any custom standards that were saved
+    const customSaved = saved.filter((s) => !s.isDefault);
+    return [...merged, ...customSaved];
   };
 
   const initialize = () => {
     try {
       setInitializationError(null);
 
-      // Check if storage is available
       if (!isStorageAvailable()) {
         throw new Error(
           "Local storage is not available. Please check your browser settings and ensure cookies/site data are enabled.",
         );
       }
 
-      // Load state from localStorage
       const storedIsLoggedIn = safeGetItem("isLoggedIn") === "true";
       const storedOnboardingCompleted =
         safeGetItem("onboardingCompleted") === "true";
       const storedProfile = safeGetItem("profile");
       const storedPapers = safeGetItem("papers");
       const storedPersonalQuestions = safeGetItem("personalQuestions");
+      const storedStandards = safeGetItem("standards");
 
       setIsLoggedIn(storedIsLoggedIn);
       setOnboardingCompleted(storedOnboardingCompleted);
@@ -152,7 +195,6 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
       if (storedPapers) {
         try {
           const parsedPapers = JSON.parse(storedPapers);
-          // Normalize all papers
           setPapers(parsedPapers.map(normalizePaper));
         } catch {
           setPapers(samplePapers);
@@ -162,7 +204,6 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
       if (storedPersonalQuestions) {
         try {
           const parsedQuestions = JSON.parse(storedPersonalQuestions);
-          // Migrate legacy questions
           setPersonalQuestions(
             parsedQuestions.map((q: Question) =>
               migrateQuestion(q, loadedProfile),
@@ -173,13 +214,22 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      if (storedStandards) {
+        try {
+          const parsedStandards: StandardEntry[] = JSON.parse(storedStandards);
+          setStandards(mergeWithDefaults(parsedStandards));
+        } catch {
+          setStandards(buildDefaultStandards());
+        }
+      }
+
       setIsInitialized(true);
     } catch (error) {
       console.error("Initialization error:", error);
       setInitializationError(
         error instanceof Error ? error.message : "Failed to initialize storage",
       );
-      setIsInitialized(true); // Still mark as initialized to show error UI
+      setIsInitialized(true);
     }
   };
 
@@ -222,6 +272,12 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     }
   }, [personalQuestions, isInitialized, initializationError]);
 
+  useEffect(() => {
+    if (isInitialized && !initializationError) {
+      safeSetItem("standards", JSON.stringify(standards));
+    }
+  }, [standards, isInitialized, initializationError]);
+
   const login = () => setIsLoggedIn(true);
   const logout = () => {
     setIsLoggedIn(false);
@@ -258,7 +314,6 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   };
 
   const addPersonalQuestion = (question: Question) => {
-    // Ensure board/standard metadata is present
     const enrichedQuestion = migrateQuestion(question, profile);
     setPersonalQuestions((prev) => [...prev, enrichedQuestion]);
   };
@@ -279,6 +334,140 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   const getStarterQuestions = () => {
     return starterQuestions;
   };
+
+  // ── Standards management ──────────────────────────────────────────────────
+
+  const addStandard = (name: string) => {
+    const newStandard: StandardEntry = {
+      id: `custom-std-${Date.now()}`,
+      name: name.trim(),
+      isDefault: false,
+      subjects: [
+        { id: `subj-${Date.now()}-0`, name: "Science", colourIndex: 0 },
+        { id: `subj-${Date.now()}-1`, name: "Mathematics", colourIndex: 1 },
+        { id: `subj-${Date.now()}-2`, name: "English", colourIndex: 2 },
+        { id: `subj-${Date.now()}-3`, name: "Social Science", colourIndex: 3 },
+        { id: `subj-${Date.now()}-4`, name: "Hindi", colourIndex: 4 },
+        {
+          id: `subj-${Date.now()}-5`,
+          name: "Computer Science",
+          colourIndex: 5,
+        },
+      ],
+    };
+    setStandards((prev) => [...prev, newStandard]);
+  };
+
+  const renameStandard = (standardId: string, name: string) => {
+    setStandards((prev) =>
+      prev.map((s) =>
+        s.id === standardId && !s.isDefault ? { ...s, name: name.trim() } : s,
+      ),
+    );
+  };
+
+  const deleteStandard = (standardId: string) => {
+    setStandards((prev) =>
+      prev.filter((s) => !(s.id === standardId && !s.isDefault)),
+    );
+  };
+
+  const reorderStandard = (standardId: string, direction: "up" | "down") => {
+    setStandards((prev) => {
+      const idx = prev.findIndex((s) => s.id === standardId);
+      if (idx === -1) return prev;
+      const newIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (newIdx < 0 || newIdx >= prev.length) return prev;
+      const arr = [...prev];
+      [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+      return arr;
+    });
+  };
+
+  // ── Subjects management ───────────────────────────────────────────────────
+
+  const addSubject = (standardId: string, name: string) => {
+    setStandards((prev) =>
+      prev.map((s) => {
+        if (s.id !== standardId) return s;
+        const colourIndex = s.subjects.length % SUBJECT_COLOURS.length;
+        const newSubject: SubjectEntry = {
+          id: `subj-${Date.now()}`,
+          name: name.trim(),
+          colourIndex,
+        };
+        return { ...s, subjects: [...s.subjects, newSubject] };
+      }),
+    );
+  };
+
+  const renameSubject = (
+    standardId: string,
+    subjectId: string,
+    name: string,
+  ) => {
+    setStandards((prev) =>
+      prev.map((s) => {
+        if (s.id !== standardId) return s;
+        return {
+          ...s,
+          subjects: s.subjects.map((sub) =>
+            sub.id === subjectId ? { ...sub, name: name.trim() } : sub,
+          ),
+        };
+      }),
+    );
+  };
+
+  const deleteSubject = (standardId: string, subjectId: string) => {
+    setStandards((prev) =>
+      prev.map((s) => {
+        if (s.id !== standardId) return s;
+        return {
+          ...s,
+          subjects: s.subjects.filter((sub) => sub.id !== subjectId),
+        };
+      }),
+    );
+  };
+
+  const reorderSubject = (
+    standardId: string,
+    subjectId: string,
+    direction: "up" | "down",
+  ) => {
+    setStandards((prev) =>
+      prev.map((s) => {
+        if (s.id !== standardId) return s;
+        const idx = s.subjects.findIndex((sub) => sub.id === subjectId);
+        if (idx === -1) return s;
+        const newIdx = direction === "up" ? idx - 1 : idx + 1;
+        if (newIdx < 0 || newIdx >= s.subjects.length) return s;
+        const arr = [...s.subjects];
+        [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+        return { ...s, subjects: arr };
+      }),
+    );
+  };
+
+  const getSubjectsForStandard = (standardId: string): SubjectEntry[] => {
+    return standards.find((s) => s.id === standardId)?.subjects ?? [];
+  };
+
+  const getQuestionCountForSubject = (
+    standardId: string,
+    subjectId: string,
+  ): number => {
+    const std = standards.find((s) => s.id === standardId);
+    if (!std) return 0;
+    const subj = std.subjects.find((s) => s.id === subjectId);
+    if (!subj) return 0;
+    return personalQuestions.filter(
+      (q) => q.standard === std.name && q.subject === subj.name,
+    ).length;
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   const resetTutorial = () => {
     safeRemoveItem("coachmarks-completed");
@@ -302,6 +491,17 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     profile,
     papers,
     personalQuestions,
+    standards,
+    addStandard,
+    renameStandard,
+    deleteStandard,
+    reorderStandard,
+    addSubject,
+    renameSubject,
+    deleteSubject,
+    reorderSubject,
+    getSubjectsForStandard,
+    getQuestionCountForSubject,
     login,
     logout,
     completeOnboarding,

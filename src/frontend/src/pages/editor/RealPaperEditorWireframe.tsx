@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   AlertCircle,
   ArrowLeft,
+  FileDown,
   Image as ImageIcon,
   Redo,
   Undo,
@@ -46,6 +47,7 @@ export function RealPaperEditorWireframe() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     "saved" | "saving" | "idle"
   >("idle");
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
   const [showAddHeadingDialog, setShowAddHeadingDialog] = useState(false);
   const [autoFocusQuestionId, setAutoFocusQuestionId] = useState<string | null>(
     null,
@@ -97,11 +99,25 @@ export function RealPaperEditorWireframe() {
       }
 
       setAutoSaveStatus("saving");
-      updatePaper(paperId, paperState);
+      // Auto-update totalMarks from individual question marks
+      const computedTotal = paperState.sections.reduce(
+        (total, section) =>
+          total +
+          section.questions.reduce((sTotal, q) => sTotal + (q.marks || 0), 0),
+        0,
+      );
+      const updatedPaper = { ...paperState, totalMarks: computedTotal };
+      updatePaper(paperId, updatedPaper);
 
       setTimeout(() => {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, "0");
+        const ampm = hours >= 12 ? "PM" : "AM";
+        const displayHours = hours % 12 || 12;
+        setLastSavedTime(`${displayHours}:${minutes} ${ampm}`);
         setAutoSaveStatus("saved");
-        setTimeout(() => setAutoSaveStatus("idle"), 2000);
+        setTimeout(() => setAutoSaveStatus("idle"), 3000);
       }, 300);
     },
     500,
@@ -158,6 +174,15 @@ export function RealPaperEditorWireframe() {
             ["", ""],
           ],
         },
+      }),
+      ...(questionType === "assertion-reason" && {
+        assertionReasonData: { assertion: "", reason: "" },
+      }),
+      ...(questionType === "case-based" && {
+        caseBasedData: { passage: "", subQuestions: [""] },
+      }),
+      ...(questionType === "numerical" && {
+        numericalData: { unit: "" },
       }),
     };
 
@@ -340,8 +365,27 @@ export function RealPaperEditorWireframe() {
               </h1>
               <p className="text-xs text-muted-foreground">
                 {autoSaveStatus === "saving" && "Saving..."}
-                {autoSaveStatus === "saved" && "Saved"}
-                {autoSaveStatus === "idle" && "Real Paper Editor"}
+                {autoSaveStatus === "saved" && lastSavedTime
+                  ? `Last saved at ${lastSavedTime} · `
+                  : autoSaveStatus === "saved"
+                    ? "Saved · "
+                    : ""}
+                {autoSaveStatus === "idle" && lastSavedTime
+                  ? `Last saved at ${lastSavedTime} · `
+                  : autoSaveStatus === "idle"
+                    ? ""
+                    : ""}
+                Total:{" "}
+                {paperState.sections.reduce(
+                  (total, section) =>
+                    total +
+                    section.questions.reduce(
+                      (sTotal, q) => sTotal + (q.marks || 0),
+                      0,
+                    ),
+                  0,
+                )}{" "}
+                marks
               </p>
             </div>
           </div>
@@ -368,10 +412,101 @@ export function RealPaperEditorWireframe() {
               <ImageIcon className="mr-2 h-4 w-4" />
               Insert Image
             </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => navigate({ to: `/export/${paperId}` })}
+              title="Export, Print & Answer Key"
+            >
+              <FileDown className="mr-2 h-4 w-4" />
+              Export
+            </Button>
             <PaperActionOverflowMenu paperId={paperId} />
           </div>
         </div>
       </div>
+
+      {/* Difficulty Distribution Bar */}
+      {(() => {
+        const allQs = paperState.sections.flatMap((s) => s.questions);
+        const total = allQs.length;
+        const easy = allQs.filter((q) => q.difficulty === "easy").length;
+        const medium = allQs.filter((q) => q.difficulty === "medium").length;
+        const hard = allQs.filter((q) => q.difficulty === "hard").length;
+        const untagged = total - easy - medium - hard;
+        const tagged = easy + medium + hard;
+        if (total === 0 || tagged === 0) return null;
+
+        const pct = (n: number) => `${Math.round((n / total) * 100)}%`;
+
+        return (
+          <div className="border-b bg-background px-4 py-2">
+            <div className="container mx-auto max-w-4xl space-y-1.5">
+              <div className="flex items-center gap-3 text-xs flex-wrap">
+                <span className="font-medium text-muted-foreground shrink-0">
+                  Difficulty mix:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {easy > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                      Easy {easy} ({pct(easy)})
+                    </span>
+                  )}
+                  {medium > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Medium {medium} ({pct(medium)})
+                    </span>
+                  )}
+                  {hard > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                      Hard {hard} ({pct(hard)})
+                    </span>
+                  )}
+                  {untagged > 0 && (
+                    <span className="text-muted-foreground">
+                      {untagged} untagged
+                    </span>
+                  )}
+                </div>
+              </div>
+              {/* Stacked progress bar */}
+              <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+                {easy > 0 && (
+                  <div
+                    className="h-full bg-green-500 transition-all duration-300"
+                    style={{ width: pct(easy) }}
+                    title={`Easy: ${easy} (${pct(easy)})`}
+                  />
+                )}
+                {medium > 0 && (
+                  <div
+                    className="h-full bg-amber-400 transition-all duration-300"
+                    style={{ width: pct(medium) }}
+                    title={`Medium: ${medium} (${pct(medium)})`}
+                  />
+                )}
+                {hard > 0 && (
+                  <div
+                    className="h-full bg-red-500 transition-all duration-300"
+                    style={{ width: pct(hard) }}
+                    title={`Hard: ${hard} (${pct(hard)})`}
+                  />
+                )}
+                {untagged > 0 && (
+                  <div
+                    className="h-full bg-muted-foreground/20 transition-all duration-300"
+                    style={{ width: pct(untagged) }}
+                    title={`Untagged: ${untagged}`}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Paper Surface */}
       <div className="container mx-auto max-w-4xl p-4 py-8">

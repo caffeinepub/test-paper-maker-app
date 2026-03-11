@@ -85,7 +85,7 @@ export function PaperSurface({
     setShowQuestionBankDialog(true);
   };
 
-  const handleQuestionBankConfirm = (board: string, standard: string) => {
+  const handleQuestionBankConfirm = (board: string, standardId: string) => {
     if (!pendingInsertContext) return;
 
     const context: any = {
@@ -100,7 +100,8 @@ export function PaperSurface({
 
     setSectionInsertContext(context);
     navigate({
-      to: `/question-bank/${board}/${standard}`,
+      to: "/question-bank/$board/$standardId/subjects",
+      params: { board, standardId },
       search: { tab: "personal" },
     });
   };
@@ -143,10 +144,18 @@ export function PaperSurface({
     0,
   );
 
+  // Compute live total marks from individual question marks
+  const computedTotalMarks = paper.sections.reduce(
+    (total, section) =>
+      total +
+      section.questions.reduce((sTotal, q) => sTotal + (q.marks || 0), 0),
+    0,
+  );
+
   return (
     <>
-      <Card className="paper-container w-full max-w-[210mm] bg-white text-black shadow-2xl print:max-w-none print:border-0 print:shadow-none">
-        <div className="min-h-[297mm] p-8 print:min-h-0 print:p-0">
+      <Card className="paper-container w-full max-w-[210mm] overflow-hidden bg-white text-black shadow-2xl print:max-w-none print:border-0 print:shadow-none">
+        <div className="min-h-[297mm] overflow-hidden p-4 sm:p-8 print:min-h-0 print:p-0">
           {/* Modern Header Card */}
           <div className="paper-header-card mb-6 rounded-xl border-2 border-border bg-gradient-to-br from-background to-muted/30 p-6 shadow-md">
             <div className="space-y-3 text-center">
@@ -199,7 +208,7 @@ export function PaperSurface({
                   <span className="font-semibold text-foreground">
                     Total Marks:
                   </span>{" "}
-                  {paper.totalMarks}
+                  {computedTotalMarks}
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="font-semibold text-foreground">Time:</span>{" "}
@@ -250,12 +259,23 @@ export function PaperSurface({
                       const headingQuestions = section.questions.filter(
                         (q) => q.headingId === heading.id,
                       );
-                      const totalMarks =
-                        headingQuestions.length * section.marks;
-                      const displayCount = Math.max(
-                        headingQuestions.length,
-                        heading.plannedCount,
+                      // Compute actual marks sum from individual question marks
+                      const headingTotalMarks = headingQuestions.reduce(
+                        (sum, q) => sum + (q.marks || 0),
+                        0,
                       );
+                      // Use per-question mark for display only if all questions have same marks
+                      const allSameMark =
+                        headingQuestions.length > 0 &&
+                        headingQuestions.every(
+                          (q) => q.marks === headingQuestions[0].marks,
+                        );
+                      const marksDisplay =
+                        headingQuestions.length === 0
+                          ? `${heading.plannedCount} × ${section.marks} = ${heading.plannedCount * section.marks} marks`
+                          : allSameMark
+                            ? `${headingQuestions.length} × ${headingQuestions[0].marks} = ${headingTotalMarks} marks`
+                            : `${headingTotalMarks} marks`;
 
                       return (
                         <div key={heading.id} className="space-y-2">
@@ -265,23 +285,28 @@ export function PaperSurface({
                             <p className="text-sm font-medium text-foreground break-words">
                               {heading.title}
                               <span className="ml-2 text-muted-foreground whitespace-nowrap">
-                                ({displayCount} × {section.marks} = {totalMarks}{" "}
-                                marks)
+                                ({marksDisplay})
                               </span>
                             </p>
                           </div>
                           {isEditable && (
-                            <div className="flex flex-wrap gap-1 print:hidden ml-4">
+                            <div
+                              className="mt-1 flex w-full max-w-full flex-wrap gap-1.5 print:hidden"
+                              style={{ boxSizing: "border-box" }}
+                            >
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() =>
                                   handleAddFromBank(section.id, heading.id)
                                 }
-                                className="h-7 px-2 text-xs"
+                                className="h-7 min-w-0 shrink px-2 text-xs"
+                                data-ocid="paper.secondary_button"
                               >
-                                <BookOpen className="mr-1 h-3 w-3" />
-                                Insert from Bank
+                                <BookOpen className="mr-1 h-3 w-3 shrink-0" />
+                                <span className="truncate">
+                                  Insert from Bank
+                                </span>
                               </Button>
                               <Button
                                 variant="outline"
@@ -289,10 +314,11 @@ export function PaperSurface({
                                 onClick={() =>
                                   handleAddWithAI(section.id, heading.id)
                                 }
-                                className="h-7 px-2 text-xs"
+                                className="h-7 min-w-0 shrink px-2 text-xs"
+                                data-ocid="paper.secondary_button"
                               >
-                                <Sparkles className="mr-1 h-3 w-3" />
-                                Insert from AI
+                                <Sparkles className="mr-1 h-3 w-3 shrink-0" />
+                                <span className="truncate">Insert from AI</span>
                               </Button>
                             </div>
                           )}
@@ -368,6 +394,11 @@ export function PaperSurface({
                                         <div className="flex-1 min-w-0">
                                           <PaperRenderer question={question} />
                                         </div>
+                                        {isEditable && (
+                                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                                            {question.marks}m
+                                          </span>
+                                        )}
                                       </div>
                                     )}
                                   </div>

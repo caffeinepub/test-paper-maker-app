@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Menu } from "lucide-react";
+import { AlertCircle, Menu, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCoachmarks } from "../../hooks/useCoachmarks";
 import { useTheme } from "../../hooks/useTheme";
@@ -26,7 +26,19 @@ export function AppShell() {
   const coachmarks = useCoachmarks();
 
   // Initialize theme at the shell level to ensure it's applied globally
-  useTheme();
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    // Cycle: system → light → dark → light
+    const effective = theme === "dark" ? "light" : "dark";
+    setTheme(effective);
+  };
+
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   const isLoginPage = location.pathname === "/";
   const isOnboardingPage = location.pathname === "/onboarding";
@@ -129,18 +141,15 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-dvh overflow-hidden bg-background">
-      {/* Desktop Sidebar - White background */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col border-r border-border bg-white">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:w-64 lg:flex-col border-r border-border bg-background">
         <NavigationDrawer onNavigate={() => {}} />
       </aside>
 
       {/* Mobile Layout */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Mobile Header - White background */}
-        <header
-          className="flex items-center gap-4 border-b border-border px-4 py-3 lg:hidden bg-white"
-          style={{ colorScheme: "light" }}
-        >
+        {/* Mobile Header */}
+        <header className="flex items-center gap-4 border-b border-border px-4 py-3 lg:hidden bg-background">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
@@ -153,15 +162,28 @@ export function AppShell() {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-64 p-0 border-border bg-white"
-              style={{ colorScheme: "light" }}
+              className="w-64 p-0 border-border bg-background"
             >
               <NavigationDrawer onNavigate={() => setMobileMenuOpen(false)} />
             </SheetContent>
           </Sheet>
-          <h1 className="text-lg font-semibold text-foreground">
+          <h1 className="flex-1 text-lg font-semibold text-foreground">
             Test Paper Maker
           </h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            className="text-foreground hover:bg-muted"
+            data-ocid="app.toggle"
+          >
+            {isDark ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </Button>
         </header>
 
         {/* Main Content */}

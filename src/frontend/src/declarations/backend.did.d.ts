@@ -43,7 +43,9 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getPaper' : ActorMethod<[string], [] | [string]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'savePaper' : ActorMethod<[string, string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

@@ -10,13 +10,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -24,9 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "@tanstack/react-router";
-import { FileDown, MoreVertical, Printer, Share2, Trash2 } from "lucide-react";
+import { FileDown, Key, MoreVertical, Printer, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { downloadPaperAsText } from "../../lib/export/paperTextExport";
 import { useMockStore } from "../../state/mockStore";
 
 interface PaperActionOverflowMenuProps {
@@ -40,45 +32,14 @@ export function PaperActionOverflowMenu({
   const { getPaperById, deletePaper } = useMockStore();
   const paper = getPaperById(paperId);
 
-  const [showShareDialog, setShowShareDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleExportPDF = () => {
-    window.print();
-  };
-
-  const handleExportText = () => {
-    if (!paper) return;
-    downloadPaperAsText(paper);
-  };
-
-  const handleShare = async () => {
-    const shareUrl = window.location.href;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: paper?.title || "Test Paper",
-          text: `Check out this test paper: ${paper?.title || "Untitled"}`,
-          url: shareUrl,
-        });
-      } catch (err) {
-        console.error("Share failed:", err);
-        setShowShareDialog(true);
-      }
-    } else {
-      setShowShareDialog(true);
-    }
-  };
-
-  const handleCopyLink = () => {
-    const shareUrl = window.location.href;
-    navigator.clipboard.writeText(shareUrl);
-    alert("Link copied to clipboard!");
+  const handleGoToExport = () => {
+    navigate({ to: `/export/${paperId}` });
   };
 
   const handleDelete = () => {
@@ -99,17 +60,13 @@ export function PaperActionOverflowMenu({
             <Printer className="mr-2 h-4 w-4" />
             Print
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleExportPDF}>
+          <DropdownMenuItem onClick={handleGoToExport}>
             <FileDown className="mr-2 h-4 w-4" />
-            Export as PDF
+            Export / Save as PDF
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleExportText}>
-            <FileDown className="mr-2 h-4 w-4" />
-            Download as Text
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleShare}>
-            <Share2 className="mr-2 h-4 w-4" />
-            Share / Send
+          <DropdownMenuItem onClick={handleGoToExport}>
+            <Key className="mr-2 h-4 w-4" />
+            Answer Key
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -121,26 +78,6 @@ export function PaperActionOverflowMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {/* Share Dialog */}
-      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Share Paper</DialogTitle>
-            <DialogDescription>
-              Copy the link below to share this paper
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="rounded-md bg-muted p-3">
-              <code className="text-sm break-all">{window.location.href}</code>
-            </div>
-            <Button onClick={handleCopyLink} className="w-full">
-              Copy Link
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

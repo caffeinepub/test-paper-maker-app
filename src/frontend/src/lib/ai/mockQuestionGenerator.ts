@@ -13,6 +13,8 @@ interface GeneratedQuestion {
   text: string;
   marks: number;
   selected: boolean;
+  suggestedAnswer: string;
+  tags: string[];
 }
 
 // Extract clean topic from focus area (remove instruction keywords)
@@ -200,6 +202,90 @@ const conceptualTemplates = {
   },
 };
 
+// Generate a short plausible suggested answer based on the question text
+function generateSuggestedAnswer(
+  questionText: string,
+  questionStyle: "numerical" | "conceptual",
+  difficulty: string,
+  topic: string,
+): string {
+  if (questionStyle === "numerical") {
+    const answersByDifficulty: Record<string, string> = {
+      easy: "Calculate step by step using the given values. Final answer depends on input parameters.",
+      medium:
+        "Apply the relevant formula. Show intermediate steps and arrive at the numerical result.",
+      hard: "Use multi-step calculation. Verify each stage before arriving at the final value.",
+    };
+    return answersByDifficulty[difficulty] || "Solve using standard methods.";
+  }
+
+  // Conceptual answers — short model answers
+  const lower = questionText.toLowerCase();
+  if (lower.startsWith("define") || lower.startsWith("what is")) {
+    return `${topic.charAt(0).toUpperCase() + topic.slice(1)} is a key concept that refers to the process or principle described in the chapter.`;
+  }
+  if (lower.startsWith("explain") || lower.startsWith("describe")) {
+    return `${topic.charAt(0).toUpperCase() + topic.slice(1)} involves several important stages. First, ... (students should elaborate with examples).`;
+  }
+  if (lower.startsWith("list") || lower.startsWith("name")) {
+    return `Key points related to ${topic}: (1) ... (2) ... (3) ... (students provide specific examples from text).`;
+  }
+  if (lower.includes("compare") || lower.includes("differentiate")) {
+    return `${topic.charAt(0).toUpperCase() + topic.slice(1)} differs from related concepts in terms of structure, function, and application.`;
+  }
+  if (lower.includes("advantage") || lower.includes("disadvantage")) {
+    return "Advantages include improved efficiency and wider application. Disadvantages include cost and complexity.";
+  }
+  if (lower.startsWith("analyze") || lower.startsWith("critically")) {
+    return `A critical analysis of ${topic} reveals both strengths and limitations. Students should support with evidence.`;
+  }
+  return `Refer to the chapter on ${topic}. Provide a structured answer covering the main points discussed in class.`;
+}
+
+// Extract tags from focus area / topic string
+function extractTags(focusArea: string, topic: string): string[] {
+  const combined = [focusArea, topic].filter(Boolean).join(" ");
+  // Split on commas, spaces, semicolons
+  const raw = combined
+    .split(/[,;\s]+/)
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 2);
+
+  // Remove common stop words and instruction keywords
+  const stopWords = new Set([
+    "the",
+    "and",
+    "for",
+    "type",
+    "questions",
+    "question",
+    "numerical",
+    "conceptual",
+    "class",
+    "grade",
+    "standard",
+    "std",
+    "level",
+    "10th",
+    "9th",
+    "8th",
+    "7th",
+    "6th",
+    "11th",
+    "12th",
+    "theory",
+    "practical",
+    "find",
+    "solve",
+    "calculate",
+    "using",
+    "with",
+  ]);
+
+  const tags = [...new Set(raw.filter((t) => !stopWords.has(t)))].slice(0, 5);
+  return tags;
+}
+
 // Detect if focus area suggests numerical questions
 function detectNumericalIntent(focusArea: string): boolean {
   const numericalKeywords =
@@ -252,6 +338,7 @@ export function generateMockQuestions(
 
   const questions: GeneratedQuestion[] = [];
   const usedTemplates = new Set<string>();
+  const tags = extractTags(focusArea, cleanTopic);
 
   for (let i = 0; i < count; i++) {
     let template = getRandomTemplate(difficulty, marksNum, questionStyle);
@@ -265,12 +352,20 @@ export function generateMockQuestions(
 
     usedTemplates.add(template);
     const text = generateQuestionText(template, cleanTopic);
+    const suggestedAnswer = generateSuggestedAnswer(
+      text,
+      questionStyle,
+      difficulty,
+      cleanTopic,
+    );
 
     questions.push({
       id: `ai-q-${Date.now()}-${i}`,
       text,
       marks: marksNum,
       selected: false,
+      suggestedAnswer,
+      tags: [...tags],
     });
   }
 

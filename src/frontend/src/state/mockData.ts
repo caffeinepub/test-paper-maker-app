@@ -17,7 +17,10 @@ export type QuestionType =
   | "true-false"
   | "match-pairs"
   | "table"
-  | "short-answer";
+  | "short-answer"
+  | "long-answer"
+  | "assertion-reason"
+  | "case-based";
 
 // Support for rich content in cells (can be string or RichCellContent)
 export type CellContent = string | any; // any to allow RichCellContent without circular dependency
@@ -32,6 +35,13 @@ export interface Question {
   imageAttachment: string | null;
   board?: string;
   standard?: string;
+  subject?: string;
+  /** Optional correct/model answer for any question type — always skippable */
+  answer?: string;
+  /** Optional difficulty level */
+  difficulty?: "easy" | "medium" | "hard";
+  /** Optional topic tags */
+  tags?: string[];
   mcqOptions?: {
     options: string[];
     correctAnswer?: number;
@@ -50,6 +60,17 @@ export interface Question {
     cols: number;
     cells: CellContent[][];
     columnHeaders?: string[];
+  };
+  assertionReasonData?: {
+    assertion: string;
+    reason: string;
+  };
+  caseBasedData?: {
+    passage: string;
+    subQuestions: string[];
+  };
+  numericalData?: {
+    unit?: string;
   };
 }
 

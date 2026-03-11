@@ -226,9 +226,9 @@ body {
 
 .rich-cell-image-wrapper {
   position: relative;
-  display: inline-block;
+  display: block;
   max-width: 100%;
-  margin: 0.125rem 0;
+  margin: 0.25rem 0;
 }
 
 .rich-cell-image {
@@ -307,7 +307,10 @@ body {
   }
 
   html,
-  body {
+  body,
+  #root {
+    background: white !important;
+    background-color: white !important;
     width: 210mm;
     height: auto !important;
     overflow: visible !important;

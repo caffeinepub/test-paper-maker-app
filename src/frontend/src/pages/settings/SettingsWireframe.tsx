@@ -27,28 +27,35 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "@tanstack/react-router";
-import { Monitor, Moon, RotateCcw, Settings, Sun, Trash2 } from "lucide-react";
-import { useState } from "react";
+import {
+  Globe,
+  Monitor,
+  Moon,
+  RotateCcw,
+  Settings,
+  Sun,
+  Trash2,
+} from "lucide-react";
 import { TOOLBOX_SPOTLIGHT_STORAGE_KEY } from "../../hooks/useRealPaperToolboxSpotlight";
 import { useTheme } from "../../hooks/useTheme";
+import { LANGUAGES } from "../../lib/i18n/translations";
+import { useLanguage } from "../../lib/i18n/useLanguage";
 import { useMockStore } from "../../state/mockStore";
 
 export function SettingsWireframe() {
   const navigate = useNavigate();
   const { resetTutorial, clearAllData } = useMockStore();
   const { theme, setTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
 
   const handleResetTutorial = () => {
-    // Reset both main tutorial and toolbox spotlight
     resetTutorial();
     try {
       localStorage.removeItem(TOOLBOX_SPOTLIGHT_STORAGE_KEY);
     } catch (error) {
       console.error("Failed to reset toolbox spotlight:", error);
     }
-    // Set flag to start tutorial
     localStorage.setItem("start-tutorial", "true");
-    // Navigate to home where tutorial will start
     navigate({ to: "/home" });
   };
 
@@ -68,7 +75,7 @@ export function SettingsWireframe() {
       <div className="mb-6">
         <h1 className="flex items-center gap-2 text-3xl font-bold text-foreground">
           <Settings className="h-8 w-8 text-primary" />
-          Settings
+          {t("heading.settings")}
         </h1>
         <p className="mt-2 text-muted-foreground">
           Manage your app preferences and data
@@ -76,17 +83,63 @@ export function SettingsWireframe() {
       </div>
 
       <div className="space-y-6">
+        {/* Language Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              {t("label.language")}
+            </CardTitle>
+            <CardDescription>
+              Choose your preferred language for the app interface
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="language-select">{t("label.language")}</Label>
+              <Select
+                value={language}
+                onValueChange={(val) => setLanguage(val as typeof language)}
+              >
+                <SelectTrigger
+                  id="language-select"
+                  className="w-full"
+                  data-ocid="settings.language.select"
+                >
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{lang.nativeLabel}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {lang.label}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Appearance Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Appearance</CardTitle>
+            <CardTitle>{t("label.appearance")}</CardTitle>
             <CardDescription>Customize how the app looks</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="theme-select">Theme</Label>
+              <Label htmlFor="theme-select">{t("label.theme")}</Label>
               <Select value={theme} onValueChange={handleThemeChange}>
-                <SelectTrigger id="theme-select" className="w-full">
+                <SelectTrigger
+                  id="theme-select"
+                  className="w-full"
+                  data-ocid="settings.theme.select"
+                >
                   <SelectValue placeholder="Select theme" />
                 </SelectTrigger>
                 <SelectContent>
@@ -123,7 +176,11 @@ export function SettingsWireframe() {
           <CardContent>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  data-ocid="settings.tutorial.button"
+                >
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Reset Tutorial
                 </Button>
@@ -138,9 +195,9 @@ export function SettingsWireframe() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t("btn.cancel")}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleResetTutorial}>
-                    Reset
+                    {t("btn.reset")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -161,7 +218,11 @@ export function SettingsWireframe() {
           <CardContent className="space-y-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full">
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  data-ocid="settings.clear_data.button"
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Clear All Data & Sign Out
                 </Button>
@@ -176,7 +237,7 @@ export function SettingsWireframe() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t("btn.cancel")}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleClearData}
                     className="bg-destructive text-destructive-foreground"

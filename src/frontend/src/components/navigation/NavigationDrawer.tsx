@@ -7,12 +7,15 @@ import {
   FileText,
   Home,
   LogOut,
+  Moon,
   Plus,
   Settings,
   Sparkles,
+  Sun,
   Upload,
   User,
 } from "lucide-react";
+import { useTheme } from "../../hooks/useTheme";
 import { createNewPaper } from "../../lib/papers/createNewPaper";
 import { useMockStore } from "../../state/mockStore";
 
@@ -24,6 +27,13 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isInitialized, profile, addPaper, logout } = useMockStore();
+  const { theme, setTheme } = useTheme();
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const toggleTheme = () => setTheme(isDark ? "light" : "dark");
 
   const handleNavigation = (path: string) => {
     navigate({ to: path });
@@ -59,12 +69,9 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
       : "w-full justify-start text-foreground hover:bg-muted hover:text-foreground";
 
   return (
-    <div
-      className="flex h-full flex-col bg-white"
-      style={{ colorScheme: "light" }}
-    >
+    <div className="flex h-full flex-col bg-background">
       {/* Header */}
-      <div className="border-b border-border p-4">
+      <div className="border-b border-border p-4 bg-background">
         <h2 className="text-xl font-bold text-foreground">Test Paper Maker</h2>
         <p className="text-sm text-muted-foreground">
           {profile.teacherName || "Teacher"}
@@ -167,7 +174,21 @@ export function NavigationDrawer({ onNavigate }: NavigationDrawerProps) {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-4">
+      <div className="border-t border-border p-4 space-y-1">
+        {/* Theme toggle */}
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-foreground hover:bg-muted hover:text-foreground"
+          onClick={toggleTheme}
+          data-ocid="nav.toggle"
+        >
+          {isDark ? (
+            <Sun className="mr-2 h-4 w-4" />
+          ) : (
+            <Moon className="mr-2 h-4 w-4" />
+          )}
+          {isDark ? "Light Mode" : "Dark Mode"}
+        </Button>
         <Button
           variant="ghost"
           className="w-full justify-start text-foreground hover:bg-muted hover:text-foreground"

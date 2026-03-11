@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet,
   RouterProvider,
   createRootRoute,
   createRoute,
@@ -18,6 +17,7 @@ import { PaperEditorWireframe } from "./pages/editor/PaperEditorWireframe";
 import { QuestionEntryWireframe } from "./pages/editor/QuestionEntryWireframe";
 import { RealPaperEditorWireframe } from "./pages/editor/RealPaperEditorWireframe";
 import { ExportPrintPreviewWireframe } from "./pages/export/ExportPrintPreviewWireframe";
+import { SharedPaperViewWireframe } from "./pages/export/SharedPaperViewWireframe";
 import { HomeDashboardWireframe } from "./pages/home/HomeDashboardWireframe";
 import { OCRReviewApproveWireframe } from "./pages/ocr/OCRReviewApproveWireframe";
 import { OCRUploadWireframe } from "./pages/ocr/OCRUploadWireframe";
@@ -26,6 +26,7 @@ import { GeneratedPapersWireframe } from "./pages/papers/GeneratedPapersWirefram
 import { ProfileWireframe } from "./pages/profile/ProfileWireframe";
 import { AddQuestionsWireframe } from "./pages/questionBank/AddQuestionsWireframe";
 import { QuestionBankBoardStandardWireframe } from "./pages/questionBank/QuestionBankBoardStandardWireframe";
+import { QuestionBankSubjectsWireframe } from "./pages/questionBank/QuestionBankSubjectsWireframe";
 import { QuestionBankWireframe } from "./pages/questionBank/QuestionBankWireframe";
 import { SettingsWireframe } from "./pages/settings/SettingsWireframe";
 import { MockStoreProvider } from "./state/mockStore";
@@ -103,9 +104,15 @@ const questionBankRoute = createRoute({
   component: QuestionBankWireframe,
 });
 
+const questionBankSubjectsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/question-bank/$board/$standardId/subjects",
+  component: QuestionBankSubjectsWireframe,
+});
+
 const questionBankBoardStandardRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/question-bank/$board/$standard",
+  path: "/question-bank/$board/$standardId/subjects/$subjectId",
   component: QuestionBankBoardStandardWireframe,
 });
 
@@ -127,9 +134,15 @@ const exportRoute = createRoute({
   component: ExportPrintPreviewWireframe,
 });
 
+const shareRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/share/$shareId",
+  component: SharedPaperViewWireframe,
+});
+
 const ocrUploadRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/ocr",
+  path: "/ocr/upload",
   component: OCRUploadWireframe,
 });
 
@@ -161,10 +174,12 @@ const routeTree = rootRoute.addChildren([
   realPaperEditorRoute,
   questionEntryRoute,
   questionBankRoute,
+  questionBankSubjectsRoute,
   questionBankBoardStandardRoute,
   addQuestionsRoute,
   aiRoute,
   exportRoute,
+  shareRoute,
   ocrUploadRoute,
   ocrReviewRoute,
   settingsRoute,
