@@ -30,7 +30,7 @@ export const DEFAULT_SUBJECTS = [
   "Computer Science",
 ];
 
-// Rotating colour palette for subject dots
+// Rotating colour palette for subject/chapter dots
 export const SUBJECT_COLOURS = [
   "#7c3aed", // purple
   "#2563eb", // blue
@@ -44,10 +44,17 @@ export const SUBJECT_COLOURS = [
   "#f97316", // orange
 ];
 
+export interface ChapterEntry {
+  id: string;
+  name: string;
+  isDefault: boolean;
+}
+
 export interface SubjectEntry {
   id: string;
   name: string;
   colourIndex: number; // index into SUBJECT_COLOURS
+  chapters: ChapterEntry[];
 }
 
 export interface StandardEntry {
@@ -76,6 +83,90 @@ export type Board = (typeof BOARDS)[number];
 export type Standard = (typeof DEFAULT_STANDARDS)[number];
 export type QuestionTypeFilter = (typeof QUESTION_TYPES)[number]["value"];
 
+/** Default NCERT-style chapters per subject */
+export const DEFAULT_CHAPTERS_BY_SUBJECT: Record<string, string[]> = {
+  Science: [
+    "Physical World",
+    "Units & Measurement",
+    "Motion in a Straight Line",
+    "Laws of Motion",
+    "Work Energy & Power",
+    "Gravitation",
+    "Properties of Solids & Liquids",
+    "Thermodynamics",
+    "Oscillations & Waves",
+    "Electrostatics",
+    "Current Electricity",
+    "Magnetic Effects",
+    "Modern Physics",
+  ],
+  Mathematics: [
+    "Real Numbers",
+    "Polynomials",
+    "Linear Equations",
+    "Quadratic Equations",
+    "Arithmetic Progressions",
+    "Triangles",
+    "Coordinate Geometry",
+    "Introduction to Trigonometry",
+    "Applications of Trigonometry",
+    "Circles",
+    "Areas Related to Circles",
+    "Surface Areas & Volumes",
+    "Statistics",
+    "Probability",
+  ],
+  English: [
+    "Reading Comprehension",
+    "Grammar - Parts of Speech",
+    "Grammar - Tenses",
+    "Grammar - Voice & Narration",
+    "Writing - Letters & Applications",
+    "Writing - Essays",
+    "Literature - Prose",
+    "Literature - Poetry",
+    "Literature - Drama",
+  ],
+  "Social Science": [
+    "Our Pasts (History)",
+    "Resources & Development (Geography)",
+    "Democratic Politics (Civics)",
+    "Understanding Economic Development",
+    "Disaster Management",
+  ],
+  Hindi: [
+    "Vasant",
+    "Durva",
+    "Bal Mahabharat",
+    "Sparsh",
+    "Sanchayan",
+    "Grammar (Vyakaran)",
+    "Composition (Rachna)",
+  ],
+  "Computer Science": [
+    "Introduction to Computing",
+    "Algorithms & Problem Solving",
+    "Programming with Python/Scratch",
+    "Internet & Web Technology",
+    "Data Handling & Spreadsheets",
+    "Database Management",
+    "Cyber Safety & Ethics",
+  ],
+};
+
+/** Build default chapters for a subject name */
+function buildDefaultChapters(
+  subjectName: string,
+  stdIdx: number,
+): ChapterEntry[] {
+  const names = DEFAULT_CHAPTERS_BY_SUBJECT[subjectName] ?? [];
+  return names.map((name, ci) => ({
+    id: `default-ch-${stdIdx}-${subjectName.replace(/\s+/g, "-").toLowerCase()}-${ci}`,
+    name,
+    isDefault: true,
+  }));
+}
+
 /** Build the initial list of StandardEntry objects (defaults 1–12) */
 export function buildDefaultStandards(): StandardEntry[] {
   return DEFAULT_STANDARDS.map((name, si) => ({
@@ -86,6 +177,7 @@ export function buildDefaultStandards(): StandardEntry[] {
       id: `default-subj-${si + 1}-${idx}`,
       name: subjectName,
       colourIndex: idx % SUBJECT_COLOURS.length,
+      chapters: buildDefaultChapters(subjectName, si + 1),
     })),
   }));
 }

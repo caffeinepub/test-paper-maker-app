@@ -26,6 +26,7 @@ import { GeneratedPapersWireframe } from "./pages/papers/GeneratedPapersWirefram
 import { ProfileWireframe } from "./pages/profile/ProfileWireframe";
 import { AddQuestionsWireframe } from "./pages/questionBank/AddQuestionsWireframe";
 import { QuestionBankBoardStandardWireframe } from "./pages/questionBank/QuestionBankBoardStandardWireframe";
+import { QuestionBankChaptersWireframe } from "./pages/questionBank/QuestionBankChaptersWireframe";
 import { QuestionBankSubjectsWireframe } from "./pages/questionBank/QuestionBankSubjectsWireframe";
 import { QuestionBankWireframe } from "./pages/questionBank/QuestionBankWireframe";
 import { SettingsWireframe } from "./pages/settings/SettingsWireframe";
@@ -116,6 +117,18 @@ const questionBankBoardStandardRoute = createRoute({
   component: QuestionBankBoardStandardWireframe,
 });
 
+const questionBankChaptersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/question-bank/$board/$standardId/subjects/$subjectId/chapters",
+  component: QuestionBankChaptersWireframe,
+});
+
+const questionBankChapterQuestionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/question-bank/$board/$standardId/subjects/$subjectId/chapters/$chapterId",
+  component: QuestionBankBoardStandardWireframe,
+});
+
 const addQuestionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/add-questions",
@@ -176,6 +189,8 @@ const routeTree = rootRoute.addChildren([
   questionBankRoute,
   questionBankSubjectsRoute,
   questionBankBoardStandardRoute,
+  questionBankChaptersRoute,
+  questionBankChapterQuestionsRoute,
   addQuestionsRoute,
   aiRoute,
   exportRoute,

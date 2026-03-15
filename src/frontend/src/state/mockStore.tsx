@@ -7,11 +7,14 @@ import {
 } from "react";
 import { normalizeToRichContent } from "../lib/editor/richCellContent";
 import {
+  type ChapterEntry,
+  DEFAULT_CHAPTERS_BY_SUBJECT,
   SUBJECT_COLOURS,
   type StandardEntry,
   type SubjectEntry,
   buildDefaultStandards,
 } from "../lib/questionBank/questionBankTaxonomy";
+import { allStarterQuestions } from "../lib/questionBank/starterQuestionsIndex";
 import {
   isStorageAvailable,
   safeGetItem,
@@ -24,7 +27,6 @@ import {
   type Question,
   defaultProfile,
   samplePapers,
-  starterQuestions,
 } from "./mockData";
 
 interface MockStoreContextType {
@@ -52,6 +54,30 @@ interface MockStoreContextType {
   ) => void;
   getSubjectsForStandard: (standardId: string) => SubjectEntry[];
   getQuestionCountForSubject: (standardId: string, subjectId: string) => number;
+  getQuestionCountForChapter: (
+    standardId: string,
+    subjectId: string,
+    chapterId: string,
+  ) => number;
+  // Chapter management
+  addChapter: (standardId: string, subjectId: string, name: string) => void;
+  renameChapter: (
+    standardId: string,
+    subjectId: string,
+    chapterId: string,
+    newName: string,
+  ) => void;
+  deleteChapter: (
+    standardId: string,
+    subjectId: string,
+    chapterId: string,
+  ) => void;
+  reorderChapter: (
+    standardId: string,
+    subjectId: string,
+    fromIndex: number,
+    toIndex: number,
+  ) => void;
   login: () => void;
   logout: () => void;
   completeOnboarding: () => void;
@@ -142,23 +168,47 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     return question;
   };
 
-  /** Merge saved standards with defaults — ensures new default subjects/standards always appear */
+  /** Merge saved standards with defaults — ensures new default subjects/chapters always appear */
   const mergeWithDefaults = (saved: StandardEntry[]): StandardEntry[] => {
     const defaults = buildDefaultStandards();
     const savedMap = new Map(saved.map((s) => [s.id, s]));
 
-    // Rebuild: for each default keep saved order/subjects if exists, else use fresh default
     const merged = defaults.map((def) => {
       const existing = savedMap.get(def.id);
       if (existing) {
-        return { ...def, subjects: existing.subjects };
+        // Merge default chapters into existing subjects
+        const mergedSubjects = existing.subjects.map((savedSubj) => {
+          const defSubj = def.subjects.find((d) => d.id === savedSubj.id);
+          if (!defSubj)
+            return { ...savedSubj, chapters: savedSubj.chapters ?? [] };
+          // If saved subject has no chapters or missing default chapters, merge them
+          const savedChapterIds = new Set(
+            (savedSubj.chapters ?? []).map((c) => c.id),
+          );
+          const missingDefaults = defSubj.chapters.filter(
+            (c) => !savedChapterIds.has(c.id),
+          );
+          return {
+            ...savedSubj,
+            chapters: [...(savedSubj.chapters ?? []), ...missingDefaults],
+          };
+        });
+        return { ...def, subjects: mergedSubjects };
       }
       return def;
     });
 
     // Append any custom standards that were saved
     const customSaved = saved.filter((s) => !s.isDefault);
-    return [...merged, ...customSaved];
+    // Ensure custom standards have chapters array on subjects
+    const normalizedCustom = customSaved.map((s) => ({
+      ...s,
+      subjects: s.subjects.map((sub) => ({
+        ...sub,
+        chapters: sub.chapters ?? [],
+      })),
+    }));
+    return [...merged, ...normalizedCustom];
   };
 
   const initialize = () => {
@@ -332,26 +382,38 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   };
 
   const getStarterQuestions = () => {
-    return starterQuestions;
+    return allStarterQuestions;
   };
 
   // ── Standards management ──────────────────────────────────────────────────
 
   const addStandard = (name: string) => {
+    const ts = Date.now();
     const newStandard: StandardEntry = {
-      id: `custom-std-${Date.now()}`,
+      id: `custom-std-${ts}`,
       name: name.trim(),
       isDefault: false,
       subjects: [
-        { id: `subj-${Date.now()}-0`, name: "Science", colourIndex: 0 },
-        { id: `subj-${Date.now()}-1`, name: "Mathematics", colourIndex: 1 },
-        { id: `subj-${Date.now()}-2`, name: "English", colourIndex: 2 },
-        { id: `subj-${Date.now()}-3`, name: "Social Science", colourIndex: 3 },
-        { id: `subj-${Date.now()}-4`, name: "Hindi", colourIndex: 4 },
+        { id: `subj-${ts}-0`, name: "Science", colourIndex: 0, chapters: [] },
         {
-          id: `subj-${Date.now()}-5`,
+          id: `subj-${ts}-1`,
+          name: "Mathematics",
+          colourIndex: 1,
+          chapters: [],
+        },
+        { id: `subj-${ts}-2`, name: "English", colourIndex: 2, chapters: [] },
+        {
+          id: `subj-${ts}-3`,
+          name: "Social Science",
+          colourIndex: 3,
+          chapters: [],
+        },
+        { id: `subj-${ts}-4`, name: "Hindi", colourIndex: 4, chapters: [] },
+        {
+          id: `subj-${ts}-5`,
           name: "Computer Science",
           colourIndex: 5,
+          chapters: [],
         },
       ],
     };
@@ -395,6 +457,7 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
           id: `subj-${Date.now()}`,
           name: name.trim(),
           colourIndex,
+          chapters: [],
         };
         return { ...s, subjects: [...s.subjects, newSubject] };
       }),
@@ -467,6 +530,135 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     ).length;
   };
 
+  const getQuestionCountForChapter = (
+    standardId: string,
+    subjectId: string,
+    chapterId: string,
+  ): number => {
+    const std = standards.find((s) => s.id === standardId);
+    if (!std) return 0;
+    const subj = std.subjects.find((s) => s.id === subjectId);
+    if (!subj) return 0;
+    if (chapterId === "uncategorized") {
+      return personalQuestions.filter(
+        (q) => q.standard === std.name && q.subject === subj.name && !q.chapter,
+      ).length;
+    }
+    const chapter = subj.chapters.find((c) => c.id === chapterId);
+    if (!chapter) return 0;
+    return personalQuestions.filter(
+      (q) =>
+        q.standard === std.name &&
+        q.subject === subj.name &&
+        q.chapter === chapter.name,
+    ).length;
+  };
+
+  // ── Chapters management ───────────────────────────────────────────────────
+
+  const addChapter = (standardId: string, subjectId: string, name: string) => {
+    setStandards((prev) =>
+      prev.map((s) => {
+        if (s.id !== standardId) return s;
+        return {
+          ...s,
+          subjects: s.subjects.map((sub) => {
+            if (sub.id !== subjectId) return sub;
+            const newChapter: ChapterEntry = {
+              id: `chapter-${Date.now()}`,
+              name: name.trim(),
+              isDefault: false,
+            };
+            return { ...sub, chapters: [...(sub.chapters ?? []), newChapter] };
+          }),
+        };
+      }),
+    );
+  };
+
+  const renameChapter = (
+    standardId: string,
+    subjectId: string,
+    chapterId: string,
+    newName: string,
+  ) => {
+    setStandards((prev) =>
+      prev.map((s) => {
+        if (s.id !== standardId) return s;
+        return {
+          ...s,
+          subjects: s.subjects.map((sub) => {
+            if (sub.id !== subjectId) return sub;
+            return {
+              ...sub,
+              chapters: (sub.chapters ?? []).map((c) =>
+                c.id === chapterId && !c.isDefault
+                  ? { ...c, name: newName.trim() }
+                  : c,
+              ),
+            };
+          }),
+        };
+      }),
+    );
+  };
+
+  const deleteChapter = (
+    standardId: string,
+    subjectId: string,
+    chapterId: string,
+  ) => {
+    setStandards((prev) =>
+      prev.map((s) => {
+        if (s.id !== standardId) return s;
+        return {
+          ...s,
+          subjects: s.subjects.map((sub) => {
+            if (sub.id !== subjectId) return sub;
+            return {
+              ...sub,
+              chapters: (sub.chapters ?? []).filter(
+                (c) => !(c.id === chapterId && !c.isDefault),
+              ),
+            };
+          }),
+        };
+      }),
+    );
+  };
+
+  const reorderChapter = (
+    standardId: string,
+    subjectId: string,
+    fromIndex: number,
+    toIndex: number,
+  ) => {
+    setStandards((prev) =>
+      prev.map((s) => {
+        if (s.id !== standardId) return s;
+        return {
+          ...s,
+          subjects: s.subjects.map((sub) => {
+            if (sub.id !== subjectId) return sub;
+            const chapters = [...(sub.chapters ?? [])];
+            if (
+              fromIndex < 0 ||
+              fromIndex >= chapters.length ||
+              toIndex < 0 ||
+              toIndex >= chapters.length
+            )
+              return sub;
+            [chapters[fromIndex], chapters[toIndex]] = [
+              chapters[toIndex],
+              chapters[fromIndex],
+            ];
+            return { ...sub, chapters };
+          }),
+        };
+      }),
+    );
+  };
+
   // ─────────────────────────────────────────────────────────────────────────
 
   const resetTutorial = () => {
@@ -502,6 +694,11 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     reorderSubject,
     getSubjectsForStandard,
     getQuestionCountForSubject,
+    getQuestionCountForChapter,
+    addChapter,
+    renameChapter,
+    deleteChapter,
+    reorderChapter,
     login,
     logout,
     completeOnboarding,

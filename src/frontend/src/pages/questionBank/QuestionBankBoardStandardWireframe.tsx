@@ -34,9 +34,14 @@ import { useMockStore } from "../../state/mockStore";
 
 export function QuestionBankBoardStandardWireframe() {
   const navigate = useNavigate();
-  const { board, standardId, subjectId } = useParams({
-    from: "/question-bank/$board/$standardId/subjects/$subjectId",
-  });
+  const { board, standardId, subjectId, chapterId } = useParams({
+    strict: false,
+  }) as {
+    board: string;
+    standardId: string;
+    subjectId: string;
+    chapterId?: string;
+  };
   const search = useSearch({ strict: false }) as {
     tab?: string;
     subjectName?: string;
@@ -79,6 +84,12 @@ export function QuestionBankBoardStandardWireframe() {
   const allQuestions =
     selectedTab === "starter" ? getStarterQuestions() : personalQuestions;
 
+  // Resolve chapter name from chapterId
+  const chapterName = (() => {
+    if (!chapterId || chapterId === "uncategorized") return null;
+    return subject?.chapters?.find((c) => c.id === chapterId)?.name ?? null;
+  })();
+
   const filteredQuestions = allQuestions.filter((q) => {
     const matchesBoard = q.board === board;
     const matchesStandard = q.standard === standardName;
@@ -90,19 +101,30 @@ export function QuestionBankBoardStandardWireframe() {
       (q.tags ?? []).some((t) =>
         t.toLowerCase().includes(tagFilter.trim().toLowerCase()),
       );
+    // Chapter filter
+    let matchesChapter = true;
+    if (chapterId) {
+      if (chapterId === "uncategorized") {
+        // starter questions show under uncategorized; personal must have no chapter
+        matchesChapter = !q.chapter;
+      } else if (chapterName) {
+        matchesChapter = q.chapter === chapterName;
+      }
+    }
     return (
       matchesBoard &&
       matchesStandard &&
       matchesSubject &&
       matchesType &&
-      matchesTag
+      matchesTag &&
+      matchesChapter
     );
   });
 
   const handleBack = () => {
     navigate({
-      to: "/question-bank/$board/$standardId/subjects",
-      params: { board, standardId },
+      to: "/question-bank/$board/$standardId/subjects/$subjectId/chapters",
+      params: { board, standardId, subjectId },
       search: { tab: selectedTab },
     });
   };
@@ -263,11 +285,17 @@ export function QuestionBankBoardStandardWireframe() {
             style={{ backgroundColor: subjectColour }}
           />
           <h1 className="text-2xl font-bold text-foreground">
-            {subjectName || "Questions"}
+            {chapterId === "uncategorized"
+              ? "Uncategorized"
+              : chapterName || subjectName || "Questions"}
           </h1>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          {board} &middot; {standardName} &middot;{" "}
+          {board} &middot; {standardName} &middot; {subjectName}
+          {chapterId
+            ? ` · ${chapterId === "uncategorized" ? "Uncategorized" : chapterName}`
+            : ""}{" "}
+          &middot;{" "}
           {selectedTab === "starter" ? "Starter Questions" : "My Questions"}
         </p>
       </div>

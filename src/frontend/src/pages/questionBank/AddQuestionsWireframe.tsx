@@ -60,6 +60,7 @@ export function AddQuestionsWireframe() {
     profile,
     standards,
     addSubject,
+    addChapter,
   } = useMockStore();
 
   const [board, setBoard] = useState<string>(profile.preferredBoard || "CBSE");
@@ -100,6 +101,28 @@ export function AddQuestionsWireframe() {
       setSubjectId(NONE_SENTINEL);
     }
   }, [standardId, standards, subjectId]);
+
+  const [chapterId, setChapterId] = useState<string>(NONE_SENTINEL);
+  const [newChapterName, setNewChapterName] = useState("");
+  const [showAddChapter, setShowAddChapter] = useState(false);
+  const [chapterError, setChapterError] = useState(false);
+
+  // Sync chapterId when subject changes (setChapterId excluded: stable setter)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: chapterId read inside is for guard only
+  useEffect(() => {
+    const subs = standards.find((s) => s.id === standardId)?.subjects ?? [];
+    const sub = subs.find((s) => s.id === subjectId);
+    const chapters = sub?.chapters ?? [];
+    if (chapters.length > 0) {
+      setChapterId((prev) => {
+        if (!chapters.find((c) => c.id === prev)) return chapters[0].id;
+        return prev;
+      });
+    } else {
+      setChapterId(NONE_SENTINEL);
+    }
+  }, [subjectId, standardId, standards]);
+  // Chapter state
   const [newSubjectName, setNewSubjectName] = useState("");
   const [showAddSubject, setShowAddSubject] = useState(false);
 
@@ -126,7 +149,9 @@ export function AddQuestionsWireframe() {
   const handleStandardChange = (newStdId: string) => {
     setStandardId(newStdId);
     const std = standards.find((s) => s.id === newStdId);
-    setSubjectId(std?.subjects[0]?.id || NONE_SENTINEL);
+    const firstSubj = std?.subjects[0];
+    setSubjectId(firstSubj?.id || NONE_SENTINEL);
+    setChapterId(firstSubj?.chapters?.[0]?.id || NONE_SENTINEL);
   };
 
   /** Simple word-overlap similarity: returns 0–1 */
@@ -278,12 +303,25 @@ export function AddQuestionsWireframe() {
       return;
     }
 
+    const subjForChapterCheck = standards
+      .find((s) => s.id === standardId)
+      ?.subjects.find((s) => s.id === subjectId);
+    if (
+      (chapterId === NONE_SENTINEL || !chapterId) &&
+      (subjForChapterCheck?.chapters ?? []).length > 0
+    ) {
+      setChapterError(true);
+      alert("Please select a chapter before saving");
+      return;
+    }
+
     const stdObj = standards.find((s) => s.id === standardId);
     const subjObj = stdObj?.subjects.find((s) => s.id === subjectId);
 
     for (const draft of questionDrafts) {
       const effectiveDifficulty =
         difficulty !== "none" ? difficulty : undefined;
+      const chapterObj = subjObj?.chapters?.find((c) => c.id === chapterId);
       const newQuestion: Question = {
         id: `q-${Date.now()}-${Math.random()}`,
         text: draft.text,
@@ -298,6 +336,7 @@ export function AddQuestionsWireframe() {
         board,
         standard: stdObj?.name || "",
         subject: subjObj?.name || "",
+        ...(chapterObj ? { chapter: chapterObj.name } : {}),
         ...(effectiveDifficulty ? { difficulty: effectiveDifficulty } : {}),
         ...(draft.answer.trim() ? { answer: draft.answer.trim() } : {}),
         ...(draft.tags && draft.tags.length > 0 ? { tags: draft.tags } : {}),
@@ -498,6 +537,203 @@ export function AddQuestionsWireframe() {
                 </Button>
               </div>
             )}
+          </div>
+
+          {/* Chapter (required) */}
+          <div className="space-y-2">
+            <Label htmlFor="chapter">
+              Chapter <span className="text-destructive">*</span>
+            </Label>
+            {(() => {
+              const currentChapters =
+                standards
+                  .find((s) => s.id === standardId)
+                  ?.subjects.find((s) => s.id === subjectId)?.chapters ?? [];
+              if (currentChapters.length === 0) {
+                return (
+                  <div className="space-y-2">
+                    {showAddChapter ? (
+                      <div className="flex items-center gap-2 rounded-lg border p-2">
+                        <Input
+                          autoFocus
+                          placeholder="New chapter name"
+                          value={newChapterName}
+                          onChange={(e) => setNewChapterName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              if (
+                                !newChapterName.trim() ||
+                                !standardId ||
+                                !subjectId
+                              )
+                                return;
+                              addChapter(
+                                standardId,
+                                subjectId,
+                                newChapterName.trim(),
+                              );
+                              setNewChapterName("");
+                              setShowAddChapter(false);
+                            }
+                            if (e.key === "Escape") {
+                              setShowAddChapter(false);
+                              setNewChapterName("");
+                            }
+                          }}
+                          className="flex-1"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (
+                              !newChapterName.trim() ||
+                              !standardId ||
+                              !subjectId
+                            )
+                              return;
+                            addChapter(
+                              standardId,
+                              subjectId,
+                              newChapterName.trim(),
+                            );
+                            setNewChapterName("");
+                            setShowAddChapter(false);
+                          }}
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setShowAddChapter(false);
+                            setNewChapterName("");
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowAddChapter(true)}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add a chapter first
+                      </Button>
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <div className="space-y-2">
+                  <Select
+                    value={
+                      chapterId === NONE_SENTINEL
+                        ? (currentChapters[0]?.id ?? NONE_SENTINEL)
+                        : chapterId
+                    }
+                    onValueChange={(v) => {
+                      if (v !== NONE_SENTINEL && v !== "__add_chapter__") {
+                        setChapterId(v);
+                        setChapterError(false);
+                      } else if (v === "__add_chapter__") {
+                        setShowAddChapter(true);
+                      }
+                    }}
+                  >
+                    <SelectTrigger
+                      id="chapter"
+                      className={chapterError ? "border-destructive" : ""}
+                      data-ocid="add_question.select"
+                    >
+                      <SelectValue placeholder="Select chapter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currentChapters
+                        .filter((c) => c.id && c.id !== "")
+                        .map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      <SelectItem value="__add_chapter__">
+                        + Create new chapter...
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {chapterError && (
+                    <p className="text-xs text-destructive">
+                      Please select a chapter
+                    </p>
+                  )}
+                  {showAddChapter && (
+                    <div className="flex items-center gap-2 rounded-lg border p-2">
+                      <Input
+                        autoFocus
+                        placeholder="New chapter name"
+                        value={newChapterName}
+                        onChange={(e) => setNewChapterName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            if (
+                              !newChapterName.trim() ||
+                              !standardId ||
+                              !subjectId
+                            )
+                              return;
+                            addChapter(
+                              standardId,
+                              subjectId,
+                              newChapterName.trim(),
+                            );
+                            setNewChapterName("");
+                            setShowAddChapter(false);
+                          }
+                          if (e.key === "Escape") {
+                            setShowAddChapter(false);
+                            setNewChapterName("");
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          if (
+                            !newChapterName.trim() ||
+                            !standardId ||
+                            !subjectId
+                          )
+                            return;
+                          addChapter(
+                            standardId,
+                            subjectId,
+                            newChapterName.trim(),
+                          );
+                          setNewChapterName("");
+                          setShowAddChapter(false);
+                        }}
+                      >
+                        Add
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowAddChapter(false);
+                          setNewChapterName("");
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           <div className="space-y-2">

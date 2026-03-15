@@ -36,6 +36,8 @@ export interface Question {
   board?: string;
   standard?: string;
   subject?: string;
+  /** Optional chapter within the subject */
+  chapter?: string;
   /** Optional correct/model answer for any question type — always skippable */
   answer?: string;
   /** Optional difficulty level */

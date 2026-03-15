@@ -76,7 +76,7 @@ export function QuestionBankSubjectsWireframe() {
 
   const handleSubjectClick = (subjectId: string, subjectName: string) => {
     navigate({
-      to: "/question-bank/$board/$standardId/subjects/$subjectId",
+      to: "/question-bank/$board/$standardId/subjects/$subjectId/chapters",
       params: { board, standardId, subjectId },
       search: { tab: selectedTab, subjectName },
     });
