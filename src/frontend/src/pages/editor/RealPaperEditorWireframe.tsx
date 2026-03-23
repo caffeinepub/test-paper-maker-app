@@ -348,8 +348,9 @@ export function RealPaperEditorWireframe() {
 
   return (
     <div className="relative min-h-screen bg-muted/30">
+      <div className="print-page-border" aria-hidden="true" />
       {/* Fixed Top Bar */}
-      <div className="sticky top-0 z-10 border-b bg-background shadow-sm">
+      <div className="sticky top-0 z-10 border-b bg-background shadow-sm print:hidden">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-4">
             <Button
@@ -440,7 +441,7 @@ export function RealPaperEditorWireframe() {
         const pct = (n: number) => `${Math.round((n / total) * 100)}%`;
 
         return (
-          <div className="border-b bg-background px-4 py-2">
+          <div className="border-b bg-background px-4 py-2 print:hidden">
             <div className="container mx-auto max-w-4xl space-y-1.5">
               <div className="flex items-center gap-3 text-xs flex-wrap">
                 <span className="font-medium text-muted-foreground shrink-0">

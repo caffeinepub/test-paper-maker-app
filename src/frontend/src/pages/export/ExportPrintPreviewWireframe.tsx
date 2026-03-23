@@ -63,8 +63,6 @@ export function ExportPrintPreviewWireframe() {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
 
-  // No longer loading from base64 URL — shared papers now use short IDs via /share/$shareId
-
   const currentLayoutMode = activePaper?.layoutMode || "original";
 
   const handleOpenCleanup = () => {
@@ -92,7 +90,6 @@ export function ExportPrintPreviewWireframe() {
       return;
     }
 
-    // Reuse existing share ID or generate a new one
     let id: string;
     if (shareUrl) {
       const parts = shareUrl.split("/share/");
@@ -104,7 +101,6 @@ export function ExportPrintPreviewWireframe() {
     const url = `${window.location.origin}/share/${id}`;
     setShareUrl(url);
 
-    // Also save to backend canister for cross-device access
     if (actor) {
       try {
         await (actor as any).savePaper(id, JSON.stringify(activePaper));
@@ -128,7 +124,6 @@ export function ExportPrintPreviewWireframe() {
       toast.error("Paper not found");
       return;
     }
-
     try {
       downloadPaperAsText(activePaper);
       toast.success("Text file downloaded successfully");
@@ -176,7 +171,8 @@ export function ExportPrintPreviewWireframe() {
         items.push({
           number: qNum,
           text:
-            question.text.slice(0, 80) + (question.text.length > 80 ? "…" : ""),
+            question.text.slice(0, 80) +
+            (question.text.length > 80 ? "\u2026" : ""),
           answer,
         });
       }
@@ -190,7 +186,7 @@ export function ExportPrintPreviewWireframe() {
 <html>
 <head>
 <meta charset="utf-8">
-<title>Answer Key — ${activePaper?.title ?? "Paper"}</title>
+<title>Answer Key \u2014 ${activePaper?.title ?? "Paper"}</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 32px; color: #111; }
   h1 { font-size: 1.4rem; margin-bottom: 8px; }
@@ -222,7 +218,6 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
   };
 
   const handlePrint = () => {
-    // Slight delay to allow the browser to prepare the print layout
     setTimeout(() => {
       window.print();
     }, 200);
@@ -292,8 +287,8 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
               <CardTitle>Paper Not Found</CardTitle>
             </div>
             <CardDescription>
-              The paper you're trying to export doesn't exist or has been
-              deleted.
+              The paper you&apos;re trying to export doesn&apos;t exist or has
+              been deleted.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex gap-4">
@@ -312,11 +307,12 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
   const isCleanedMode = currentLayoutMode === "cleaned";
 
   return (
-    <div className="container mx-auto max-w-6xl p-4 py-8">
+    <div className="container mx-auto max-w-6xl p-4 py-8 print:p-0 print:m-0 print:max-w-none">
+      {/* ── SCREEN UI ── */}
       <div className="mb-6 flex items-center justify-between print:hidden">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            Export & Print Preview
+            Export &amp; Print Preview
           </h1>
           <p className="mt-2 text-muted-foreground">
             Review and export your paper
@@ -333,8 +329,8 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Panel - Actions */}
+      <div className="grid gap-6 lg:grid-cols-3 print:block">
+        {/* Left Panel — screen only */}
         <div className="space-y-4 lg:col-span-1 print:hidden">
           <Card>
             <CardHeader>
@@ -423,7 +419,6 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
                           </span>
                         )}
                       </div>
-                      {/* Proportional progress bar */}
                       <div className="flex h-2 overflow-hidden rounded-full bg-muted">
                         {stats.easy > 0 && (
                           <div
@@ -474,6 +469,7 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
                 variant="outline"
                 className="w-full justify-start"
                 onClick={handlePrint}
+                data-ocid="export.primary_button"
               >
                 <Printer className="mr-2 h-4 w-4" />
                 Print / Save as PDF
@@ -505,11 +501,10 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
                   Export as Word (.docx)
                 </Button>
                 <p className="text-xs text-muted-foreground pl-1">
-                  Text only — tables and images not included
+                  Text only \u2014 tables and images not included
                 </p>
               </div>
 
-              {/* Save as Template */}
               {showSaveTemplate ? (
                 <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
                   <p className="text-sm font-medium">Save as Template</p>
@@ -590,7 +585,7 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Works on any device — share via WhatsApp, email, or SMS.
+                  Works on any device \u2014 share via WhatsApp, email, or SMS.
                 </p>
               </div>
             </CardContent>
@@ -601,35 +596,43 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
               <CardTitle>Print Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>• Paper Size: A4</p>
-              <p>• Margins: Standard</p>
-              <p>• Include Logo: {profile.schoolLogo ? "Yes" : "No"}</p>
-              <p>• Layout Mode: {isCleanedMode ? "Cleaned" : "Original"}</p>
+              <p>\u2022 Paper Size: A4</p>
+              <p>\u2022 Margins: Standard</p>
+              <p>\u2022 Include Logo: {profile.schoolLogo ? "Yes" : "No"}</p>
+              <p>
+                \u2022 Layout Mode: {isCleanedMode ? "Cleaned" : "Original"}
+              </p>
             </CardContent>
           </Card>
 
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-xs">
-              Use your browser's print dialog to save as PDF or adjust print
-              settings.
+              Use your browser&apos;s print dialog to save as PDF or adjust
+              print settings.
             </AlertDescription>
           </Alert>
         </div>
 
-        {/* Right Panel - Preview */}
+        {/* Right Panel — screen preview + print target */}
         <div className="lg:col-span-2">
-          <Card className="print:border-0 print:shadow-none">
-            <CardHeader className="print:hidden">
+          {/* Screen: paper inside a nice card */}
+          <Card className="print:hidden">
+            <CardHeader>
               <CardTitle>Paper Preview</CardTitle>
               <CardDescription>
                 This is how your paper will look when printed
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-center">
+            <CardContent className="flex justify-center p-2 sm:p-4">
               <PaperSurface paper={activePaper} isEditable={false} />
             </CardContent>
           </Card>
+
+          {/* Print: no wrappers — pure paper surface */}
+          <div className="hidden print:block">
+            <PaperSurface paper={activePaper} isEditable={false} />
+          </div>
         </div>
       </div>
 
@@ -669,18 +672,17 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Key className="h-5 w-5 text-primary" />
-              Answer Key — {activePaper.title}
+              Answer Key \u2014 {activePaper.title}
             </DialogTitle>
             <DialogDescription>
               Print or save the answer key for this paper. Questions without a
-              stored answer are shown as "Not provided."
+              stored answer are shown as &quot;Not provided.&quot;
             </DialogDescription>
           </DialogHeader>
 
-          {/* Answer key content — also targeted by print CSS */}
           <div id="answer-key-print-content" className="space-y-2 py-2">
             <h2 className="text-lg font-bold text-foreground print:block hidden">
-              Answer Key — {activePaper.title}
+              Answer Key \u2014 {activePaper.title}
             </h2>
             {getAnswerKeyItems().length === 0 ? (
               <p className="text-sm text-muted-foreground">
@@ -701,7 +703,7 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
                         {item.text}
                       </p>
                       <p className="mt-1 text-sm font-medium text-foreground">
-                        →{" "}
+                        \u2192{" "}
                         <span
                           className={
                             item.answer === "Not provided"
@@ -732,7 +734,7 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
         </DialogContent>
       </Dialog>
 
-      {/* Cleanup Dialog with Comparison */}
+      {/* Cleanup Dialog */}
       <Dialog open={showCleanupDialog} onOpenChange={setShowCleanupDialog}>
         <DialogContent className="max-w-5xl">
           <DialogHeader>
@@ -745,7 +747,7 @@ ${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div>
               <strong>
                 No text content, wording, or spelling will be changed
               </strong>{" "}
-              — only spacing, alignment, and layout will be improved.
+              \u2014 only spacing, alignment, and layout will be improved.
             </DialogDescription>
           </DialogHeader>
 
