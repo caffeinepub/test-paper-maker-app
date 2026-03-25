@@ -25,11 +25,9 @@ export function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const coachmarks = useCoachmarks();
 
-  // Initialize theme at the shell level to ensure it's applied globally
   const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    // Cycle: system → light → dark → light
     const effective = theme === "dark" ? "light" : "dark";
     setTheme(effective);
   };
@@ -42,13 +40,15 @@ export function AppShell() {
 
   const isLoginPage = location.pathname === "/";
   const isOnboardingPage = location.pathname === "/onboarding";
+  const isPdfPreviewPage = location.pathname.startsWith("/pdf-preview/");
 
   useEffect(() => {
-    // Wait for store to initialize before redirecting
     if (!isInitialized) return;
 
-    // Check if tutorial is being started
     const startingTutorial = safeGetItem("start-tutorial") === "true";
+
+    // PDF preview pages don't require auth redirect
+    if (isPdfPreviewPage) return;
 
     if (!isLoggedIn && !isLoginPage) {
       navigate({ to: "/" });
@@ -66,7 +66,6 @@ export function AppShell() {
       (isLoginPage || isOnboardingPage) &&
       !startingTutorial
     ) {
-      // User completed onboarding, redirect to home
       navigate({ to: "/home" });
     }
   }, [
@@ -75,6 +74,7 @@ export function AppShell() {
     onboardingCompleted,
     isLoginPage,
     isOnboardingPage,
+    isPdfPreviewPage,
     navigate,
   ]);
 
@@ -135,7 +135,8 @@ export function AppShell() {
     );
   }
 
-  if (isLoginPage || isOnboardingPage) {
+  // PDF Preview, Login, Onboarding: render without app shell nav
+  if (isLoginPage || isOnboardingPage || isPdfPreviewPage) {
     return <Outlet />;
   }
 

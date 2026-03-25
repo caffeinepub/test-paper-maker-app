@@ -129,6 +129,12 @@ export function PaperSurface({
     <>
       {/* A4 paper surface */}
       <div className="paper-surface w-full max-w-[210mm] bg-white text-black shadow-2xl print:max-w-none print:shadow-none">
+        {/* Page border rectangle — visible only in print */}
+        <div
+          aria-hidden="true"
+          className="print-page-border hidden print:block"
+        />
+
         {/* Inner content with consistent padding from all walls */}
         <div className="paper-inner">
           {/* ── EXAM PAPER HEADER ── */}
@@ -243,7 +249,7 @@ export function PaperSurface({
 
                   {/* Question Headings */}
                   {headings.length === 0 ? (
-                    <div className="paper-empty-state">
+                    <div className="paper-empty-state print:hidden">
                       <p className="text-xs text-gray-400 italic">
                         No question headings yet.{" "}
                         {isEditable &&
@@ -317,7 +323,7 @@ export function PaperSurface({
 
                           {/* Questions */}
                           {headingQuestions.length === 0 ? (
-                            <div className="paper-empty-state ml-4">
+                            <div className="paper-empty-state print:hidden ml-4">
                               <p className="text-xs text-gray-400 italic">
                                 No questions yet.{" "}
                                 {isEditable &&

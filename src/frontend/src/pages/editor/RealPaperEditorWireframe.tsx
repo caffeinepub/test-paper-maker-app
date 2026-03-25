@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   AlertCircle,
   ArrowLeft,
+  Eye,
   FileDown,
   Image as ImageIcon,
   Redo,
@@ -20,6 +21,7 @@ import { PaperSurface } from "../../components/paper/PaperSurface";
 import { useDebouncedEffect } from "../../hooks/useDebouncedEffect";
 import { useRealPaperToolboxSpotlight } from "../../hooks/useRealPaperToolboxSpotlight";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
+import { safeSetItem } from "../../lib/storage/safeStorage";
 import type {
   Paper,
   Question,
@@ -31,7 +33,7 @@ import { useMockStore } from "../../state/mockStore";
 export function RealPaperEditorWireframe() {
   const navigate = useNavigate();
   const { paperId } = useParams({ from: "/editor/$paperId/real-paper" });
-  const { isInitialized, getPaperById, updatePaper } = useMockStore();
+  const { isInitialized, getPaperById, updatePaper, papers } = useMockStore();
   const toolboxSpotlight = useRealPaperToolboxSpotlight();
 
   const paper = getPaperById(paperId);
@@ -68,7 +70,6 @@ export function RealPaperEditorWireframe() {
     maxHistorySize: 50,
   });
 
-  // Initialize state from paper
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally only re-runs when paperId or init status changes
   useEffect(() => {
     if (paper && isInitialized) {
@@ -80,7 +81,6 @@ export function RealPaperEditorWireframe() {
     }
   }, [paper?.id, isInitialized]);
 
-  // Initialize section and heading selection
   useEffect(() => {
     if (paperState && paperState.sections.length > 0 && !selectedSectionId) {
       const firstSection = paperState.sections[0];
@@ -91,7 +91,6 @@ export function RealPaperEditorWireframe() {
     }
   }, [paperState, selectedSectionId]);
 
-  // Debounced autosave
   useDebouncedEffect(
     () => {
       if (!paperState || !isInitialized || isInitialLoadRef.current) {
@@ -99,7 +98,6 @@ export function RealPaperEditorWireframe() {
       }
 
       setAutoSaveStatus("saving");
-      // Auto-update totalMarks from individual question marks
       const computedTotal = paperState.sections.reduce(
         (total, section) =>
           total +
@@ -124,7 +122,6 @@ export function RealPaperEditorWireframe() {
     [paperState, isInitialized],
   );
 
-  // Update heading selection when section changes
   const handleSelectSection = (sectionId: string) => {
     setSelectedSectionId(sectionId);
     const section = paperState?.sections.find((s) => s.id === sectionId);
@@ -199,7 +196,6 @@ export function RealPaperEditorWireframe() {
       };
     });
 
-    // Set both selected and autofocus
     setSelectedQuestionId(newQuestion.id);
     setAutoFocusQuestionId(newQuestion.id);
     toast.success("Question added");
@@ -253,7 +249,6 @@ export function RealPaperEditorWireframe() {
 
   const handleSelectQuestion = (questionId: string | null) => {
     setSelectedQuestionId(questionId);
-    // Also trigger autofocus when clicking existing questions
     if (questionId) {
       setAutoFocusQuestionId(questionId);
     }
@@ -323,6 +318,27 @@ export function RealPaperEditorWireframe() {
     reader.readAsDataURL(file);
 
     e.target.value = "";
+  };
+
+  const handleOpenPdfPreview = () => {
+    if (paperState) {
+      const computedTotal = paperState.sections.reduce(
+        (total, section) =>
+          total +
+          section.questions.reduce((sTotal, q) => sTotal + (q.marks || 0), 0),
+        0,
+      );
+      const updatedPaper = { ...paperState, totalMarks: computedTotal };
+      // Write to sessionStorage so the new tab reads it immediately without race condition
+      sessionStorage.setItem("pdf_preview_paper", JSON.stringify(updatedPaper));
+      // Also keep localStorage and React state in sync
+      const updatedPapers = papers.map((p) =>
+        p.id === paperId ? updatedPaper : p,
+      );
+      safeSetItem("papers", JSON.stringify(updatedPapers));
+      updatePaper(paperId, updatedPaper);
+    }
+    window.open(`/pdf-preview/${paperId}`, "_blank");
   };
 
   if (!isInitialized) {
@@ -413,6 +429,17 @@ export function RealPaperEditorWireframe() {
               <ImageIcon className="mr-2 h-4 w-4" />
               Insert Image
             </Button>
+            {/* PDF Preview button — opens exact A4 view in new tab */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenPdfPreview}
+              title="Preview exact PDF layout in new tab"
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              PDF Preview
+            </Button>
             <Button
               variant="default"
               size="sm"
@@ -473,34 +500,29 @@ export function RealPaperEditorWireframe() {
                   )}
                 </div>
               </div>
-              {/* Stacked progress bar */}
               <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
                 {easy > 0 && (
                   <div
                     className="h-full bg-green-500 transition-all duration-300"
                     style={{ width: pct(easy) }}
-                    title={`Easy: ${easy} (${pct(easy)})`}
                   />
                 )}
                 {medium > 0 && (
                   <div
                     className="h-full bg-amber-400 transition-all duration-300"
                     style={{ width: pct(medium) }}
-                    title={`Medium: ${medium} (${pct(medium)})`}
                   />
                 )}
                 {hard > 0 && (
                   <div
                     className="h-full bg-red-500 transition-all duration-300"
                     style={{ width: pct(hard) }}
-                    title={`Hard: ${hard} (${pct(hard)})`}
                   />
                 )}
                 {untagged > 0 && (
                   <div
                     className="h-full bg-muted-foreground/20 transition-all duration-300"
                     style={{ width: pct(untagged) }}
-                    title={`Untagged: ${untagged}`}
                   />
                 )}
               </div>
@@ -550,7 +572,6 @@ export function RealPaperEditorWireframe() {
         />
       </div>
 
-      {/* Add Heading Dialog */}
       {showAddHeadingDialog && selectedSectionId && (
         <AddQuestionHeadingDialog
           open={showAddHeadingDialog}
@@ -559,12 +580,10 @@ export function RealPaperEditorWireframe() {
         />
       )}
 
-      {/* Toolbox Spotlight */}
       {toolboxSpotlight.shouldShow && (
         <RealPaperToolboxSpotlight onComplete={toolboxSpotlight.complete} />
       )}
 
-      {/* Hidden file input */}
       <input
         ref={imageInputRef}
         type="file"

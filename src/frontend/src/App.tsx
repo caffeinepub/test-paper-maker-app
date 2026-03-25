@@ -17,6 +17,7 @@ import { PaperEditorWireframe } from "./pages/editor/PaperEditorWireframe";
 import { QuestionEntryWireframe } from "./pages/editor/QuestionEntryWireframe";
 import { RealPaperEditorWireframe } from "./pages/editor/RealPaperEditorWireframe";
 import { ExportPrintPreviewWireframe } from "./pages/export/ExportPrintPreviewWireframe";
+import { PDFPreviewPage } from "./pages/export/PDFPreviewPage";
 import { SharedPaperViewWireframe } from "./pages/export/SharedPaperViewWireframe";
 import { HomeDashboardWireframe } from "./pages/home/HomeDashboardWireframe";
 import { OCRReviewApproveWireframe } from "./pages/ocr/OCRReviewApproveWireframe";
@@ -147,6 +148,12 @@ const exportRoute = createRoute({
   component: ExportPrintPreviewWireframe,
 });
 
+const pdfPreviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/pdf-preview/$paperId",
+  component: PDFPreviewPage,
+});
+
 const shareRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/share/$shareId",
@@ -194,6 +201,7 @@ const routeTree = rootRoute.addChildren([
   addQuestionsRoute,
   aiRoute,
   exportRoute,
+  pdfPreviewRoute,
   shareRoute,
   ocrUploadRoute,
   ocrReviewRoute,
