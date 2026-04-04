@@ -108,7 +108,6 @@ export function AddQuestionsWireframe() {
   const [chapterError, setChapterError] = useState(false);
 
   // Sync chapterId when subject changes (setChapterId excluded: stable setter)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: chapterId read inside is for guard only
   useEffect(() => {
     const subs = standards.find((s) => s.id === standardId)?.subjects ?? [];
     const sub = subs.find((s) => s.id === subjectId);

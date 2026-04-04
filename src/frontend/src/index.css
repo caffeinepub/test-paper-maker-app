@@ -529,11 +529,12 @@ body {
 ═══════════════════════════════════════════════════ */
 
 .pdf-preview-shell {
-  background: #e8e8e8 !important;
+  background: #525659 !important;
   color-scheme: light !important;
   min-height: 100vh;
   width: 100%;
-  padding-bottom: 40px;
+  padding-bottom: 0;
+  overflow-x: hidden;
 }
 
 .pdf-preview-toolbar {
@@ -598,63 +599,91 @@ body {
   background: #f0e8ff !important;
 }
 
-.pdf-preview-page-area {
-  display: flex;
-  justify-content: center;
-  padding: 0 16px;
+/* ── PDF PREVIEW: Google-Drive-style viewer ──────────────────────────────
+   The outer shell occupies full width and provides the grey background.
+   The A4 page is always 794px wide internally, then CSS-scaled to fit.
+   A height-compensation wrapper corrects the layout height after scaling.
+──────────────────────────────────────────────────────────────────────── */
+
+/* Grey document-viewer background — full width */
+.pdf-shell-outer {
+  width: 100%;
+  background: #525659; /* same grey as Google Drive PDF viewer */
+  box-sizing: border-box;
+  padding: 24px 0 40px;
+  overflow-x: hidden;
 }
 
-/* The A4 simulation wrapper */
-.pdf-a4-wrapper {
-  position: relative;
-  width: 210mm;
-  min-height: 297mm;
+/* The A4 page — always 794px (210mm at 96dpi), scaled by JS transform */
+.pdf-a4-page {
+  width: 794px;
   background: white !important;
   color-scheme: light !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   box-sizing: border-box;
-  overflow: visible !important;
+  /* transform and transformOrigin set inline by React */
+  position: relative;
 }
 
-/* Visible border box on screen (simulates the print border) */
-.pdf-screen-border {
-  position: absolute;
-  top: 10mm;
-  left: 10mm;
-  right: 10mm;
-  bottom: 10mm;
+/* Border box — wraps all content, grows naturally with content.
+   overflow: visible is critical — hidden clips long questions. */
+.pdf-content-border {
+  margin: 10mm;
   border: 2px solid #000;
-  pointer-events: none;
-  z-index: 2;
+  min-height: calc(297mm - 24mm); /* at least one A4 page minus margins */
+  box-sizing: border-box;
+  overflow: visible;
+  position: relative;
+  background: white;
 }
 
-/* Visible page number on screen */
-.pdf-screen-page-number {
-  position: absolute;
-  bottom: 8mm;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 10pt;
-  font-weight: 600;
-  color: #333;
-  letter-spacing: 2px;
-  pointer-events: none;
-  z-index: 5;
-}
-
-/* Override paper-surface inside pdf-a4-wrapper */
-.pdf-a4-wrapper .paper-surface {
+/* Paper surface resets inside the A4 page */
+.pdf-a4-page .paper-surface {
   width: 100% !important;
   max-width: 100% !important;
   box-shadow: none !important;
   border: none !important;
   border-radius: 0 !important;
+  background: white !important;
 }
 
-/* Ensure paper inner has enough padding from all borders */
-.pdf-a4-wrapper .paper-inner {
-  padding: 14mm 16mm 28mm 16mm !important;
+/* Inner padding — inside the border box, keeps content away from border */
+.pdf-a4-page .paper-inner {
+  padding: 5mm 7mm 5mm 7mm !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  background: white !important;
+}
+
+/* Page number inside the border at the bottom */
+.pdf-page-number {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 3mm 0 4mm;
+  font-size: 10pt;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #333;
+  background: white;
+}
+
+/* Legacy screen-border and page-number divs are no longer rendered */
+.pdf-screen-border {
+  display: none !important;
+}
+.pdf-screen-page-number {
+  display: none !important;
+}
+/* Old pdf-preview-page-area / scale-container / a4-wrapper kept for safety */
+.pdf-preview-page-area {
+  display: block;
+}
+.pdf-scale-container {
+  display: block;
+}
+.pdf-a4-wrapper {
+  display: block;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -687,24 +716,44 @@ body {
     min-height: 0 !important;
   }
 
-  .pdf-a4-wrapper {
-    box-shadow: none !important;
+  /* PDF preview shell: white bg when printing */
+  .pdf-shell-outer {
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  /* A4 page in print — full width, no transform, no shadow */
+  .pdf-a4-page {
     width: 210mm !important;
-    min-height: 297mm !important;
-    margin: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
     page-break-after: always;
   }
 
-  .pdf-screen-page-number {
+  /* Content border stays visible in print */
+  .pdf-content-border {
+    margin: 10mm !important;
+    border: 2px solid #000 !important;
+    overflow: visible !important;
+    min-height: calc(297mm - 24mm) !important;
+  }
+
+  /* Page number at bottom */
+  .pdf-page-number {
     display: block !important;
-    position: fixed !important;
-    bottom: 8mm !important;
-    left: 0 !important;
-    right: 0 !important;
     text-align: center !important;
     font-size: 9pt !important;
+    font-weight: 700 !important;
     color: #333 !important;
-    z-index: 9999 !important;
+    padding: 3mm 0 4mm !important;
+  }
+
+  /* Legacy classes — keep hidden */
+  .pdf-scale-container,
+  .pdf-a4-wrapper,
+  .pdf-screen-border,
+  .pdf-screen-page-number {
+    display: none !important;
   }
 
   /* Hide ALL app chrome */

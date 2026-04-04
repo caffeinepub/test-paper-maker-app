@@ -182,45 +182,49 @@ export function ExportPrintPreviewWireframe() {
 
   const handlePrintAnswerKey = () => {
     const items = getAnswerKeyItems();
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Answer Key \u2014 ${activePaper?.title ?? "Paper"}</title>
-<style>
-  body { font-family: Arial, sans-serif; padding: 32px; color: #111; }
-  h1 { font-size: 1.4rem; margin-bottom: 8px; }
-  h2 { font-size: 1rem; color: #555; margin-bottom: 24px; }
-  .item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #eee; }
-  .num { font-weight: 700; min-width: 32px; }
-  .q { font-size: 0.85rem; color: #555; }
-  .ans { font-weight: 600; color: #5b21b6; margin-top: 2px; }
-  .not-provided { color: #999; font-style: italic; }
-</style>
-</head>
-<body>
-<h1>Answer Key</h1>
-<h2>${activePaper?.title ?? ""}</h2>
-${items.map((item) => `<div class="item"><div class="num">Q${item.number}.</div><div><div class="q">${item.text}</div><div class="ans ${item.answer === "Not provided" ? "not-provided" : ""}">${item.answer}</div></div></div>`).join("")}
-</body>
-</html>`;
-    const w = window.open("", "_blank", "width=700,height=600");
-    if (!w) {
-      toast.error("Could not open print window. Please allow popups.");
-      return;
-    }
-    w.document.write(html);
-    w.document.close();
-    w.focus();
+
+    const printDiv = document.createElement("div");
+    printDiv.id = "answer-key-print-overlay";
+    printDiv.innerHTML = `
+      <h1 style="font-size:1.4rem;margin-bottom:8px;">Answer Key</h1>
+      <h2 style="font-size:1rem;color:#555;margin-bottom:24px;">${activePaper?.title ?? ""}</h2>
+      ${items
+        .map(
+          (item) => `
+        <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #eee;">
+          <div style="font-weight:700;min-width:32px;">Q${item.number}.</div>
+          <div>
+            <div style="font-size:0.85rem;color:#555;">${item.text}</div>
+            <div style="font-weight:600;color:${item.answer === "Not provided" ? "#999" : "#5b21b6"};margin-top:2px;font-style:${item.answer === "Not provided" ? "italic" : "normal"}">${item.answer}</div>
+          </div>
+        </div>`,
+        )
+        .join("")}
+    `;
+
+    const style = document.createElement("style");
+    style.id = "answer-key-print-style";
+    style.textContent = `
+      @media print {
+        body > *:not(#answer-key-print-overlay) { display: none !important; }
+        #answer-key-print-overlay { display: block !important; font-family: Arial, sans-serif; padding: 32px; color: #111; }
+      }
+      #answer-key-print-overlay { display: none; }
+    `;
+
+    document.head.appendChild(style);
+    document.body.appendChild(printDiv);
+
+    window.print();
+
     setTimeout(() => {
-      w.print();
-    }, 300);
+      document.head.removeChild(style);
+      document.body.removeChild(printDiv);
+    }, 1000);
   };
 
   const handlePrint = () => {
-    setTimeout(() => {
-      window.print();
-    }, 200);
+    window.print();
     toast.info(
       "In the print dialog: set Paper = A4, Margins = None, enable Background Graphics, then Save as PDF",
       { duration: 6000 },

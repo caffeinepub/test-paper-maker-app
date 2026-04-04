@@ -21,7 +21,6 @@ import { PaperSurface } from "../../components/paper/PaperSurface";
 import { useDebouncedEffect } from "../../hooks/useDebouncedEffect";
 import { useRealPaperToolboxSpotlight } from "../../hooks/useRealPaperToolboxSpotlight";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
-import { safeSetItem } from "../../lib/storage/safeStorage";
 import type {
   Paper,
   Question,
@@ -33,7 +32,7 @@ import { useMockStore } from "../../state/mockStore";
 export function RealPaperEditorWireframe() {
   const navigate = useNavigate();
   const { paperId } = useParams({ from: "/editor/$paperId/real-paper" });
-  const { isInitialized, getPaperById, updatePaper, papers } = useMockStore();
+  const { isInitialized, getPaperById, updatePaper } = useMockStore();
   const toolboxSpotlight = useRealPaperToolboxSpotlight();
 
   const paper = getPaperById(paperId);
@@ -329,16 +328,24 @@ export function RealPaperEditorWireframe() {
         0,
       );
       const updatedPaper = { ...paperState, totalMarks: computedTotal };
-      // Write to sessionStorage so the new tab reads it immediately without race condition
-      sessionStorage.setItem("pdf_preview_paper", JSON.stringify(updatedPaper));
-      // Also keep localStorage and React state in sync
-      const updatedPapers = papers.map((p) =>
-        p.id === paperId ? updatedPaper : p,
-      );
-      safeSetItem("papers", JSON.stringify(updatedPapers));
+
+      // Write synchronously to localStorage BEFORE navigation
+      // (localStorage is shared between same-origin navigations in the same tab)
+      try {
+        localStorage.setItem(
+          `pdf_preview_${paperId}`,
+          JSON.stringify(updatedPaper),
+        );
+      } catch {
+        // storage full — proceed anyway, will fallback to store
+      }
+
+      // Also persist to the main store
       updatePaper(paperId, updatedPaper);
     }
-    window.open(`/pdf-preview/${paperId}`, "_blank");
+
+    // Navigate in the same tab — PDFPreviewPage reads from localStorage
+    navigate({ to: `/pdf-preview/${paperId}` });
   };
 
   if (!isInitialized) {
@@ -429,12 +436,12 @@ export function RealPaperEditorWireframe() {
               <ImageIcon className="mr-2 h-4 w-4" />
               Insert Image
             </Button>
-            {/* PDF Preview button — opens exact A4 view in new tab */}
+            {/* PDF Preview button — navigates to exact A4 preview in same tab */}
             <Button
               variant="outline"
               size="sm"
               onClick={handleOpenPdfPreview}
-              title="Preview exact PDF layout in new tab"
+              title="Preview exact PDF layout"
               className="border-purple-300 text-purple-700 hover:bg-purple-50"
             >
               <Eye className="mr-2 h-4 w-4" />
